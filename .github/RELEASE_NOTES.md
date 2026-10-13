@@ -7,6 +7,9 @@
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
+### New in 1.3.1
+- **Linux:** the drop-down settings (panel edge, monitor, animation speed, world-clock city) no longer close the panel when you open them — they now use in-panel menus
+
 ### New in 1.3.0
 - **Timer: set any time** — type minutes and seconds, plus more presets (15m, 45m, 60m) (#5)
 - **Linux: text fields work again** — the panel now takes keyboard focus for search, notes, calculator… (#4)
