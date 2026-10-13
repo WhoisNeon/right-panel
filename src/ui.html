@@ -162,6 +162,14 @@
   .tabs { display: flex; background: var(--soft); border-radius: 11px; padding: 3px; gap: 2px; }
   .tabs button { flex: 1; border: 0; background: none; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--muted); transition: background .25s, color .25s; }
   .tabs button.on { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
+  .pick { position: relative; }
+  .pick > .field { cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+  .pick > .field::after { content: " ▾"; color: var(--muted); }
+  .pick .opts { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto; scrollbar-width: none;
+    background: var(--liquid); border-radius: 12px; padding: 4px; box-shadow: 0 0 0 1px var(--line), 0 10px 30px -10px rgba(0,0,0,.5); }
+  .pick.open .opts { display: block; }
+  .pick .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .pick .opts button:hover, .pick .opts button.on { background: var(--soft2); }
   .spage { display: none; flex-direction: column; gap: 8px; }
   .spage.on { display: flex; animation: rise .4s cubic-bezier(.2,.8,.2,1) both; }
   .wsec { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 4px 2px 0; display: flex; justify-content: space-between; }
@@ -1166,6 +1174,35 @@ save();
 // re-read icons of saved apps (clean, no shortcut arrow)
 S.apps.forEach(a => send('refreshIcon', { id: a.id, path: a.path }));
 send('ready');
+/* ---- Linux: native <select> popups are separate GTK windows; opening one takes focus away from
+   the panel, which then closes itself. Swap them for in-page dropdowns. ---- */
+if (OS === 'linux') $$('select').forEach(sel => {
+  const box = document.createElement('div'), btn = document.createElement('button'), list = document.createElement('div');
+  box.className = 'pick'; btn.className = 'field'; btn.type = 'button'; list.className = 'opts';
+  if (sel.style.width) box.style.width = sel.style.width; else box.style.width = '100%', btn.style.maxWidth = 'none', btn.style.width = '100%';
+  sel.before(box); box.append(btn, list, sel); sel.style.display = 'none';
+  const label = () => { btn.textContent = sel.selectedOptions[0]?.textContent || ''; };
+  btn.onclick = e => {
+    e.stopPropagation();
+    const open = !box.classList.contains('open');
+    $$('.pick.open').forEach(p => p.classList.remove('open'));
+    if (!open) return;
+    list.innerHTML = [...sel.options].map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${esc(o.textContent)}</button>`).join('');
+    box.classList.add('open');
+    const r = btn.getBoundingClientRect(), up = innerHeight - r.bottom < Math.min(list.scrollHeight, 220) + 12 && r.top > innerHeight - r.bottom;
+    list.style.top = up ? 'auto' : ''; list.style.bottom = up ? 'calc(100% + 4px)' : '';
+  };
+  list.onclick = e => {
+    e.stopPropagation();
+    const b = e.target.closest('[data-v]'); if (!b) return;
+    sel.value = b.dataset.v; box.classList.remove('open'); label();
+    sel.dispatchEvent(new Event('change', { bubbles: true })); label();
+  };
+  new MutationObserver(label).observe(sel, { childList: true, subtree: true });
+  sel.addEventListener('change', label);
+  label();
+});
+addEventListener('click', () => $$('.pick.open').forEach(p => p.classList.remove('open')));
 </script>
 </body>
 </html>
