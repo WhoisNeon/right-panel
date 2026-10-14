@@ -395,7 +395,7 @@ const atEdge = x => DIR > 0 ? x >= innerWidth - 6 : x <= 6;
 /* ================= widget registry ================= */
 // kind: panel = opens a flyout, action = runs immediately
 const W = {
-  emoji:     { name: 'Emoji', icon: '😊', kind: 'panel' },
+  emoji:     { name: 'Emoji', icon: I('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>'), kind: 'panel' },
   clip:      { name: 'Clipboard', icon: I('<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/>'), kind: 'panel' },
   color:     { name: 'Color', icon: I('<path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.2-1-1.5-1-2.5 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4-4-7.5-9-7.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>'), kind: 'panel' },
   shot:      { name: 'Screenshot', icon: I('<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/>'), kind: 'action', run: () => { app.close(); send('screenshot'); } },
