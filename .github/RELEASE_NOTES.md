@@ -7,6 +7,12 @@
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
+### New in 1.4.5
+- **Correct version number** — the About panel and the installer now report the real release instead of being stuck at 1.4.0
+- **Back arrow renders properly** — it had no stroke styling, so it drew as a solid black shape
+- **Clipboard images:** the ★ and × buttons sit in the top-right corner instead of floating over the middle of the picture. Text rows keep them vertically centred
+- **Open panel setting** no longer wraps its description into the dropdown
+
 ### New in 1.4.4
 - **Choose how the panel opens** (*Settings → General*): any edge, or only while holding **Ctrl**, **Shift** or **Space**
 - **No more hover tooltips** — labels moved off `title` so nothing pops up over a button, while screen readers still get the names

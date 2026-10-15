@@ -16,7 +16,7 @@
   body { font-family: Arad, "Segoe UI Variable Text", "Segoe UI", Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
   /* panel chrome is glyphs, not text — keep the colour fonts off it so arrows and symbols keep their metrics */
   .back, .item .acts span { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
-  .back svg { width: 14px; height: 14px; }
+  .back svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .item .acts span svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .item.pinned .acts span[data-pin] svg { fill: currentColor; }
   button { font: inherit; color: inherit; }
@@ -110,6 +110,8 @@
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
   .item .acts { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+  /* image rows are tall, so their buttons sit in the top corner instead of floating mid-row */
+  .item.shot .acts { top: 8px; transform: none; }
   .item:hover .acts, .item.pinned .acts { opacity: 1; }
   .item .acts span { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
   .item .acts span:hover { background: var(--soft2); color: var(--ink); }
@@ -166,6 +168,8 @@
 
   /* settings */
   .set { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 4px 2px; }
+  .set > span { min-width: 0; }
+  .set > select { flex: none; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .toggle.on { background: #34c759; }
@@ -374,7 +378,7 @@
       <div class="set"><span id="startLbl">Start with Windows</span><button class="toggle" id="tStartup"></button></div>
       <div class="set" id="pasteRow"><span>Paste on click</span><button class="toggle" id="tPaste"></button></div>
       <div class="set"><span>Magnify icons on hover</span><button class="toggle" id="tMagnify"></button></div>
-      <div class="set" id="openModRow"><span>Open panel<small class="hint" style="display:block">Hold this key while moving to the screen edge</small></span><select class="field" id="openModSel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
+      <div class="set" id="openModRow"><span>Open panel<small class="hint" style="display:block;text-align:left">Hold at the screen edge</small></span><select class="field" id="openModSel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
       <div class="set"><span>Animation speed</span><select class="field" id="speedSel" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
       <div class="set"><span>Panel edge</span><select class="field" id="edgeSel" style="width:auto"><option value="right">Right</option><option value="left">Left</option></select></div>
       <div class="set" id="monRow"><span>Monitor</span><select class="field" id="monSel" style="width:auto"></select></div>

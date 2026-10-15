@@ -57,6 +57,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 - **Emoji search works in Persian too** — keywords come from [CLDR](https://cldr.unicode.org/), so `خنده` finds 😂, `آتش` finds 🔥 and `ایران` finds 🇮🇷
 - **Drag a file or folder onto the panel** to pin it, or right-click it → *Add to Right Panel* (Windows; on Windows 11 under *Show more options*)
 - **Left or right edge**, and pick which monitor it lives on (*Settings → General*)
+- **Open on a key**: the panel appears when you reach the screen edge — or only while you hold **Ctrl**, **Shift** or **Space**, if you'd rather it stayed out of the way (*Settings → General*, Windows)
 - **Built-in updater**: Right Panel checks GitHub once a day and can download and run the new installer for you (*Settings → General*)
 - Only one copy runs at a time
 
