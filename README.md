@@ -42,14 +42,15 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 | 📋 **Clipboard history** | Text *and images*, search, ☆ pin favourites that survive restarts |
 | 🎨 **Color** | Eyedropper (pick any pixel on screen), HEX / RGB / HSL, palette, recent colors |
 | 📸 **Screenshot** | Opens the system snipping tool |
-| 📝 **Notes** | As many notes as you like, in tabs, saved as you type |
+| 📝 **Notes** | As many notes as you like, in tabs, saved as you type — double-click a tab to name it |
 | 🧩 **Your apps & folders** | Pin apps, shortcuts or folders — add them in Settings or just **drag them onto the panel** |
 | 🔎 **Search** | Google, YouTube, Wikipedia, Translate, Maps, GitHub… or just type a URL |
 | ✂️ **Snippets** | Save text you type often, paste it with one click |
 | 🧮 **Calculator · Units · Password · Generate** | Quick math, unit conversions, strong passwords, UUIDs, dates, lorem ipsum |
+| 📏 **Units** | Length, mass, volume, **data sizes** (byte → petabyte), speed, temperature, frequency — type `1.5gb` or `1,024 KB` |
 | ⏱️ **Timer · Stopwatch · World clock** | With laps, presets and your favorite cities |
 | 🎵 **Media** | Play/pause, next, previous, volume |
-| 🔤 **Text tools** | UPPER/lower/Title, trim, one line, slug, Base64, URL encode, word count |
+| 🔤 **Text tools** | Type or paste text, then UPPER/lower/Title, trim, one line, slug, Base64, URL encode, word count |
 | ☀️ **Keep awake · Screen off · Lock · Pin window on top** | One-click system helpers |
 
 **Also**

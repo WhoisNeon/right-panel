@@ -8,10 +8,15 @@
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
 ### New in 1.4.5
-- **Correct version number** — the About panel and the installer now report the real release instead of being stuck at 1.4.0
-- **Back arrow renders properly** — it had no stroke styling, so it drew as a solid black shape
-- **Clipboard images:** the ★ and × buttons sit in the top-right corner instead of floating over the middle of the picture. Text rows keep them vertically centred
-- **Open panel setting** no longer wraps its description into the dropdown
+- **Units panel rebuilt** — a much larger set: length (mm · cm · m · km · in · ft · yd · mi), mass (mg · g · kg · oz · lb), volume (ml · l · fl oz · gal), **data sizes (b · KB · MB · GB · TB · PB)**, speed (km/h · mph · m/s · knot), temperature (C · F · K) and frequency (BPM · Hz). Accepts `1,024 KB`, `1.5mb`, `°C` and `km/h`
+- **Text tools accept typed text** — no longer clipboard-only; an empty box still falls back to the clipboard
+- **Clipboard images show their file size** next to the resolution
+- **Note titles are editable** — double-click a tab to name it; unnamed notes keep showing their first line
+- **Settings rows: proper icons** — the Dock/More move buttons and the drag handle are drawn as vectors and sit where they belong
+- **Back button** centres its arrow and has more breathing room from the panel title
+- **Timer presets wrap** instead of the 45-minute button escaping the panel
+- **Panels no longer close the instant they open** — the focus change caused by opening one no longer counts as clicking away
+- **Correct version number** — the About panel and installer now report the real release instead of being stuck at 1.4.0
 
 ### New in 1.4.4
 - **Choose how the panel opens** (*Settings → General*): any edge, or only while holding **Ctrl**, **Shift** or **Space**

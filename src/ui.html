@@ -16,7 +16,7 @@
   body { font-family: Arad, "Segoe UI Variable Text", "Segoe UI", Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
   /* panel chrome is glyphs, not text — keep the colour fonts off it so arrows and symbols keep their metrics */
   .back, .item .acts span { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
-  .back svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .back svg { width: 15px; height: 15px; display: block; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .item .acts span svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .item.pinned .acts span[data-pin] svg { fill: currentColor; }
   button { font: inherit; color: inherit; }
@@ -68,9 +68,9 @@
   .panel.on > :nth-child(2) { animation-delay: .03s; } .panel.on > :nth-child(3) { animation-delay: .06s; }
   .panel.on > :nth-child(4) { animation-delay: .09s; } .panel.on > :nth-child(n+5) { animation-delay: .12s; }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); filter: blur(5px); } }
-  .head { display: flex; align-items: center; gap: 4px; min-height: 22px; }
+  .head { display: flex; align-items: center; gap: 10px; min-height: 22px; }
   .head h4 { flex: 1; margin: 0; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
-  .back { display: none; border: 0; background: var(--soft); color: var(--ink); width: 24px; height: 22px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1; }
+  .back { display: none; border: 0; background: var(--soft); color: var(--ink); width: 24px; height: 22px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; flex: none; }
   .back:hover { background: var(--soft2); }
   .fly-ui.sub .back { display: inline-grid; place-items: center; }
   .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
@@ -171,9 +171,9 @@
   .set > span { min-width: 0; }
   .set > select { flex: none; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
-  .toggle::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .toggle.on { background: #34c759; }
-  .toggle.on::after { transform: translateX(16px); }
+  .toggle.on::after { transform: translate(16px, 0); }
   .tabs { display: flex; background: var(--soft); border-radius: 11px; padding: 3px; gap: 2px; }
   .tabs button { flex: 1; border: 0; background: none; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--muted); transition: background .25s, color .25s; }
   .tabs button.on { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
@@ -193,12 +193,14 @@
   .wrow { display: flex; align-items: center; gap: 7px; background: var(--soft); border-radius: 11px; padding: 5px 5px 5px 8px; font-size: 13px; cursor: grab; transition: background .2s, opacity .2s; flex: none; }
   .wrow:hover { background: var(--soft2); }
   .wrow.off { opacity: .4; }
-  .wrow .grip { color: var(--muted); font-size: 12px; letter-spacing: -2px; width: 10px; }
+  .wrow .grip { color: var(--muted); width: 12px; flex: none; display: grid; place-items: center; }
+  .wrow .grip svg { width: 10px; height: 16px; stroke: currentColor; fill: currentColor; stroke-width: 2; stroke-linecap: round; }
   .wrow .wi { width: 22px; height: 22px; display: grid; place-items: center; font-size: 14px; flex: none; }
   .wrow .wi svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .wrow .wi img { width: 19px; height: 19px; object-fit: contain; }
   .wrow .wn { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .wrow .wb { border: 0; background: none; color: var(--muted); height: 24px; min-width: 24px; padding: 0 6px; border-radius: 7px; cursor: pointer; font-size: 11px; display: grid; place-items: center; flex: none; }
+  .wrow .wb { border: 0; background: none; color: var(--muted); height: 24px; min-width: 24px; padding: 0 6px; border-radius: 7px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; flex: none; }
+  .wrow .wb svg { width: 13px; height: 13px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .wrow .wb:hover { background: var(--soft2); color: var(--ink); }
   .ph-row { height: 34px; border-radius: 11px; border: 2px dashed var(--muted); flex: none; }
   .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -298,7 +300,7 @@
   <div class="panel" data-name="timer">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Timer</h4></div>
     <div class="timer" id="timerOut">05:00</div>
-    <div class="row" id="timerPresets"></div>
+    <div class="chips" id="timerPresets"></div>
     <div class="row"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn" id="timerSet">Set</button></div>
     <div class="row"><button class="btn primary" id="timerStart">Start</button><button class="btn" id="timerReset">Reset</button></div>
   </div>
@@ -312,6 +314,8 @@
 
   <div class="panel" data-name="text">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Text tools · clipboard</h4></div>
+    <input class="field" dir="auto" id="ttIn" placeholder="Type or paste text here…">
+    <div class="hint" id="ttSrc">using the clipboard</div>
     <div class="grid3" id="textTools"></div>
   </div>
 
@@ -520,7 +524,7 @@ const app = window.app = {
   },
   iconFor(id, icon) { const a = S.apps.find(x => x.id === id); if (a && icon && a.icon !== icon) { a.icon = icon; save(); renderAll(); } },
   syncStartup(v) { S.startup = v; $('#tStartup').classList.toggle('on', v); save(); },
-  blur() { if (isOpen && !dragging) app.close(); },
+  blur() { if (isOpen && !dragging && performance.now() - openedAt > 260) app.close(); },   // ignore the focus churn right after opening
   stats() {},
   clip(text) { addClip(text); },
   picked(hex) { setColor(hex); pushRecentColor(hex); copy(hex, 'Picked ' + hex); isOpen = true; openWidget('color'); },
@@ -540,7 +544,7 @@ function inside(x, y) {
   }
   return false;
 }
-function maybeClose() { if (isOpen && !typing() && !sticky && !dragging) { clearTimeout(outT); outT = setTimeout(app.close, 220); } }
+function maybeClose() { if (isOpen && performance.now() - openedAt > 260 && !typing() && !sticky && !dragging) { clearTimeout(outT); outT = setTimeout(app.close, 220); } }
 let lastPt = null;
 addEventListener('dragover', e => { lastPt = { x: e.clientX, y: e.clientY }; });
 addEventListener('mousemove', e => {
@@ -783,9 +787,9 @@ function moveWidget(id, list, idx, withHidden = false) {
 /* ================= settings: widget manager ================= */
 function rowHTML(id, zone) {
   const w = info(id), off = S.hidden.includes(id);
-  const moveBtn = w.dockOnly ? '' : `<button class="wb" data-to="${zone === 'dock' ? 'more' : 'dock'}" aria-label="${zone === 'dock' ? 'Move into More' : 'Move to dock'}">${zone === 'dock' ? '↘ More' : '↗ Dock'}</button>`;
+  const moveBtn = w.dockOnly ? '' : `<button class="wb" data-to="${zone === 'dock' ? 'more' : 'dock'}" aria-label="${zone === 'dock' ? 'Move into More' : 'Move to dock'}"><svg viewBox="0 0 24 24"><path d="M7 7h9l-2.5-2.5M17 17H8l2.5 2.5"/></svg>${zone === 'dock' ? 'More' : 'Dock'}</button>`;
   return `<div class="wrow ${off ? 'off' : ''}" data-w="${id}">
-    <span class="grip">⋮⋮</span><span class="wi">${w.icon}</span><span class="wn">${esc(w.name)}</span>${moveBtn}
+    <span class="grip"><svg viewBox="0 0 10 16"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="wi">${w.icon}</span><span class="wn">${esc(w.name)}</span>${moveBtn}
     <button class="wb" data-eye aria-label="${off ? 'Show' : 'Hide'}">${off ? '○' : '●'}</button>
     ${w.kind === 'app' ? '<button class="wb" data-rm aria-label="Remove app">✕</button>' : ''}</div>`;
 }
@@ -1700,8 +1704,9 @@ function renderClips() {
   const rest = clips.filter(c => c.img ? !c.pin : !S.pins.includes(c.text));
   const list = [...pinned, ...rest].filter(c => c.img ? !q : c.text.toLowerCase().includes(q));
   window._clipView = list;
-  $('#clipList').innerHTML = list.length ? list.map((c, i) => c.img
-    ? `<button class="item shot spring ${c.pin ? 'pinned' : ''}" data-i="${i}"><img src="${c.img.thumb}" alt=""><small>Image · ${c.img.w}×${c.img.h} · ${c.pin ? 'pinned' : ago(c.t)}</small><span class="acts"><span data-pin aria-label="${c.pin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9-4.3-4.2 5.9-.8z"/></svg></span><span data-x aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span></button>`
+  const fmtSize = b => b < 1024 ? `${b} B` : b < 1048576 ? `${Math.round(b / 1024)} KB` : `${(b / 1048576).toFixed(1)} MB`;
+$('#clipList').innerHTML = list.length ? list.map((c, i) => c.img
+    ? `<button class="item shot spring ${c.pin ? 'pinned' : ''}" data-i="${i}"><img src="${c.img.thumb}" alt=""><small>Image · ${c.img.w}×${c.img.h} · ${fmtSize(c.img.bytes || 0)} · ${c.pin ? 'pinned' : ago(c.t)}</small><span class="acts"><span data-pin aria-label="${c.pin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9-4.3-4.2 5.9-.8z"/></svg></span><span data-x aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span></button>`
     : `<button class="item spring ${c.pin ? 'pinned' : ''}" data-i="${i}">${esc(c.text.replace(/\s+/g, ' ').slice(0, 120))}<small>${c.pin ? 'pinned' : ago(c.t)} · ${c.text.length} chars</small><span class="acts"><span data-pin aria-label="${c.pin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9-4.3-4.2 5.9-.8z"/></svg></span><span data-x aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span></button>`
   ).join('') : '<div class="empty">Copy something and it shows up here</div>';
 }
@@ -1749,7 +1754,7 @@ const note = $('#note');
 let notes = Array.isArray(init.notes) ? init.notes : [];
 if (!notes.length) notes = [{ id: 'n' + Date.now(), text: '' }];
 let noteAt = 0, nt;
-const noteTitle = n => (n.text.trim().split('\n')[0] || 'Empty note').slice(0, 18);
+const noteTitle = n => (n.title || n.text.trim().split('\n')[0] || 'Empty note').slice(0, 18);
 function renderNotes() {
   noteAt = Math.min(noteAt, notes.length - 1);
   $('#noteTabs').innerHTML = notes.map((n, i) => `<button class="chip spring ${i === noteAt ? 'on' : ''}" data-n="${i}">${esc(noteTitle(n))}</button>`).join('');
@@ -1758,6 +1763,15 @@ function renderNotes() {
 }
 function saveNotes(label) { send('note', { notes }); $('#noteInfo').textContent = label || 'saved'; }
 $('#noteTabs').onclick = e => { const i = e.target.closest('[data-n]')?.dataset.n; if (i !== undefined) { noteAt = +i; renderNotes(); note.focus(); } };
+/* double-click a tab to name it; an unnamed note still shows its first line */
+$('#noteTabs').addEventListener('dblclick', e => {
+  const b = e.target.closest('[data-n]'); if (!b) return;
+  b.contentEditable = 'true'; b.focus();
+  const sel = getSelection(), r = document.createRange(); r.selectNodeContents(b); sel.removeAllRanges(); sel.addRange(r);
+  const done = () => { b.removeEventListener('blur', done); b.contentEditable = 'false'; notes[+b.dataset.n].title = b.textContent.trim().slice(0, 40); renderNotes(); saveNotes('saved'); };
+  b.addEventListener('blur', done);
+  b.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); b.blur(); } });
+});
 note.addEventListener('input', () => {
   notes[noteAt].text = note.value; $('#noteInfo').textContent = 'saving…';
   clearTimeout(nt); nt = setTimeout(() => { saveNotes(`saved · ${note.value.length} chars`); $('#noteTabs').innerHTML = notes.map((n, i) => `<button class="chip spring ${i === noteAt ? 'on' : ''}" data-n="${i}">${esc(noteTitle(n))}</button>`).join(''); }, 400);
@@ -1928,16 +1942,20 @@ const JS_TT = {
   urle: t => encodeURIComponent(t), urld: t => decodeURIComponent(t),
 };
 $('#textTools').innerHTML = Object.entries(TT).map(([n, m]) => `<button class="spring" data-m="${m}"><b>${m.startsWith('js:') ? (m === 'js:count' ? '#' : '⇄') : 'Aa'}</b>${n}</button>`).join('');
+/* typed text wins; empty box falls back to the clipboard, which is where the old behaviour started */
+const ttInput = $('#ttIn');
+const ttText = () => { const typed = ttInput.value; return typed.trim() ? typed : lastClip; };
+ttInput.addEventListener('input', () => { $('#ttSrc').textContent = ttInput.value.trim() ? 'using what you typed' : 'using the clipboard'; });
 $('#textTools').onclick = e => {
   const m = e.target.closest('[data-m]')?.dataset.m; if (!m) return;
   if (m.startsWith('js:')) {
-    const k = m.slice(3), t = lastClip;
-    if (!t) { toast('Copy some text first'); return; }
+    const k = m.slice(3), t = ttText();
+    if (!t) { toast('Type some text, or copy some first'); return; }
     if (k === 'count') { toast(`${(t.trim().match(/\S+/g) || []).length} words · ${t.length} chars · ${t.split('\n').length} lines`); return; }
     try { deliver(JS_TT[k](t)); } catch { toast('That text can’t be decoded'); }
     return;
   }
-  if (S.paste) app.close(); send('transform', { mode: m, paste: S.paste }); if (!S.paste) toast('Clipboard updated');
+  if (S.paste) app.close(); send('transform', { mode: m, paste: S.paste, text: ttInput.value.trim() ? ttInput.value : null }); if (!S.paste) toast('Clipboard updated');
 };
 
 /* ---- password ---- */
@@ -1950,16 +1968,35 @@ $('#pwCopy').onclick = $('#pwOut').onclick = () => copy($('#pwOut').textContent,
 
 /* ---- units ---- */
 const U = {
-  in: [['cm', 2.54]], cm: [['in', 1 / 2.54], ['mm', 10]], mm: [['in', 1 / 25.4], ['cm', .1]], m: [['ft', 3.28084], ['cm', 100]], ft: [['m', .3048], ['in', 12]],
-  km: [['mi', .621371], ['m', 1000]], mi: [['km', 1.609344]], kg: [['lb', 2.20462], ['g', 1000]], lb: [['kg', .453592], ['oz', 16]], g: [['oz', .035274]], oz: [['g', 28.3495]],
-  l: [['gal', .264172], ['ml', 1000]], gal: [['l', 3.78541]], mb: [['gb', 1 / 1024], ['kb', 1024]], gb: [['mb', 1024], ['tb', 1 / 1024]], kmh: [['mph', .621371]], mph: [['kmh', 1.609344]],
+  in: [['cm', 2.54], ['mm', 25.4]], cm: [['in', 1 / 2.54], ['mm', 10], ['m', .01]], mm: [['in', 1 / 25.4], ['cm', .1], ['m', .001]],
+  m: [['ft', 3.28084], ['cm', 100], ['km', .001], ['mi', .000621371], ['yd', 1.09361], ['in', 39.3701]],
+  km: [['mi', .621371], ['m', 1000], ['ft', 3280.84], ['nm', .000001]], mi: [['km', 1.609344], ['m', 1609.344], ['ft', 5280], ['yd', 1760]],
+  yd: [['m', .9144], ['ft', 3], ['in', 36]], ft: [['m', .3048], ['in', 12], ['yd', .333333], ['cm', 30.48], ['mm', 304.8]],
+  kg: [['lb', 2.20462], ['g', 1000], ['oz', 35.274]], lb: [['kg', .453592], ['oz', 16], ['g', 453.592]], g: [['oz', .035274], ['mg', 1000], ['kg', .001]],
+  oz: [['g', 28.3495], ['lb', .0625]], mg: [['g', .001]],
+  l: [['gal', .264172], ['ml', 1000], ['fl_oz', 33.814]], ml: [['l', .001], ['fl_oz', .0295735]],
+  gal: [['l', 3.78541], ['ml', 3785.41]], fl_oz: [['ml', 29.5735], ['l', .0295735]],
+  // binary data sizes, the ones disk tools actually use
+  b: [['kb', 1 / 1024], ['bit', 8]], kb: [['b', 1024], ['mb', 1 / 1024], ['bit', 8192]], mb: [['kb', 1024], ['gb', 1 / 1024]],
+  gb: [['mb', 1024], ['tb', 1 / 1024]], tb: [['gb', 1024], ['pb', 1 / 1024]], pb: [['tb', 1024]],
+  bit: [['b', .125], ['kb', 1 / 8192]],
+  c: [['f', 1.8], ['k', 273.15]], f: [['c', 5 / 9], ['k', 255.372222222]], k: [['c', -273.15], ['f', -459.67]],
+  kmh: [['mph', .621371], ['ms', .277778], ['knot', .539957]], mph: [['kmh', 1.609344], ['ms', .44704], ['knot', .868976]],
+  ms: [['kmh', 3.6], ['mph', 2.23694]], knot: [['kmh', 1.852], ['mph', 1.15078]],
+  bpm: [['hz', 60]], hz: [['bpm', 60]],
 };
+const U_CANON = { 'mib': 'mb', 'kib': 'kb', 'gib': 'gb', 'tib': 'tb', 'fl oz': 'fl_oz', 'fl. oz.': 'fl_oz', 'fl-oz': 'fl_oz' };
+const fmtNum = v => +v.toPrecision(10);
 $('#unitIn').addEventListener('input', e => {
-  const m = e.target.value.trim().toLowerCase().match(/^(-?[\d.]+)\s*°?\s*([a-z/]+)$/); let out = [];
-  if (m) { const v = +m[1], u = m[2].replace('km/h', 'kmh');
-    if (u === 'c') out = [[v * 9 / 5 + 32, '°F'], [v + 273.15, 'K']]; else if (u === 'f') out = [[(v - 32) * 5 / 9, '°C']];
-    else if (U[u]) out = U[u].map(([n, f]) => [v * f, n]); }
-  $('#unitOut').innerHTML = out.length ? out.map(([v, n]) => { const s = `${+v.toPrecision(8)} ${n}`; return `<button class="item plain spring" data-s="${s}">${s}</button>`; }).join('') : `<div class="empty">${m ? 'Unknown unit' : 'in · cm · mm · m · ft · km · mi · kg · lb · g · oz · l · gal · c · f · mb · gb · kmh · mph'}</div>`;
+  const m = e.target.value.trim().toLowerCase().match(/^(-?[\d.,]+)\s*(°?[a-z/²³]+)$/); let out = [];
+  if (m) {
+    const v = +m[1].replace(/,(?=\d{3}\b)/g, '').replace(',', '.'), raw = m[2];
+    const u = U_CANON[raw] || raw.replace(/°c/g, 'c').replace(/°f/g, 'f').replace('km/h', 'kmh').replace('km/hr', 'kmh').replace('m/s', 'ms');
+    if (U[u]) out = U[u].map(([n, f]) => [fmtNum(v * f), n]);
+    else if (u === 'c') out = [[fmtNum(v * 9 / 5 + 32), 'f'], [fmtNum(v + 273.15), 'k']];
+    else if (u === 'f') out = [[fmtNum((v - 32) * 5 / 9), 'c'], [fmtNum((v + 459.67) * 5 / 9), 'k']];
+  }
+  $('#unitOut').innerHTML = out.length ? out.map(([v, n]) => { const s = `${v} ${n.toUpperCase()}`; return `<button class="item plain spring" data-s="${s}">${s}</button>`; }).join('') : `<div class="empty">${m ? 'Unknown unit' : 'length: mm · cm · m · km · in · ft · yd · mi<br>mass: mg · g · kg · oz · lb<br>volume: ml · l · fl_oz · gal<br>data: b · kb · mb · gb · tb · pb<br>speed: kmh · mph · ms · knot<br>temp: c · f · k · bpm'}</div>`;
 });
 $('#unitOut').onclick = e => { const s = e.target.dataset.s; if (s) copy(s); };
 $('#unitIn').dispatchEvent(new Event('input'));

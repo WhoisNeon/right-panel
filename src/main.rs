@@ -151,7 +151,7 @@ fn pins_dir() -> std::path::PathBuf {
 fn image_call(id: u64, w: u32, h: u32, rgba: &[u8], pinned: bool) -> String {
     let (tw, th, thumb) = util::thumbnail(w, h, rgba, 240);
     let uri = format!("data:image/png;base64,{}", util::base64(&util::png(tw, th, &thumb)));
-    format!("app.clipImage({})", json!({ "id": id.to_string(), "w": w, "h": h, "thumb": uri, "pinned": pinned }))
+    format!("app.clipImage({})", json!({ "id": id.to_string(), "w": w, "h": h, "thumb": uri, "bytes": rgba.len(), "pinned": pinned }))
 }
 
 fn pin_image(id: u64, on: bool) -> bool {
@@ -751,7 +751,9 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         sys::paste_into_previous();
                     }
                     "transform" => {
-                        if let Some(t) = get_clip() {
+                        // text present = the user typed into the panel; otherwise fall back to the clipboard
+                        let src = m["text"].as_str().map(str::to_owned).or_else(get_clip);
+                        if let Some(t) = src {
                             set_clip(&transform(&t, &s("mode")));
                             if m["paste"].as_bool().unwrap_or(false) {
                                 sys::paste_into_previous();
