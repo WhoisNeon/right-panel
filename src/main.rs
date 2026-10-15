@@ -251,13 +251,24 @@ fn log(msg: &str) {
     }
 }
 
+/// Announces a picked or dropped path to the panel. A folder is not a widget any more: it is
+/// pushed into the Folders tool instead of the dock.
+fn add_path(proxy: &EventLoopProxy<Ev>, path: &str) -> bool {
+    let item = json!({ "path": path, "name": util::display_name(path), "icon": sys::icon_data_uri(path) });
+    let script = if std::path::Path::new(path).is_dir() {
+        format!("app.folderAdded({item})")
+    } else {
+        format!("app.appAdded({item})")
+    };
+    proxy.send_event(Ev::Script(script)).is_ok()
+}
+
 /// File picker runs on its own thread so the panel keeps animating.
 fn add_app(proxy: EventLoopProxy<Ev>, folder: bool) {
     thread::spawn(move || {
         if let Some(path) = if folder { sys::pick_folder() } else { sys::pick_file() } {
-            let item = json!({ "path": path, "name": util::display_name(&path), "icon": sys::icon_data_uri(&path) });
-            let _ = proxy.send_event(Ev::Script(format!("app.appAdded({item})")));
-            let _ = proxy.send_event(Ev::Show("settings"));
+            let _ = add_path(&proxy, &path);
+            let _ = proxy.send_event(Ev::Show(if folder { "folders" } else { "settings" }));
         }
     });
 }
@@ -282,8 +293,7 @@ fn spawn_inbox_watch(proxy: EventLoopProxy<Ev>) {
         if let Ok(text) = fs::read_to_string(&file) {
             let _ = fs::remove_file(&file);
             for path in text.lines().map(str::trim).filter(|l| !l.is_empty()) {
-                let item = json!({ "path": path, "name": util::display_name(path), "icon": sys::icon_data_uri(path) });
-                if proxy.send_event(Ev::Script(format!("app.appAdded({item})"))).is_err() {
+                if !add_path(&proxy, path) {
                     return;
                 }
             }
@@ -647,9 +657,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                 wry::DragDropEvent::Drop { paths, .. } => {
                     let _ = drop_proxy.send_event(Ev::Script("app.dropHint(false)".into()));
                     for path in paths {
-                        let p = path.display().to_string();
-                        let item = json!({ "path": p, "name": util::display_name(&p), "icon": sys::icon_data_uri(&p) });
-                        let _ = drop_proxy.send_event(Ev::Script(format!("app.appAdded({item})")));
+                        let _ = add_path(&drop_proxy, &path.display().to_string());
                     }
                 }
                 _ => {}

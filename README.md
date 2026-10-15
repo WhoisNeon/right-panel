@@ -15,14 +15,14 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 
 <br>
 
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.8-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.8-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.8-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.9-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.9-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.9-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
 <br>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.8-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.8-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.8-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.8-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.9-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.9-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.9-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.9-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
 
 <br><br>
 
@@ -43,8 +43,9 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 | 🎨 **Color** | Eyedropper (pick any pixel on screen), HEX / RGB / HSL, palette, recent colors |
 | 📸 **Screenshot** | Opens the system snipping tool |
 | 📝 **Notes** | As many notes as you like, in tabs, saved as you type — double-click a tab to name it |
-| 🧩 **Your apps & folders** | Pin apps, shortcuts or folders — add them in Settings or just **drag them onto the panel** |
-| 🔎 **Search** | Google, YouTube, Wikipedia, Translate, Maps, GitHub… or just type a URL |
+| 🧩 **Your apps** | Pin apps or shortcuts — add them in Settings or just **drag them onto the panel** |
+| 📁 **Folders** | Drop a folder and it lands in the Folders tool, not the dock. Add, remove and drag to reorder, then click to open |
+| 🔎 **Search** | A dozen engines in categories — Google, Bing, DuckDuckGo, Brave, Reddit, Stack Overflow, YouTube, Images, Wikipedia, Translate, News, Maps, GitHub — each with its own logo, or just type a URL. The box detects Persian/Arabic and puts a direction button on the matching side |
 | ✂️ **Snippets** | Save text you type often, paste it with one click |
 | 🧮 **Calculator · Units · Password · Generate** | Quick math, unit conversions, strong passwords, UUIDs, dates, lorem ipsum |
 | 📏 **Units** | Length, mass, volume, **data sizes** (byte → petabyte), speed, temperature, frequency — type `1.5gb` or `1,024 KB` |
@@ -56,7 +57,9 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 **Also**
 - **Persian & Arabic**: type in any search box or note and the caret flips to match — Persian and Arabic text throughout the panel is set in the [Arad](https://github.com/MDarvishi5124/Arad) typeface, with Latin left to your system font
 - **Emoji search works in Persian too** — keywords come from [CLDR](https://cldr.unicode.org/), so `خنده` finds 😂, `آتش` finds 🔥 and `ایران` finds 🇮🇷
-- **Drag a file or folder onto the panel** to pin it, or right-click it → *Add to Right Panel* (Windows; on Windows 11 under *Show more options*)
+- **Emoji stay put while you paste** — click as many as you like; the picker only closes once your mouse leaves it
+- **The calculator takes the keyboard** — digits, `+ - * / ( ) ^`, `Enter` to evaluate, `Backspace` to delete, `c` to clear. It won't let you type `1**3++++--`
+- **Drag a file onto the panel** to pin it, or right-click it → *Add to Right Panel* (Windows; on Windows 11 under *Show more options*). Folders go to the **Folders** tool instead
 - **Left or right edge**, and pick which monitor it lives on (*Settings → General*)
 - **Open on a key**: the panel appears when you reach the screen edge — or only while you hold **Ctrl**, **Shift** or **Space**, if you'd rather it stayed out of the way (*Settings → General*, Windows)
 - **Built-in updater**: Right Panel checks GitHub once a day and can download and run the new installer for you (*Settings → General*)
@@ -64,7 +67,8 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 
 **Make it yours**
 - Drag any tool **between the dock and the More grid**, reorder, hide or show it (also in *Settings → Widgets*)
-- **15 themes** (Midnight, Graphite, Ocean, Grape, Forest, Wine, Espresso, Neon, Sunset, Snow, Sand, Sky, Rose, Mint, Lilac) + custom color
+- Hover an app in the dock for its name — a proper tooltip, not the browser's default
+- **15 themes** (Midnight, Graphite, Ocean, Grape, Forest, Wine, Espresso, Neon, Sunset, Snow, Sand, Sky, Rose, Mint, Lilac) + custom color. Scrollbars follow the theme
 - Liquid spring animations, magnify-on-hover, sliding active pill
 - Tray icon, start with Windows / at login
 

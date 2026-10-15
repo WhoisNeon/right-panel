@@ -7,6 +7,22 @@
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
+### New in 1.4.9
+- **Search got organised** — engines are grouped (Search, Community, Media, Learn, News, Maps, Dev), each button carries its own drawn logo, and three more joined: Bing, Google Images and Stack Overflow
+- **The search box knows which way you read** — type Persian or Arabic and a direction button appears on the left; type Latin and it sits on the right. Press it to override the direction the text is shown in
+- **The calculator keypad now matches the Windows layout** — ÷ sits on the 789 row, × on 456, − on 123, and the bottom row reads `^ 0 . =`. The equals key draws its real glyph (it was blank before)
+- **You can type into the calculator** — digits, operators, brackets and `^` all work straight from the keyboard, `Enter` evaluates, `Backspace` deletes, `c` or `Delete` clears, and `Escape` still closes the panel
+- **The calculator refuses nonsense** — a key that would build something unparseable is ignored, so `1**3++++--` can no longer be typed. Chained signs like `3--+6` still work
+- **Folders are no longer dock shortcuts** — dropping a folder, or adding one, puts it in the **Folders** tool. That panel is now yours: add, remove and drag to reorder, and the `+ Folder` button is gone from Settings
+- **Notes have a real right-click menu** — Edit title, Copy note, and Delete note (which keeps one empty note so the panel is never left blank)
+- **Hover text is readable again** — the note menu used to turn its label the same colour as its background
+- **Scrollbars are back, and themed** — thin rounded bars that take their colour from the active theme, instead of being hidden
+- **Dock apps got tooltips** — a proper styled bubble with the app name, drawn by the panel rather than the browser's default `title`
+- **Apps added to the dock now sit on a button background** like every other tool
+- **The first row in the More panel is no longer clipped** when you hover it
+- **The hour box is back in the timer**, and its Set button is an icon
+- **A centring pass** — the World Clock delete button, the calculator operators and the widget manager rows all line up now. The row buttons read remove, move, toggle, and moving a widget is an arrow icon instead of the word "More"
+- **Password minimum length is 4**
 ### New in 1.4.8
 - **Num Convert behaves like a text tool now** — the input is a resizable area that keeps your line breaks, and the three result boxes are all exactly the same size and show every line you typed
 - **Units panel layout** — the number box gets its own full-width row, the category and unit pickers sit underneath it 50/50, and the number box loses those up/down arrows

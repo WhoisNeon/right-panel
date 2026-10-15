@@ -10,6 +10,14 @@
   }
   * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
   html, body { height: 100%; margin: 0; background: transparent; overflow: hidden; }
+  /* themed scrollbars — every theme sets --soft2/--muted, so the bar follows it for free.
+     Only the webkit pseudo-elements are styled: setting scrollbar-color would make Chromium
+     hand the scrollbar back to the default and ignore all of this. */
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--soft2); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); background-clip: content-box; }
+  ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
   /* Arad leads but is scoped to Arabic script by unicode-range, so Persian/Arabic comes from Arad
      and everything else falls through to Segoe UI. Reversing the order would hand Arabic to
      Segoe UI, which covers it too and would win before Arad was ever reached. */
@@ -35,8 +43,7 @@
   .tab-ui::before { bottom: 100%; background: radial-gradient(circle at 0 0, transparent calc(var(--f, 26px) - .5px), var(--liquid) var(--f, 26px)); }
   .tab-ui::after  { top: 100%;    background: radial-gradient(circle at 0 100%, transparent calc(var(--f, 26px) - .5px), var(--liquid) var(--f, 26px)); }
 
-  .tools { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; max-height: calc(100vh - 190px); overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding: 4px 8px; }
-  .tools::-webkit-scrollbar { display: none; }
+  .tools { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; max-height: calc(100vh - 190px); overflow-y: auto; overflow-x: hidden; padding: 4px 8px; }
   .tab-sep { width: 30px; height: 1px; background: var(--line); margin: 12px 0; flex: none; }
   .tool {
     position: relative; z-index: 1; flex: none; width: 44px; height: 44px; border: 0; border-radius: 14px; background: var(--soft); font-size: 19px;
@@ -46,8 +53,6 @@
   .tool svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .tool img { width: 26px; height: 26px; object-fit: contain; pointer-events: none; }
   .tool:hover { background: var(--soft2); border-radius: 18px; }
-  .tool.app { background: transparent; }
-  .tool.app:hover { background: var(--soft2); }
   .tool.active { background: transparent; color: var(--inv-ink); }
   .tool.on::after, .tile.on::after { content: ""; position: absolute; right: 3px; top: 3px; width: 7px; height: 7px; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 2px var(--liquid); }
   .tool.ghost, .tile.ghost, .wrow.ghost { opacity: .35 !important; }
@@ -85,12 +90,13 @@
   input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   select.field { appearance: none; cursor: pointer; }
   select.field option { background: #222; color: #fff; }
-  .scroll { overflow-y: auto; scrollbar-width: none; }
-  .scroll::-webkit-scrollbar { display: none; }
+  .scroll { overflow-y: auto; }
   .spring { transition: transform .35s var(--pop), background .2s; }
   .btn { border: 0; background: var(--soft); border-radius: 12px; padding: 9px 12px; font-size: 13px; cursor: pointer; }
   .btn:hover { background: var(--soft2); }
   .btn.primary { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
+  .btn.iconbtn { flex: none; display: grid; place-items: center; padding: 9px 11px; }
+  .btn.iconbtn svg { width: 16px; height: 16px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .row { display: flex; gap: 6px; }
   .row > * { flex: 1; }
   .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 10px 0; }
@@ -100,8 +106,7 @@
   .chip.on { background: var(--inv); color: var(--inv-ink); }
 
   /* emoji */
-  .cats { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-  .cats::-webkit-scrollbar { display: none; }
+  .cats { display: flex; gap: 2px; min-width: 0; overflow-x: auto; }
   .cats button { flex: 1 0 auto; min-width: 26px; border: 0; background: none; font-size: 16px; height: 30px; border-radius: 9px; cursor: pointer; opacity: .5; }
   .cats button.on, .cats button:hover { opacity: 1; background: var(--soft); }
   .emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; height: 220px; align-content: start; }
@@ -110,8 +115,7 @@
   .emoji-grid button:hover { background: var(--soft2); transform: scale(1.22); }
 
   /* lists (clipboard, snippets, units…) */
-  .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; scrollbar-width: none; }
-  .list::-webkit-scrollbar { display: none; }
+  .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -146,8 +150,9 @@
 
   /* more: tiles */
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .tiles { max-height: 400px; min-height: 70px; overflow-y: auto; scrollbar-width: none; align-content: start; }
-  .tiles::-webkit-scrollbar { display: none; }
+  /* the top padding is the room the first row needs to lift into on hover; without it the
+     tile is clipped by the scroll container */
+  .tiles { max-height: 400px; min-height: 70px; overflow-y: auto; align-content: start; padding: 5px 1px 1px; }
   .tile, .grid3 > button { position: relative; border: 0; background: var(--soft); border-radius: 14px; padding: 13px 4px; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--ink);
     transition: transform .35s var(--pop), background .2s, border-radius .35s var(--spring); }
   .tile b, .grid3 > button b { font-size: 17px; font-weight: 600; height: 24px; display: grid; place-items: center; }
@@ -167,15 +172,14 @@
   .mb.big svg { fill: currentColor; }
   .display { font-size: 26px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; padding: 4px 6px; min-height: 40px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; }
   .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-  .keys button { border: 0; background: var(--soft); color: var(--ink); border-radius: 10px; height: 34px; font-size: 14px; font-family: inherit; cursor: pointer; }
+  .keys button { border: 0; background: var(--soft); color: var(--ink); border-radius: 10px; height: 38px; font-size: 15px; font-family: inherit; cursor: pointer; display: grid; place-items: center; }
   .keys button:hover { background: var(--soft2); }
   .keys button:active { transform: scale(.94); }
   .keys button.fn { color: var(--muted); font-size: 13px; }
   .keys button.op { color: var(--inv-ink); background: var(--inv); }
-  .keys button svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .keys button svg { width: 18px; height: 18px; display: block; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
   .display i { display: inline-grid; place-items: center; width: .78em; height: .78em; vertical-align: -.1em; opacity: .72; }
   .display i svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-  .keys button.wide { grid-column: span 4; }
   .keys button.on { background: var(--soft2); box-shadow: inset 0 0 0 1px var(--line); }
   .timer { font-size: 44px; font-weight: 300; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
   input[type=range] { width: 100%; accent-color: var(--inv); }
@@ -192,8 +196,38 @@
   .zone .zt { font-size: 22px; font-weight: 300; font-variant-numeric: tabular-nums; min-width: 64px; }
   .zone .zn { flex: 1; font-size: 13px; line-height: 1.2; }
   .zone .zn small { display: block; color: var(--muted); font-size: 10px; }
-  .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 22px; height: 22px; }
+  .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
+  .zone .x svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .zone .x:hover { background: var(--soft2); color: var(--ink); }
+
+  /* dock app tooltips: title="" is never used here, this is the styled replacement */
+  .tip { position: fixed; z-index: 80; background: var(--inv); color: var(--inv-ink); font-size: 11px; font-weight: 500; padding: 5px 9px; border-radius: 8px;
+    pointer-events: none; white-space: nowrap; opacity: 0; will-change: transform, opacity; transition: opacity .16s, transform .28s var(--pop);
+    box-shadow: 0 8px 22px -8px rgba(0,0,0,.55); }
+  .tip.on { opacity: 1; }
+
+  /* folders panel — a reorderable list, dragged with the same pointer engine as the dock */
+  .frow { display: flex; align-items: center; gap: 8px; padding: 8px 7px 8px 11px; }
+  .frow .grip { color: var(--muted); width: 10px; flex: none; display: grid; place-items: center; cursor: grab; }
+  .frow .grip svg { width: 10px; height: 16px; fill: currentColor; stroke: none; opacity: .75; }
+  .frow .fi { width: 20px; height: 20px; flex: none; display: grid; place-items: center; }
+  .frow .fi svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .frow .fn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .frow .fx { width: 22px; height: 22px; flex: none; border-radius: 7px; display: grid; place-items: center; color: var(--muted); }
+  .frow .fx svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .frow .fx:hover { background: var(--soft2); color: var(--ink); }
+
+  /* web search: a direction button that sits on whichever side the text reads towards */
+  #searchDir { order: 2; flex: none; padding: 9px; display: none; place-items: center; }
+  #searchDir.on { display: grid; }
+  #searchDir.rtl { order: 0; }
+  #searchDir svg { width: 15px; height: 15px; display: block; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .engsec { display: flex; flex-direction: column; gap: 5px; }
+  .engsec > h5 { margin: 3px 0 0; font-size: 9.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
+  .engsec .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  .chip.engine { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; min-width: 0; }
+  .chip.engine span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip.engine svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
   /* settings */
   .set { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 4px 2px; }
@@ -209,7 +243,7 @@
   .pick { position: relative; }
   .pick > .field { cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
   .pick > .field::after { content: " ▾"; color: var(--muted); }
-  .pick .opts { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto; scrollbar-width: none;
+  .pick .opts { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto;
     background: var(--liquid); border-radius: 12px; padding: 4px; box-shadow: 0 0 0 1px var(--line), 0 10px 30px -10px rgba(0,0,0,.5); }
   .pick.open .opts { display: block; }
   .pick .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
@@ -219,6 +253,9 @@
   .wsec { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 4px 2px 0; display: flex; justify-content: space-between; }
   .wlist { display: flex; flex-direction: column; gap: 4px; min-height: 36px; border-radius: 12px; }
   .wlist.drop { box-shadow: inset 0 0 0 2px var(--line); }
+  /* the row title is text next to buttons that are taller than it — centre them on each other */
+  .wsec { align-items: center; }
+  .wsec .addpair { align-items: center; }
   .wrow { display: flex; align-items: center; gap: 7px; background: var(--soft); border-radius: 11px; padding: 5px 5px 5px 8px; font-size: 13px; cursor: grab; transition: background .2s, opacity .2s; flex: none; }
   .wrow:hover { background: var(--soft2); }
   .wrow.off { opacity: .4; }
@@ -231,10 +268,15 @@
   .wrow .wb { border: 0; background: none; color: var(--muted); height: 24px; min-width: 24px; padding: 0 6px; border-radius: 7px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; flex: none; }
   .wrow .wb svg { width: 13px; height: 13px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .wrow .wb:hover { background: var(--soft2); color: var(--ink); }
-  .ctxmenu { position: fixed; z-index: 60; background: var(--inv); color: var(--inv-ink); border-radius: 10px; padding: 4px; box-shadow: 0 10px 28px rgba(0,0,0,.4); }
+  .ctxmenu { position: fixed; z-index: 60; min-width: 148px; background: var(--inv); color: var(--inv-ink); border-radius: 12px; padding: 4px; box-shadow: 0 14px 34px -10px rgba(0,0,0,.5); }
   .ctxmenu[hidden] { display: none; }
-  .ctxmenu button { display: block; width: 100%; border: 0; background: none; color: inherit; font: inherit; font-size: 12px; text-align: start; padding: 7px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
-  .ctxmenu button:hover { background: var(--soft); color: var(--ink); }
+  .ctxmenu button { display: flex; align-items: center; gap: 9px; width: 100%; border: 0; background: none; color: inherit; font: inherit; font-size: 12px; text-align: start; padding: 8px 11px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  /* invert on hover: --soft over --inv is nearly invisible, and --ink is the background colour
+     on every light-on-dark theme, which made the label vanish */
+  .ctxmenu button:hover { background: var(--inv-ink); color: var(--inv); }
+  .ctxmenu button.danger:hover { background: #ff453a; color: #fff; }
+  .ctxmenu button svg { width: 13px; height: 13px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .ctxmenu i.sep { display: block; height: 1px; margin: 4px 8px; background: currentColor; opacity: .18; }
   .notename { width: 100%; border: 0; outline: 0; background: var(--soft2); color: var(--ink); border-radius: 99px; padding: 5px 11px; font: inherit; font-size: 12px; }
   .ph-row { height: 34px; border-radius: 11px; border: 2px dashed var(--muted); flex: none; }
   .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -335,7 +377,7 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Timer</h4></div>
     <div class="timer" id="timerOut">05:00</div>
     <div class="chips" id="timerPresets"></div>
-    <div class="row"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn" id="timerSet">Set</button></div>
+    <div class="row"><input class="field" dir="auto" id="timerHr" type="number" min="0" max="99" placeholder="Hr"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn iconbtn" id="timerSet" aria-label="Set the timer"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>
     <div class="row"><button class="btn primary" id="timerStart">Start</button><button class="btn" id="timerReset">Reset</button></div>
   </div>
 
@@ -362,7 +404,7 @@
       <button class="chip on" data-set="upper">A–Z</button><button class="chip on" data-set="lower">a–z</button><button class="chip on" data-set="digit">0–9</button><button class="chip on" data-set="symbol">!@#</button>
     </div>
     <div class="set"><span>Length <b id="pwLenV">16</b></span></div>
-    <input type="range" min="6" max="64" value="16" id="pwLen">
+    <input type="range" min="4" max="64" value="16" id="pwLen">
     <div class="row"><button class="btn" id="pwGen">Regenerate</button><button class="btn primary" id="pwCopy">Copy</button></div>
   </div>
 
@@ -396,8 +438,8 @@
   </div>
 
   <div class="panel" data-name="folders">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Folders</h4></div>
-    <div class="grid3" id="folderGrid"></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Folders</h4><button class="link" id="folderAdd"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</button></div>
+    <div class="list scroll" id="folderList" style="max-height:290px"></div>
   </div>
 
   <div class="panel" data-name="snippets">
@@ -408,8 +450,8 @@
 
   <div class="panel" data-name="search">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Web search</h4></div>
-    <input class="field" dir="auto" id="searchIn" placeholder="Search or type a URL, then Enter">
-    <div class="chips" id="engines"></div>
+    <div class="row"><input class="field" dir="auto" id="searchIn" placeholder="Search or type a URL, then Enter"><button class="btn iconbtn" id="searchDir" aria-label="Text direction"></button></div>
+    <div id="engines"></div>
   </div>
 
   <div class="panel" data-name="clock">
@@ -421,7 +463,7 @@
   <div class="panel" data-name="settings">
     <div class="tabs" id="stabs"><button data-p="widgets" class="on">Widgets</button><button data-p="look">Theme</button><button data-p="general">General</button></div>
     <div class="spage on" data-p="widgets">
-      <div class="wsec"><span>In the dock</span><span class="addpair"><button class="link" id="addApp"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>App</button><button class="link" id="addFolder"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Folder</button></span></div>
+      <div class="wsec"><span>In the dock</span><span class="addpair"><button class="link" id="addApp"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>App</button></span></div>
       <div class="wlist scroll" id="wDock" data-zone="dock" style="max-height:190px"></div>
       <div class="wsec"><span>Inside More</span></div>
       <div class="wlist scroll" id="wMore" data-zone="more" style="max-height:170px"></div>
@@ -447,7 +489,13 @@
 </div>
 
 <div class="drop-hint" id="dropHint"><span><b>＋</b>Drop to add to Right Panel</span></div>
-<div class="ctxmenu" id="noteMenu" hidden><button data-act="title">Edit title</button></div>
+<div class="ctxmenu" id="noteMenu" hidden>
+  <button data-act="title"><svg viewBox="0 0 24 24"><path d="M16.5 3.5l4 4L8 20H4v-4z"/><path d="M14 6l4 4"/></svg>Edit title</button>
+  <button data-act="copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5.5 15V5.5a2 2 0 0 1 2-2H15"/></svg>Copy note</button>
+  <i class="sep"></i>
+  <button data-act="delete" class="danger"><svg viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/></svg>Delete note</button>
+</div>
+<div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -498,10 +546,20 @@ const W = {
 const DEF_DOCK = ['emoji', 'clip', 'color', 'shot', 'note', 'more'];
 const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'clock', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
 
+/* the folders the panel starts with; the user can add, remove and reorder from the Folders tool */
+const HOME = init.home || '~';
+const DEF_FOLDERS = OS === 'windows'
+  ? [['Desktop', 'shell:Desktop'], ['Downloads', 'shell:Downloads'], ['Documents', 'shell:Personal'], ['Pictures', 'shell:My Pictures'],
+     ['Music', 'shell:My Music'], ['Videos', 'shell:My Video'], ['This PC', 'shell:MyComputerFolder'], ['Recycle Bin', 'shell:RecycleBinFolder'], ['Startup', 'shell:Startup']]
+  : [['Home', HOME], ['Desktop', HOME + '/Desktop'], ['Downloads', HOME + '/Downloads'], ['Documents', HOME + '/Documents'], ['Pictures', HOME + '/Pictures'],
+     ['Music', HOME + '/Music'], ['Videos', HOME + (OS === 'macos' ? '/Movies' : '/Videos')],
+     OS === 'macos' ? ['Applications', '/Applications'] : ['Apps', '/usr/share/applications'], ['Trash', OS === 'macos' ? HOME + '/.Trash' : 'trash:///']];
+
 // migrate older settings (single "order" list) and keep lists consistent with what exists
 function normalize() {
   if (!S.dock) S.dock = (S.order && S.order.length ? S.order : [...DEF_DOCK, ...S.apps.map(a => a.id)]);
   if (!S.more) S.more = [...DEF_MORE];
+  if (!Array.isArray(S.folders) || !S.folders.length) S.folders = DEF_FOLDERS.map(([name, path], i) => ({ id: 'd' + i, name, path }));
   const known = new Set([...Object.keys(W).filter(k => !W[k].fixed && (!W[k].os || W[k].os.includes(OS))), ...S.apps.map(a => a.id)]);
   S.dock = [...new Set(S.dock)].filter(id => known.has(id));
   S.more = [...new Set(S.more)].filter(id => known.has(id) && !S.dock.includes(id) && !W[id]?.dockOnly);
@@ -566,6 +624,7 @@ const app = window.app = {
   open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); },
   close() {
     if (!isOpen) return; isOpen = false; sticky = false; closedAt = performance.now(); setPanel(null); mx = -1; hoverY = null;
+    hideTip();
     document.activeElement?.blur(); send('pass', { on: true });
   },
   cursor(dist) { mx = dist; },   // distance in px from the screen edge, -1 = away
@@ -575,9 +634,15 @@ const app = window.app = {
     S.apps.push({ id, name: it.name, path: it.path, icon: it.icon }); S.dock.splice(Math.max(0, S.dock.indexOf('more')), 0, id);
     save(); renderAll(); toast(`Added ${it.name}`);
   },
+  folderAdded(it) {
+    S.folders = [...S.folders, { id: 'f' + Date.now(), name: it.name, path: it.path }];
+    save(); renderFolders(); toast(`${it.name} → Folders`);
+  },
   iconFor(id, icon) { const a = S.apps.find(x => x.id === id); if (a && icon && a.icon !== icon) { a.icon = icon; save(); renderAll(); } },
   syncStartup(v) { S.startup = v; $('#tStartup').classList.toggle('on', v); save(); },
-  blur() { if (isOpen && !dragging && performance.now() - openedAt > 260) app.close(); },   // ignore the focus churn right after opening
+  // a paste hands focus to the app behind the panel, so a blur on its own is not a reason to
+  // close: only close when the pointer has actually left as well
+  blur() { if (isOpen && !dragging && performance.now() - openedAt > 260 && !(lastPt && inside(lastPt.x, lastPt.y))) app.close(); },
   stats() {},
   clip(text) { addClip(text); },
   picked(hex) { setColor(hex); pushRecentColor(hex); copy(hex, 'Picked ' + hex); isOpen = true; openWidget('color'); },
@@ -726,6 +791,7 @@ function setPanel(name, fromMore = false) {
   if (name === 'pass') genPw();
   if (name === 'gen') renderGen();
   if (name === 'clock') renderZones();
+  if (name === 'folders') renderFolders();
   if (name === 'settings') renderWidgets();
 }
 const anchorOf = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
@@ -769,6 +835,8 @@ function zoneOf(el) {
   if (el.closest('#tools')) return { list: 'dock', box: toolsBox, ph: ph.dock, sel: '.tool', axis: 'y' };
   if (el.closest('#tiles')) return { list: 'more', box: $('#tiles'), ph: ph.tiles, sel: '.tile', axis: 'grid' };
   const wl = el.closest('.wlist'); if (wl) return { list: wl.dataset.zone, box: wl, ph: ph.row, sel: '.wrow', axis: 'y' };
+  const fl = el.closest('#folderList');
+  if (fl) return { list: 'folders', box: fl, ph: ph.row, sel: '.frow', axis: 'y', move: moveFolder };
   return null;
 }
 function clearPh() { Object.values(ph).forEach(p => p.remove()); $$('.wlist.drop').forEach(x => x.classList.remove('drop')); }
@@ -816,7 +884,7 @@ function dropDrag(e) {
   if (dragMoved && z && z.ph.parentElement === z.box) {
     const idx = [...z.box.children].filter(k => k === z.ph || (k.matches(z.sel) && k !== el)).indexOf(z.ph);
     clearPh();
-    moveWidget(id, z.list, idx, z.box.classList.contains('wlist'));
+    if (z.move) z.move(id, idx); else moveWidget(id, z.list, idx, z.box.classList.contains('wlist'));
   } else clearPh();
   setTimeout(() => { dragMoved = false; if (lastPt && !inside(lastPt.x, lastPt.y)) maybeClose(); }, 60);
 }
@@ -826,6 +894,7 @@ addEventListener('mousedown', e => { const el = e.target.closest('[data-w]'); if
 app.dropHint = on => $('#dropHint').classList.toggle('on', !!on);
 function moveWidget(id, list, idx, withHidden = false) {
   if (list === 'more' && info(id)?.dockOnly) return;
+  if (!info(id)) return;   // a folder row dropped on the dock: not a widget, nothing to move
   const wasHidden = S.hidden.includes(id);
   // positions ignore hidden items; map visible index → real index
   const visible = S[list].filter(x => x !== id && (withHidden || !S.hidden.includes(x)));
@@ -837,18 +906,27 @@ function moveWidget(id, list, idx, withHidden = false) {
   save(); renderAll();
   if (list === 'dock' && panel === 'more') toast(`${info(id).name} → dock`);
 }
+function moveFolder(id, idx) {
+  const from = S.folders.findIndex(f => f.id === id); if (from < 0) return;
+  const anchor = S.folders.filter(f => f.id !== id)[idx];
+  const [f] = S.folders.splice(from, 1);
+  const at = anchor ? S.folders.indexOf(anchor) : S.folders.length;
+  S.folders.splice(at < 0 ? S.folders.length : at, 0, f);
+  save(); renderFolders();
+}
 
 /* ================= settings: widget manager ================= */
 function rowHTML(id, zone) {
-  const w = info(id), off = S.hidden.includes(id);
+  const w = info(id), off = S.hidden.includes(id), toMore = zone === 'dock';
   const eye = off
     ? '<path d="M4 4l16 16"/><path d="M9.9 5.2A9.9 9.9 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.6 4.1M6.4 7.8A17.5 17.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 3.5-.7"/>'
     : '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/>';
-  const moveBtn = w.dockOnly ? '' : `<button class="wb" data-to="${zone === 'dock' ? 'more' : 'dock'}" aria-label="${zone === 'dock' ? 'Move into More' : 'Move to dock'}"><svg viewBox="0 0 24 24"><path d="M7 7h9l-2.5-2.5M17 17H8l2.5 2.5"/></svg>${zone === 'dock' ? 'More' : 'Dock'}</button>`;
+  // icon only: the arrow points the way the widget travels, up to the dock or down into More
+  const moveBtn = w.dockOnly ? '' : `<button class="wb" data-to="${toMore ? 'more' : 'dock'}" aria-label="${toMore ? 'Move into More' : 'Move to dock'}"><svg viewBox="0 0 24 24">${toMore ? '<path d="M6 9l6 6 6-6"/>' : '<path d="M6 15l6-6 6 6"/>'}</svg></button>`;
+  const rmBtn = w.kind === 'app' ? '<button class="wb" data-rm aria-label="Remove app"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : '';
   return `<div class="wrow ${off ? 'off' : ''}" data-w="${id}">
-    <span class="grip"><svg viewBox="0 0 10 16"><circle cx="2.5" cy="3" r="1.1"/><circle cx="7.5" cy="3" r="1.1"/><circle cx="2.5" cy="8" r="1.1"/><circle cx="7.5" cy="8" r="1.1"/><circle cx="2.5" cy="13" r="1.1"/><circle cx="7.5" cy="13" r="1.1"/></svg></span><span class="wi">${w.icon}</span><span class="wn">${esc(w.name)}</span>${moveBtn}
-    <button class="wb" data-eye aria-label="${off ? 'Show' : 'Hide'}"><svg viewBox="0 0 24 24">${eye}</svg></button>
-    ${w.kind === 'app' ? '<button class="wb" data-rm aria-label="Remove app">✕</button>' : ''}</div>`;
+    <span class="grip"><svg viewBox="0 0 10 16"><circle cx="2.5" cy="3" r="1.1"/><circle cx="7.5" cy="3" r="1.1"/><circle cx="2.5" cy="8" r="1.1"/><circle cx="7.5" cy="8" r="1.1"/><circle cx="2.5" cy="13" r="1.1"/><circle cx="7.5" cy="13" r="1.1"/></svg></span><span class="wi">${w.icon}</span><span class="wn">${esc(w.name)}</span>${rmBtn}${moveBtn}
+    <button class="wb" data-eye aria-label="${off ? 'Show' : 'Hide'}"><svg viewBox="0 0 24 24">${eye}</svg></button></div>`;
 }
 function renderWidgets() {
   $('#wDock').innerHTML = S.dock.map(id => rowHTML(id, 'dock')).join('');
@@ -867,11 +945,30 @@ $('#stabs').addEventListener('click', e => {
   $$('.spage').forEach(x => x.classList.toggle('on', x.dataset.p === p));
 });
 $('#addApp').onclick = () => send('addApp');
-$('#addFolder').onclick = () => send('addApp', { folder: true });
 
 const toastEl = $('#toast'); let tt;
 function toast(msg) { toastEl.textContent = msg; toastEl.classList.remove('show'); void toastEl.offsetWidth; toastEl.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('show'), 1600); }
 function copy(text, msg) { send('copy', { text }); toast(msg || 'Copied'); }
+
+/* ---- dock tooltips for apps (styled, not a title attribute) ---- */
+const tipEl = $('#tip');
+let tipT;
+function showTip(el) {
+  tipEl.textContent = info(el.dataset.w)?.name || '';
+  tipEl.classList.add('on');
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const x = DIR > 0 ? r.left - w - 10 : r.right + 10;
+  tipEl.style.left = clamp(x, 6, innerWidth - w - 6) + 'px';
+  tipEl.style.top = (r.top + r.height / 2 - h / 2) + 'px';
+  tipEl.style.transform = `translateX(${DIR > 0 ? 6 : -6}px)`;
+  requestAnimationFrame(() => { if (tipEl.classList.contains('on')) tipEl.style.transform = 'none'; });
+}
+function hideTip() { clearTimeout(tipT); tipEl.classList.remove('on'); }
+toolsBox.addEventListener('mouseover', e => {
+  const el = e.target.closest('.tool.app'); if (!el) return;
+  clearTimeout(tipT); tipT = setTimeout(() => showTip(el), 300);
+});
+toolsBox.addEventListener('mouseout', e => { if (e.target.closest('.tool.app')) hideTip(); });
 // insert into the app you were using (or just copy, per settings)
 function deliver(text, keepOpen) { if (S.paste) { if (!keepOpen) app.close(); send('paste', { text }); } else copy(text); }
 
@@ -1859,7 +1956,18 @@ $('#noteTabs').addEventListener('contextmenu', e => {
   noteMenu.style.left = Math.max(6, Math.min(e.clientX, innerWidth - noteMenu.offsetWidth - 8)) + 'px';
   noteMenu.style.top = Math.max(6, Math.min(e.clientY, innerHeight - noteMenu.offsetHeight - 8)) + 'px';
 });
-noteMenu.onclick = e => { if (e.target.dataset.act === 'title') { noteMenu.hidden = true; startNoteTitle(menuIdx); } };
+function deleteNote(i) {
+  notes.splice(i, 1);
+  if (!notes.length) notes = [{ id: 'n' + Date.now(), text: '' }];
+  noteAt = Math.min(i, notes.length - 1); renderNotes(); saveNotes('note deleted');
+}
+noteMenu.onclick = e => {
+  const act = e.target.closest('[data-act]')?.dataset.act; if (!act || menuIdx < 0) return;
+  noteMenu.hidden = true;
+  if (act === 'title') startNoteTitle(menuIdx);
+  else if (act === 'copy') copy(notes[menuIdx].text, 'Note copied');
+  else if (act === 'delete') deleteNote(menuIdx);
+};
 addEventListener('pointerdown', e => { if (!noteMenu.hidden && !noteMenu.contains(e.target)) noteMenu.hidden = true; }, true);
 note.addEventListener('input', () => {
   notes[noteAt].text = note.value; $('#noteInfo').textContent = 'saving…';
@@ -1867,11 +1975,7 @@ note.addEventListener('input', () => {
 });
 $('#noteNew').onclick = () => { notes.unshift({ id: 'n' + Date.now(), text: '' }); noteAt = 0; renderNotes(); saveNotes('new note'); note.focus(); };
 $('#noteCopy').onclick = () => copy(note.value);
-$('#noteDel').onclick = () => {
-  notes.splice(noteAt, 1);
-  if (!notes.length) notes = [{ id: 'n' + Date.now(), text: '' }];
-  noteAt = 0; renderNotes(); saveNotes('note deleted');
-};
+$('#noteDel').onclick = () => deleteNote(noteAt);
 renderNotes();
 
 /* ---- media keys ---- */
@@ -1931,15 +2035,23 @@ const GEN = {
 function renderGen() { $('#genList').innerHTML = Object.entries(GEN).map(([n, f]) => { let v; try { v = esc(f()); } catch { v = 'not available here'; } return `<button class="item plain spring gen" data-g="${n}">${n}<span>${v}</span></button>`; }).join(''); }
 $('#genList').onclick = e => { const g = e.target.closest('[data-g]')?.dataset.g; if (!g) return; let v; try { v = GEN[g](); } catch { return toast('That one is not available here'); } deliver(v); };
 
-/* ---- folders ---- */
-const H = init.home || '~';
-const FOLDERS = OS === 'windows'
-  ? [['Desktop', 'shell:Desktop'], ['Downloads', 'shell:Downloads'], ['Documents', 'shell:Personal'], ['Pictures', 'shell:My Pictures'],
-     ['Music', 'shell:My Music'], ['Videos', 'shell:My Video'], ['This PC', 'shell:MyComputerFolder'], ['Recycle Bin', 'shell:RecycleBinFolder'], ['Startup', 'shell:Startup']]
-  : [['Home', H], ['Desktop', H + '/Desktop'], ['Downloads', H + '/Downloads'], ['Documents', H + '/Documents'], ['Pictures', H + '/Pictures'], ['Music', H + '/Music'],
-     ['Videos', H + (OS === 'macos' ? '/Movies' : '/Videos')], OS === 'macos' ? ['Applications', '/Applications'] : ['Apps', '/usr/share/applications'], ['Trash', OS === 'macos' ? H + '/.Trash' : 'trash:///']];
-$('#folderGrid').innerHTML = FOLDERS.map(([n, t]) => `<button class="spring" data-open="${t}"><b>${W.folders.icon}</b>${n}</button>`).join('');
-$('#folderGrid').onclick = e => { const o = e.target.closest('[data-open]'); if (o) { app.close(); send('open', { target: o.dataset.open }); } };
+/* ---- folders: one list the user owns — add, remove, drag to reorder ---- */
+const GRIP = '<svg viewBox="0 0 10 16"><circle cx="2.5" cy="3" r="1.1"/><circle cx="7.5" cy="3" r="1.1"/><circle cx="2.5" cy="8" r="1.1"/><circle cx="7.5" cy="8" r="1.1"/><circle cx="2.5" cy="13" r="1.1"/><circle cx="7.5" cy="13" r="1.1"/></svg>';
+function renderFolders() {
+  $('#folderList').innerHTML = S.folders.map(f => `<button class="item frow spring" data-w="${f.id}">
+    <span class="grip">${GRIP}</span><span class="fi">${W.folders.icon}</span><span class="fn">${esc(f.name)}</span>
+    <span class="fx" data-x aria-label="Remove ${esc(f.name)}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>`).join('')
+    || '<div class="empty">No folders yet — press Add</div>';
+}
+$('#folderList').addEventListener('click', e => {
+  if (dragMoved) return;
+  const row = e.target.closest('.frow'); if (!row) return;
+  const i = S.folders.findIndex(f => f.id === row.dataset.w); if (i < 0) return;
+  if (e.target.closest('[data-x]')) { S.folders.splice(i, 1); save(); renderFolders(); return; }
+  app.close(); send('open', { target: S.folders[i].path });
+});
+$('#folderAdd').onclick = () => send('addApp', { folder: true });
+renderFolders();
 
 /* ---- snippets ---- */
 function renderSnips() {
@@ -1955,17 +2067,54 @@ $('#snipList').onclick = e => {
 renderSnips();
 
 /* ---- web search ---- */
-const ENGINES = { Google: 'https://www.google.com/search?q=%s', YouTube: 'https://www.youtube.com/results?search_query=%s', Wikipedia: 'https://en.wikipedia.org/w/index.php?search=%s',
-  Translate: 'https://translate.google.com/?sl=auto&tl=en&text=%s', Maps: 'https://www.google.com/maps/search/%s', GitHub: 'https://github.com/search?q=%s', DuckDuckGo: 'https://duckduckgo.com/?q=%s',
-  Reddit: 'https://www.reddit.com/search/?q=%s', Brave: 'https://search.brave.com/search?q=%s' };
-function renderEngines() { $('#engines').innerHTML = Object.keys(ENGINES).map(n => `<button class="chip spring ${S.engine === n ? 'on' : ''}" data-e="${n}">${n}</button>`).join(''); }
-$('#engines').onclick = e => { const n = e.target.dataset.e; if (n) { S.engine = n; save(); renderEngines(); $('#searchIn').focus(); } };
-$('#searchIn').addEventListener('keydown', e => {
+/* grouped so the list stays scannable at a dozen engines; each icon is drawn inline, not fetched */
+const ENGINES = {
+  Google:       { c: 'Search',    u: 'https://www.google.com/search?q=%s',                  i: '<path d="M20.5 12A8.5 8.5 0 1 1 18 6"/><path d="M12 12h8.5"/>' },
+  Bing:         { c: 'Search',    u: 'https://www.bing.com/search?q=%s',                    i: '<path d="M12 3l6 3.4-6 3.4v7.8"/><path d="M12 6L6 9.4v5.2L12 19l6-3.4"/>' },
+  DuckDuckGo:   { c: 'Search',    u: 'https://duckduckgo.com/?q=%s',                        i: '<circle cx="12" cy="12" r="8.2"/><path d="M9.6 11h.01M14.4 11h.01M9.6 15a3.4 3.4 0 0 0 4.8 0"/>' },
+  Brave:        { c: 'Search',    u: 'https://search.brave.com/search?q=%s',                i: '<path d="M12 3l7.4 3.2-1 11.2L12 21l-6.4-3.6-1-11.2z"/><path d="M9.4 10.4h.01M14.6 10.4h.01M9.8 14.4a3.3 3.3 0 0 0 4.4 0"/>' },
+  Reddit:       { c: 'Community', u: 'https://www.reddit.com/search/?q=%s',                 i: '<circle cx="12" cy="13.6" r="6.4"/><path d="M9.6 12.6h.01M14.4 12.6h.01M9.7 16a3.3 3.3 0 0 0 4.6 0"/><path d="M12 7.2V4.4M12 4.4l3.2-1"/><circle cx="15.6" cy="3.2" r="1.1"/>' },
+  StackOverflow:{ c: 'Community', u: 'https://stackoverflow.com/search?q=%s',              i: '<path d="M7 15.5V19h10v-3.5"/><path d="M9 15.5h6"/><path d="M9 12.4l6 1.2"/><path d="M9.9 9.4l5.5 2.3"/><path d="M11.6 6.5l4.7 3.1"/>' },
+  YouTube:      { c: 'Media',     u: 'https://www.youtube.com/results?search_query=%s',     i: '<rect x="3" y="6" width="18" height="12" rx="4"/><path d="M11 9.6l4 2.4-4 2.4z"/>' },
+  Images:       { c: 'Media',     u: 'https://www.google.com/search?tbm=isch&q=%s',         i: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.5"/><path d="M4 17.6l5-5 4 4 3-3 4 4"/>' },
+  Wikipedia:    { c: 'Learn',     u: 'https://en.wikipedia.org/w/index.php?search=%s',      i: '<circle cx="12" cy="12" r="8.5"/><path d="M7.5 9.6l2.3 5.8 2.2-4.3 2.2 4.3 2.3-5.8"/>' },
+  Translate:    { c: 'Learn',     u: 'https://translate.google.com/?sl=auto&tl=en&text=%s', i: '<path d="M4 6h7M7.5 6V4.4M6 6c0 3.2 2 5.4 5 6.5"/><path d="M4 18.6l3.6-8.6 3.6 8.6M5.3 15.6h4.6"/><path d="M14 18.4h6M17 18.4v-6.6M14.5 11.8h5"/>' },
+  News:         { c: 'News',      u: 'https://news.google.com/search?q=%s',                 i: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2h-1"/><path d="M7 9h7M7 12.4h7M7 15.4h4"/>' },
+  Maps:         { c: 'Maps',      u: 'https://www.google.com/maps/search/%s',               i: '<path d="M12 21s6.6-6 6.6-10.6a6.6 6.6 0 1 0-13.2 0C5.4 15 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.4"/>' },
+  GitHub:       { c: 'Dev',       u: 'https://github.com/search?q=%s',                      i: '<path d="M9 20.6c-4 1.2-4-2.2-5.6-2.7m11.1 5v-3.8a3.3 3.3 0 0 0-.9-2.5c3-.4 6.1-1.5 6.1-6.7a5.2 5.2 0 0 0-1.4-3.6 4.9 4.9 0 0 0-.1-3.6s-1.2-.4-3.9 1.4a13.2 13.2 0 0 0-6.9 0C5 2.7 3.8 3.1 3.8 3.1a4.9 4.9 0 0 0-.1 3.6A5.2 5.2 0 0 0 2.3 10.3c0 5.2 3 6.3 6.1 6.7a3.3 3.3 0 0 0-.9 2.5v4.9"/>' },
+};
+const ENG_CATS = ['Search', 'Community', 'Media', 'Learn', 'News', 'Maps', 'Dev'];
+function renderEngines() {
+  $('#engines').innerHTML = ENG_CATS.map(c => {
+    const rows = Object.entries(ENGINES).filter(([, e]) => e.c === c);
+    return rows.length ? `<div class="engsec"><h5>${c}</h5><div class="chips">${rows.map(([n, e]) =>
+      `<button class="chip engine spring ${S.engine === n ? 'on' : ''}" data-e="${n}">${I(e.i)}<span>${n}</span></button>`).join('')}</div></div>` : '';
+  }).join('');
+}
+$('#engines').onclick = e => { const n = e.target.closest('[data-e]')?.dataset.e; if (n) { S.engine = n; save(); renderEngines(); $('#searchIn').focus(); } };
+
+/* the direction button: sits on the side the text reads towards, gone while the box is empty.
+   dir="auto" already picks the direction — this only exists so it can be overridden. */
+const searchIn = $('#searchIn'), searchDir = $('#searchDir');
+const RTL_RE = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+let dirPin = null;
+function dirUpdate() {
+  const v = searchIn.value, rtl = dirPin ? dirPin === 'rtl' : RTL_RE.test(v);
+  searchIn.dir = dirPin || 'auto';
+  searchDir.classList.toggle('on', !!v.trim());
+  searchDir.classList.toggle('rtl', rtl);
+  searchDir.innerHTML = I(rtl ? '<path d="M20 12H4M10 6l-6 6 6 6"/>' : '<path d="M4 12h16M14 6l6 6-6 6"/>');
+  searchDir.setAttribute('aria-label', rtl ? 'Reads right to left — show it left to right' : 'Reads left to right — show it right to left');
+}
+searchIn.addEventListener('input', dirUpdate);
+searchDir.onclick = () => { dirPin = (dirPin ? dirPin === 'rtl' : RTL_RE.test(searchIn.value)) ? 'ltr' : 'rtl'; dirUpdate(); searchIn.focus(); };
+searchIn.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return; const q = e.target.value.trim(); if (!q) return;
-  const url = /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q) && !q.includes(' ') ? 'https://' + q : /^https?:\/\//.test(q) ? q : ENGINES[S.engine].replace('%s', encodeURIComponent(q));
-  e.target.value = ''; app.close(); send('open', { target: url });
+  const url = /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q) && !q.includes(' ') ? 'https://' + q : /^https?:\/\//.test(q) ? q : ENGINES[S.engine].u.replace('%s', encodeURIComponent(q));
+  e.target.value = ''; dirPin = null; dirUpdate(); app.close(); send('open', { target: url });
 });
 renderEngines();
+dirUpdate();
 
 /* ---- world clock ---- */
 const ZONES = ['UTC', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Istanbul', 'Europe/Moscow', 'Asia/Tehran', 'Asia/Dubai', 'Asia/Karachi', 'Asia/Kolkata', 'Asia/Bangkok',
@@ -1980,7 +2129,7 @@ function zoneParts(z) {
 }
 function renderZones() {
   $('#zones').innerHTML = S.zones.map((z, i) => { const p = zoneParts(z);
-    return `<div class="zone"><span class="zt">${p.t}</span><span class="zn">${city(z)}<small>${p.sub}</small></span><button class="x" data-i="${i}">×</button></div>`; }).join('')
+    return `<div class="zone"><span class="zt">${p.t}</span><span class="zn">${city(z)}<small>${p.sub}</small></span><button class="x" data-i="${i}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`; }).join('')
     || '<div class="empty">Add a city below</div>';
   $('#zoneAdd').innerHTML = '<option value="">＋ Add a city…</option>' + ZONES.filter(z => !S.zones.includes(z)).map(z => `<option value="${z}">${city(z)}</option>`).join('');
 }
@@ -2017,12 +2166,13 @@ const FN_ICON = {
   close: '<path d="M8.5 4c3.6 3.2 3.6 12.8 0 16"/>',
   equals: '<path d="M4.5 9h15M4.5 15h15"/>',
 };
+/* Windows keypad order: the operator sits on the right of each number row, ÷ uppermost, and the
+   bottom row reads sign, 0, point, equals. Digits stay plain text, everything else is drawn. */
 const CALC_KEYS = [['C', 'clear', 'fn'], ['⌫', 'back', 'fn'], ['(', 'open', 'fn'], [')', 'close', 'fn'],
-  ['7'], ['8'], ['9'], ['×', 'times', 'op'],
-  ['4'], ['5'], ['6'], ['÷', 'div', 'op'],
+  ['7'], ['8'], ['9'], ['÷', 'div', 'op'],
+  ['4'], ['5'], ['6'], ['×', 'times', 'op'],
   ['1'], ['2'], ['3'], ['−', 'minus', 'op'],
-  ['^', 'pow', 'fn'], ['0'], ['.'], ['+', 'plus', 'op'],
-  ['=', 'eq', 'wide op']];
+  ['^', 'pow', 'fn'], ['0'], ['.'], ['=', 'equals', 'op']];
 const KEY_TYPED = { '×': '*', '÷': '/', '−': '-', '^': '**' };
 const KEY_SVG = { ...OP_ICON, times: OP_ICON['*'], div: OP_ICON['/'], minus: OP_ICON['-'], plus: OP_ICON['+'], pow: OP_ICON['**'], ...FN_ICON };
 $('#calcKeys').innerHTML = CALC_KEYS.map(([k, g, c]) => `<button data-k="${k}" class="${c || ''}">${g ? I(KEY_SVG[g]) : k}</button>`).join('');
@@ -2031,17 +2181,45 @@ const showCalc = () => {
   const parts = calcExpr.match(/\*\*|[+\-*/]|[()]|\d*\.?\d+/g) || [];
   $('#calcOut').innerHTML = parts.length ? parts.map(t => OP_ICON[t] ? `<i>${I(OP_ICON[t])}</i>` : esc(t)).join('') : '0';
 };
+/* Windows-style entry: a key that would build something unparseable is ignored rather than typed.
+   Operators may still chain as a unary run, so "3--+6" is allowed, but the run is capped at three
+   characters — the four-deep "1**3++++--" can never be built. A power counts as two characters,
+   which also refuses "1^^3". */
+const CALC_OP = /^[+\-*/]+$/;
+function calcType(k) {
+  if (k === 'C') { calcExpr = ''; return; }
+  if (k === '⌫') { calcExpr = calcExpr.replace(/(?:\*\*|[+\-*/().]|\d)$/, ''); return; }   // "^" is two characters wide
+  if (k === '=') { const v = calc(calcExpr); if (v !== null) calcExpr = String(v); return; }
+  const t = KEY_TYPED[k] || k;
+  const run = /[+\-*/]*$/.exec(calcExpr)[0];
+  const operandDue = !calcExpr || /[+\-*/(]$/.test(calcExpr);   // the next key starts an operand
+  if (CALC_OP.test(t)) {
+    if (operandDue && !/^[+\-]+$/.test(t)) return;   // a * or / cannot open an operand
+    if (run.length + t.length > 3) return;
+  } else if (t === '(') {
+    if (!operandDue) return;                         // no implicit "3(4)"
+  } else if (t === ')') {
+    const depth = (calcExpr.match(/\(/g) || []).length - (calcExpr.match(/\)/g) || []).length;
+    if (depth < 1 || operandDue) return;
+  } else if (t === '.') {
+    const tail = /[\d.]*$/.exec(calcExpr)[0];
+    if (!tail || tail.includes('.')) return;         // one point per number, and never a bare one
+  }
+  calcExpr += t;
+}
 $('#calcKeys').onclick = e => {
   const k = e.target.closest('[data-k]')?.dataset.k; if (k === undefined) return;
-  if (k === 'C') calcExpr = '';
-  else if (k === '⌫') calcExpr = calcExpr.replace(/(?:\*\*|[+\-*/().]|\d)$/, '');   // "^" is two characters wide
-  else if (k === '=') { const v = calc(calcExpr); if (v !== null) calcExpr = String(v); }
-  else if (KEY_TYPED[k]) calcExpr += KEY_TYPED[k];
-  else if (k === '.') { if (!/[.\d]*$/.exec(calcExpr)[0].includes('.')) calcExpr += '.'; }   // no "12.3.4"
-  else calcExpr += k;                                                                       // digits, ( and )
-  showCalc();
+  calcType(k); showCalc();
 };
 $('#calcOut').onclick = () => { const v = calc(calcExpr); if (v !== null) copy(String(v)); else copy(calcExpr); };
+/* typing goes through the same filter as the keypad; Escape is left alone so it still closes the panel */
+addEventListener('keydown', e => {
+  if (panel !== 'calc' || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key === 'Enter' || e.key === '=' ? '=' : e.key === 'Backspace' ? '⌫'
+    : e.key === 'Delete' || e.key === 'c' || e.key === 'C' ? 'C' : /^[\d.+\-*/()^]$/.test(e.key) ? e.key : null;
+  if (!k) return;
+  e.preventDefault(); calcType(k); showCalc();
+});
 showCalc();
 
 /* ---- timer ---- */
@@ -2049,13 +2227,15 @@ let tTotal = 300, tLeft = 300, tRun = null;
 const fmtT = s => (s >= 3600 ? `${s / 3600 | 0}:` + String((s / 60 | 0) % 60).padStart(2, '0') : String(s / 60 | 0).padStart(2, '0')) + `:${String(s % 60).padStart(2, '0')}`;
 $('#timerPresets').innerHTML = [1, 5, 10, 15, 25, 45, 60].map(m => `<button class="btn" data-m="${m}">${m}m</button>`).join('');
 $('#timerPresets').onclick = e => { const m = e.target.dataset.m; if (m) { clearInterval(tRun); tRun = null; tTotal = tLeft = m * 60; drawT(); } };
+const TIMER_MAX = 99 * 3600 + 59 * 60 + 59;
 function setTimer() {
-  const sec = (Math.max(0, +$('#timerMin').value || 0) * 60) + Math.max(0, +$('#timerSec').value || 0);
-  if (!sec) return toast('Enter minutes or seconds');
-  clearInterval(tRun); tRun = null; tTotal = tLeft = Math.min(sec, 999 * 60 + 59); drawT();
+  const num = id => Math.max(0, Math.floor(+$(id).value || 0));
+  const sec = num('#timerHr') * 3600 + num('#timerMin') * 60 + num('#timerSec');
+  if (!sec) return toast('Enter hours, minutes or seconds');
+  clearInterval(tRun); tRun = null; tTotal = tLeft = Math.min(sec, TIMER_MAX); drawT();
 }
 $('#timerSet').onclick = setTimer;
-['#timerMin', '#timerSec'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') setTimer(); }));
+['#timerHr', '#timerMin', '#timerSec'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') setTimer(); }));
 function drawT() { $('#timerOut').textContent = fmtT(tLeft); $('#timerStart').textContent = tRun ? 'Pause' : 'Start'; }
 $('#timerStart').onclick = () => {
   if (tRun) { clearInterval(tRun); tRun = null; }
