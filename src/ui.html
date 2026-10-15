@@ -268,7 +268,7 @@
     <div class="head"><button class="back">←</button><h4>Notes</h4><span class="link" id="noteInfo">saved</span></div>
     <div class="chips" id="noteTabs"></div>
     <textarea class="field scroll" dir="auto" id="note" placeholder="Write something…"></textarea>
-    <div class="row"><button class="btn" id="noteNew">＋ New</button><button class="btn" id="noteCopy">Copy</button><button class="btn" id="noteDel">Delete</button></div>
+    <div class="row"><button class="btn" id="noteNew">New</button><button class="btn" id="noteCopy">Copy</button><button class="btn" id="noteDel">Delete</button></div>
   </div>
 
   <div class="panel" data-name="more">
@@ -1758,7 +1758,17 @@ $('#noteDel').onclick = () => {
 renderNotes();
 
 /* ---- media keys ---- */
-$('[data-name=media]').addEventListener('click', e => { const k = e.target.closest('[data-key]'); if (k) send('key', { name: k.dataset.key }); });
+$('[data-name=media]').addEventListener('click', e => {
+  const k = e.target.closest('[data-key]'); if (!k) return;
+  send('key', { name: k.dataset.key });
+  // we get no playback-state feedback from the OS, so this just mirrors the last key we sent
+  if (k.dataset.key === 'play') {
+    const on = k.dataset.on !== '1';
+    k.dataset.on = on ? '1' : '0';
+    k.title = on ? 'Pause' : 'Play';
+    k.innerHTML = `<svg viewBox="0 0 24 24">${on ? '<path d="M9 5v14M15 5v14"/>' : '<path d="M7 4l12 8-12 8z"/>'}</svg>`;
+  }
+});
 
 /* ---- keep awake ---- */
 let awake = false;
@@ -1786,9 +1796,12 @@ $('#swLaps').onclick = e => { const s = e.target.closest('[data-s]')?.dataset.s;
 
 /* ---- generators → paste into the app you were in ---- */
 const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
+/* crypto.randomUUID is secure-context only, and this page is not one — build it from getRandomValues instead */
+const uuid4 = () => ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+  (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 const pad = n => String(n).padStart(2, '0');
 const GEN = {
-  'UUID': () => crypto.randomUUID(),
+  'UUID': () => (crypto.randomUUID || uuid4)(),
   'Date': () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; },
   'Time': () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; },
   'ISO timestamp': () => new Date().toISOString(),
@@ -1798,8 +1811,8 @@ const GEN = {
   'Lorem sentence': () => LOREM.split('. ')[0] + '.',
   'Lorem paragraph': () => LOREM,
 };
-function renderGen() { $('#genList').innerHTML = Object.entries(GEN).map(([n, f]) => `<button class="item plain spring gen" data-g="${n}">${n}<span>${esc(f())}</span></button>`).join(''); }
-$('#genList').onclick = e => { const g = e.target.closest('[data-g]')?.dataset.g; if (g) deliver(GEN[g]()); };
+function renderGen() { $('#genList').innerHTML = Object.entries(GEN).map(([n, f]) => { let v; try { v = esc(f()); } catch { v = 'not available here'; } return `<button class="item plain spring gen" data-g="${n}">${n}<span>${v}</span></button>`; }).join(''); }
+$('#genList').onclick = e => { const g = e.target.closest('[data-g]')?.dataset.g; if (!g) return; let v; try { v = GEN[g](); } catch { return toast('That one is not available here'); } deliver(v); };
 
 /* ---- folders ---- */
 const H = init.home || '~';

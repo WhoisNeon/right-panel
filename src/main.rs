@@ -599,11 +599,17 @@ fn main() {
 
     let mut ctx = WebContext::new(Some(dir.join("webview")));
     // Fonts ride along as data: URIs — the webview's page has no file:// origin to load them from.
+// Each is limited to the scripts it owns: Arad to Arabic so Latin stays Segoe UI, Twemoji to the
+// emoji blocks so UI glyphs like ← ★ × keep the text font and their metrics stay put.
+const ARAD_RANGE: &str = "U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F";
+const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049,U+2122,U+2139,U+2194-2199,U+21A9-21AA,U+231A-231B,U+2328,U+23CF,U+23E9-23F3,U+23F8-23FA,U+24C2,U+25AA-25AB,U+25B6,U+25C0,U+25FB-25FE,U+3030,U+303D,U+3297,U+3299,U+FE0F";
     let fonts = format!(
-        "@font-face{{font-family:'Twemoji';src:url(data:font/ttf;base64,{}) format('truetype')}}\
-         @font-face{{font-family:'Arad';font-weight:300 700;src:url(data:font/woff2;base64,{}) format('woff2')}}",
+        "@font-face{{font-family:'Twemoji';src:url(data:font/ttf;base64,{}) format('truetype');unicode-range:{}}}\
+         @font-face{{font-family:'Arad';font-weight:300 700;src:url(data:font/woff2;base64,{}) format('woff2');unicode-range:{}}}",
         util::base64(include_bytes!("../assets/twemoji.ttf")),
+        TWEMOJI_RANGE,
         util::base64(include_bytes!("../assets/arad.woff2")),
+        ARAD_RANGE,
     );
     let init = format!(
         "window.onerror=(m,s,l)=>window.ipc.postMessage(JSON.stringify({{t:\"log\",text:m+\" @\"+l}}));window.__init = {};\

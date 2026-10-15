@@ -38,7 +38,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 
 | | |
 |---|---|
-| 😊 **Emoji picker** | Search, categories, recents. Click to type it straight into the app you were using |
+| 😊 **Emoji picker** | Search in English or Persian, categories, recents, and **259 country flags**. Click to type it straight into the app you were using |
 | 📋 **Clipboard history** | Text *and images*, search, ☆ pin favourites that survive restarts |
 | 🎨 **Color** | Eyedropper (pick any pixel on screen), HEX / RGB / HSL, palette, recent colors |
 | 📸 **Screenshot** | Opens the system snipping tool |
@@ -53,6 +53,8 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 | ☀️ **Keep awake · Screen off · Lock · Pin window on top** | One-click system helpers |
 
 **Also**
+- **Persian & Arabic**: type in any search box or note and the caret flips to match — the [Arad](https://github.com/MDarvishi5124/Arad) typeface covers Persian and Arabic text throughout the panel
+- **Emoji search works in Persian too** — keywords come from [CLDR](https://cldr.unicode.org/), so `خنده` finds 😂, `آتش` finds 🔥 and `ایران` finds 🇮🇷
 - **Drag a file or folder onto the panel** to pin it, or right-click it → *Add to Right Panel* (Windows; on Windows 11 under *Show more options*)
 - **Left or right edge**, and pick which monitor it lives on (*Settings → General*)
 - **Built-in updater**: Right Panel checks GitHub once a day and can download and run the new installer for you (*Settings → General*)
