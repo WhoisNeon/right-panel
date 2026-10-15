@@ -92,6 +92,12 @@ Built with Rust, [tao](https://github.com/tauri-apps/tao) + [wry](https://github
 
 Settings live in `%APPDATA%\RightPanel` (Windows), `~/Library/Application Support/RightPanel` (macOS) or `~/.config/right-panel` (Linux).
 
+## Third-party
+
+- Emoji graphics: [Twemoji](https://github.com/jdecked/twemoji) by Twitter, Inc — [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). `assets/twemoji.ttf`.
+- Persian/Arabic typeface: [Arad](https://github.com/MDarvishi5124/Arad) by Sadegh Farshadi — SIL Open Font License 1.1. `assets/arad.woff2`.
+- Persian emoji keywords and country names: [CLDR](https://cldr.unicode.org/), Unicode Common Locale Data Repository — [Unicode-3.0](https://www.unicode.org/license.txt).
+
 ## License
 
 [MIT](LICENSE)

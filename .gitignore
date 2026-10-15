@@ -1,3 +1,8 @@
 /target
 /dist
 /pkg
+
+# local scaffolding, not part of the app
+/test-ui.html
+/*.ps1
+/assets/preview-emoji.html

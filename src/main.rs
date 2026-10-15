@@ -26,7 +26,7 @@ use wry::{WebContext, WebViewBuilder};
 
 const UI: &str = include_str!("ui.html");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-const REPO: &str = "raminturne/right-panel";
+const REPO: &str = "WhoisNeon/right-panel";
 const WIN_W: f64 = 480.0;
 const WIN_H: f64 = 680.0;
 
@@ -598,11 +598,20 @@ fn main() {
     }
 
     let mut ctx = WebContext::new(Some(dir.join("webview")));
+    // Fonts ride along as data: URIs — the webview's page has no file:// origin to load them from.
+    let fonts = format!(
+        "@font-face{{font-family:'Twemoji';src:url(data:font/ttf;base64,{}) format('truetype')}}\
+         @font-face{{font-family:'Arad';font-weight:300 700;src:url(data:font/woff2;base64,{}) format('woff2')}}",
+        util::base64(include_bytes!("../assets/twemoji.ttf")),
+        util::base64(include_bytes!("../assets/arad.woff2")),
+    );
     let init = format!(
-        "window.onerror=(m,s,l)=>window.ipc.postMessage(JSON.stringify({{t:\"log\",text:m+\" @\"+l}}));window.__init = {};",
+        "window.onerror=(m,s,l)=>window.ipc.postMessage(JSON.stringify({{t:\"log\",text:m+\" @\"+l}}));window.__init = {};\
+         addEventListener('DOMContentLoaded',()=>{{const s=document.createElement('style');s.textContent={};document.head.appendChild(s);}});",
         json!({ "settings": settings, "notes": notes, "platform": sys::PLATFORM, "home": sys::home(),
                 "version": VERSION, "contextMenu": sys::context_menu_enabled(),
-                "screens": all_screens.iter().map(|s| json!({ "name": s.name, "w": s.w, "h": s.h })).collect::<Vec<_>>() })
+                "screens": all_screens.iter().map(|s| json!({ "name": s.name, "w": s.w, "h": s.h })).collect::<Vec<_>>() }),
+        fonts,
     );
     let ipc_proxy = proxy.clone();
     let drop_proxy = proxy.clone();

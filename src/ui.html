@@ -10,7 +10,7 @@
   }
   * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
   html, body { height: 100%; margin: 0; background: transparent; overflow: hidden; }
-  body { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  body { font-family: "Segoe UI Variable Text", "Segoe UI", Arad, Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
   button { font: inherit; color: inherit; }
   input, textarea, select { -webkit-user-select: text; user-select: text; }
   svg.i, .ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -67,7 +67,7 @@
   .fly-ui.sub .back { display: inline-grid; place-items: center; }
   .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
   .link:hover { color: var(--ink); background: var(--soft); }
-  .field { width: 100%; border: 0; outline: 0; border-radius: 12px; background: var(--soft); color: var(--ink); padding: 9px 12px; font: inherit; font-size: 13px; }
+  .field { width: 100%; border: 0; outline: 0; border-radius: 12px; background: var(--soft); color: var(--ink); padding: 9px 12px; font: inherit; font-size: 13px; text-align: start; }
   .field::placeholder { color: var(--muted); }
   select.field { appearance: none; cursor: pointer; }
   select.field option { background: #222; color: #fff; }
@@ -235,14 +235,14 @@
 
 <div class="fly-ui" id="flyUi">
   <div class="panel" data-name="emoji">
-    <div class="head"><button class="back" title="Back">←</button><input class="field" id="emojiSearch" placeholder="Search emoji…"></div>
+    <div class="head"><button class="back" title="Back">←</button><input class="field" dir="auto" id="emojiSearch" placeholder="Search emoji…"></div>
     <div class="cats" id="cats"></div>
     <div class="emoji-grid scroll" id="emojiGrid"></div>
   </div>
 
   <div class="panel" data-name="clip">
     <div class="head"><button class="back">←</button><h4>Clipboard</h4><button class="link" id="clipClear">Clear</button></div>
-    <input class="field" id="clipSearch" placeholder="Search history…">
+    <input class="field" dir="auto" id="clipSearch" placeholder="Search history…">
     <div class="list scroll" id="clipList"></div>
   </div>
 
@@ -265,7 +265,7 @@
   <div class="panel" data-name="note">
     <div class="head"><button class="back">←</button><h4>Notes</h4><span class="link" id="noteInfo">saved</span></div>
     <div class="chips" id="noteTabs"></div>
-    <textarea class="field scroll" id="note" placeholder="Write something…"></textarea>
+    <textarea class="field scroll" dir="auto" id="note" placeholder="Write something…"></textarea>
     <div class="row"><button class="btn" id="noteNew">＋ New</button><button class="btn" id="noteCopy">Copy</button><button class="btn" id="noteDel">Delete</button></div>
   </div>
 
@@ -276,7 +276,7 @@
 
   <div class="panel" data-name="calc">
     <div class="head"><button class="back">←</button><h4>Calculator</h4></div>
-    <input class="field" id="calcIn" placeholder="e.g. (12.5 * 4) / 3 + 2^3">
+    <input class="field" dir="auto" id="calcIn" placeholder="e.g. (12.5 * 4) / 3 + 2^3">
     <div class="display" id="calcOut" title="Click to copy">0</div>
   </div>
 
@@ -284,7 +284,7 @@
     <div class="head"><button class="back">←</button><h4>Timer</h4></div>
     <div class="timer" id="timerOut">05:00</div>
     <div class="row" id="timerPresets"></div>
-    <div class="row"><input class="field" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn" id="timerSet">Set</button></div>
+    <div class="row"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn" id="timerSet">Set</button></div>
     <div class="row"><button class="btn primary" id="timerStart">Start</button><button class="btn" id="timerReset">Reset</button></div>
   </div>
 
@@ -310,7 +310,7 @@
 
   <div class="panel" data-name="unit">
     <div class="head"><button class="back">←</button><h4>Units</h4></div>
-    <input class="field" id="unitIn" placeholder="e.g. 12 in, 5 km, 70 kg, 30 c">
+    <input class="field" dir="auto" id="unitIn" placeholder="e.g. 12 in, 5 km, 70 kg, 30 c">
     <div id="unitOut" class="list"></div>
   </div>
 
@@ -332,13 +332,13 @@
 
   <div class="panel" data-name="snippets">
     <div class="head"><button class="back">←</button><h4>Snippets</h4><span class="hint">click to paste</span></div>
-    <input class="field" id="snipIn" placeholder="Type a snippet and press Enter…">
+    <input class="field" dir="auto" id="snipIn" placeholder="Type a snippet and press Enter…">
     <div class="list scroll" id="snipList"></div>
   </div>
 
   <div class="panel" data-name="search">
     <div class="head"><button class="back">←</button><h4>Web search</h4></div>
-    <input class="field" id="searchIn" placeholder="Search or type a URL, then Enter">
+    <input class="field" dir="auto" id="searchIn" placeholder="Search or type a URL, then Enter">
     <div class="chips" id="engines"></div>
   </div>
 
@@ -802,22 +802,849 @@ function deliver(text) { if (S.paste) { app.close(); send('paste', { text }); } 
 const EMOJI = {
   '😀': '😀 grinning happy|😃 smiley happy|😄 smile|😁 grin|😆 laughing|😅 sweat smile|🤣 rofl laugh|😂 joy tears laugh|🙂 slight smile|🙃 upside down|😉 wink|😊 blush smile|😇 angel innocent|🥰 love hearts|😍 heart eyes love|🤩 star struck|😘 kiss|😋 yum tasty|😛 tongue|😜 wink tongue|🤪 zany crazy|🤑 money|🤗 hug|🤭 oops|🤫 shush quiet|🤔 thinking|🤐 zipper|🤨 raised eyebrow|😐 neutral|😑 expressionless|😶 no mouth|😏 smirk|😒 unamused|🙄 eye roll|😬 grimace|😌 relieved|😔 pensive sad|😪 sleepy|😴 sleeping|😷 mask sick|🤒 fever sick|🤢 nausea|🤮 vomit|🥵 hot|🥶 cold|🥴 woozy|😵 dizzy|🤯 mind blown|🤠 cowboy|🥳 party|😎 cool sunglasses|🤓 nerd|🧐 monocle|😕 confused|😟 worried|🙁 frown|😮 open mouth wow|😲 astonished|😳 flushed|🥺 pleading|😦 frowning|😨 fearful|😰 anxious|😢 cry sad|😭 sob cry|😱 scream|😖 confounded|😣 persevere|😞 disappointed|😓 downcast|😩 weary|😫 tired|🥱 yawn|😤 triumph|😡 angry mad|😠 angry|🤬 swear|😈 devil|💀 skull dead|💩 poop|🤡 clown|👻 ghost|👽 alien|🤖 robot',
   '👍': '👍 thumbs up yes like|👎 thumbs down no|👌 ok|✌️ peace victory|🤞 fingers crossed luck|🤟 love you|🤘 rock|🤙 call me|👈 left|👉 right|👆 up|👇 down|☝️ point up|✋ hand stop|👋 wave hello bye|🖐️ hand|🖖 vulcan|👏 clap|🙌 raise hands|👐 open hands|🤲 palms|🤝 handshake deal|🙏 pray thanks please|✍️ write|💪 muscle strong|👀 eyes look|👁️ eye|🧠 brain|👂 ear|👃 nose|👄 mouth|🫶 heart hands|🤌 pinched|🫡 salute',
-  '❤️': '❤️ red heart love|🧡 orange heart|💛 yellow heart|💚 green heart|💙 blue heart|💜 purple heart|🖤 black heart|🤍 white heart|🤎 brown heart|💔 broken heart|❣️ heart exclamation|💕 two hearts|💞 revolving hearts|💓 beating heart|💗 growing heart|💖 sparkling heart|💘 cupid|💝 heart gift|💯 hundred|💢 anger|💥 boom collision|💫 dizzy|💦 sweat drops|💨 dash|💬 speech|💭 thought|💤 zzz sleep|✨ sparkles|🔥 fire lit|⭐ star|🌟 glowing star|⚡ zap lightning|🎉 tada party|🎊 confetti',
+  '❤️': '❤️ red heart love|🧡 orange heart|💛 yellow heart|💚 green heart|💙 blue heart|💜 purple heart|🖤 black heart|🤍 white heart|🤎 brown heart|💔 broken heart|❣️ heart exclamation|💕 two hearts|💞 revolving hearts|💓 beating heart|💗 growing heart|💖 sparkling heart|💘 cupid|💝 heart gift|💋 kiss|💯 hundred|💢 anger|💥 boom collision|💫 dizzy|💦 sweat drops|💨 dash|💬 speech|💭 thought|💤 zzz sleep|✨ sparkles|🔥 fire lit|⭐ star|🌟 glowing star|⚡ zap lightning|🎉 tada party|🎊 confetti',
   '🐶': '🐶 dog|🐱 cat|🐭 mouse|🐹 hamster|🐰 rabbit bunny|🦊 fox|🐻 bear|🐼 panda|🐨 koala|🐯 tiger|🦁 lion|🐮 cow|🐷 pig|🐸 frog|🐵 monkey|🐔 chicken|🐧 penguin|🐦 bird|🦄 unicorn|🐝 bee|🦋 butterfly|🐢 turtle|🐍 snake|🐙 octopus|🐬 dolphin|🐳 whale|🦈 shark|🌵 cactus|🌲 tree|🌴 palm|🍀 clover luck|🌸 blossom flower|🌹 rose|🌻 sunflower|🌈 rainbow|☀️ sun|🌙 moon|☁️ cloud|❄️ snow|🌊 wave ocean',
   '🍕': '🍎 apple|🍌 banana|🍉 watermelon|🍇 grapes|🍓 strawberry|🍒 cherry|🍑 peach|🥑 avocado|🍆 eggplant|🌶️ pepper hot|🥕 carrot|🌽 corn|🍞 bread|🧀 cheese|🍔 burger|🍟 fries|🍕 pizza|🌭 hotdog|🌮 taco|🍣 sushi|🍜 ramen noodles|🍩 donut|🍪 cookie|🎂 cake birthday|🍫 chocolate|🍿 popcorn|☕ coffee|🍵 tea|🧋 boba|🍺 beer|🍷 wine|🥂 cheers',
   '💡': '⚽ soccer football|🏀 basketball|🎮 game controller|🎲 dice|🎯 target dart|🏆 trophy win|🥇 gold medal|🎸 guitar|🎹 piano|🎧 headphones music|🎵 music note|🎬 movie|📷 camera|💻 laptop|🖥️ desktop computer|⌨️ keyboard|🖱️ mouse|📱 phone|🔋 battery|💡 idea bulb|🔦 flashlight|📚 books|📝 memo note|✏️ pencil|📌 pin|📎 paperclip|✂️ scissors|🔒 lock|🔑 key|🔨 hammer|🛠️ tools|⚙️ gear settings|🧲 magnet|💰 money bag|💳 card|📦 package box|✉️ envelope mail|📅 calendar|⏰ alarm clock|⌛ hourglass|🚀 rocket|✈️ plane|🚗 car|🏠 house home|🎁 gift',
   '✅': '✅ check done yes|☑️ checkbox|✔️ check mark|❌ cross no wrong|❎ cross box|➕ plus|➖ minus|➗ divide|✖️ multiply|❓ question|❗ exclamation|‼️ double exclamation|⚠️ warning|🚫 prohibited|⛔ no entry|🔴 red circle|🟠 orange circle|🟡 yellow circle|🟢 green circle|🔵 blue circle|🟣 purple circle|⚫ black circle|⚪ white circle|🔺 triangle|🔶 diamond|▶️ play|⏸️ pause|⏹️ stop|🔁 repeat|🔀 shuffle|⬆️ up arrow|⬇️ down arrow|⬅️ left arrow|➡️ right arrow|↩️ return|🔗 link|©️ copyright|®️ registered|™️ trademark|#️⃣ hash|🆗 ok|🆕 new|🆒 cool|🔞 18'
 };
+/* country flags — names from CLDR common/main/fa.xml <territories> + common/annotations/en.xml.
+   Flags have no entries in the Persian annotations, so the territory names are what make 🇮🇷 findable by ایران */
+const FLAGS = `🇦🇨|ascension island|جزایر آسنسیون
+🇦🇩|andorra|آندورا
+🇦🇪|united arab emirates|امارات متحدهٔ عربی
+🇦🇫|afghanistan|افغانستان
+🇦🇬|antigua & barbuda|آنتیگوا و باربودا
+🇦🇮|anguilla|آنگویلا
+🇦🇱|albania|آلبانی
+🇦🇲|armenia|ارمنستان
+🇦🇴|angola|آنگولا
+🇦🇶|antarctica|جنوبگان
+🇦🇷|argentina|آرژانتین
+🇦🇸|american samoa|ساموآی امریکا
+🇦🇹|austria|اتریش
+🇦🇺|australia|استرالیا
+🇦🇼|aruba|آروبا
+🇦🇽|åland islands|جزایر آلاند
+🇦🇿|azerbaijan|جمهوری آذربایجان
+🇧🇦|bosnia & herzegovina|بوسنی و هرزگوین
+🇧🇧|barbados|باربادوس
+🇧🇩|bangladesh|بنگلادش
+🇧🇪|belgium|بلژیک
+🇧🇫|burkina faso|بورکینافاسو
+🇧🇬|bulgaria|بلغارستان
+🇧🇭|bahrain|بحرین
+🇧🇮|burundi|بوروندی
+🇧🇯|benin|بنین
+🇧🇱|st. barthélemy|سن بارتلمی
+🇧🇲|bermuda|برمودا
+🇧🇳|brunei|برونئی
+🇧🇴|bolivia|بولیوی
+🇧🇶|caribbean netherlands|جزایر کارائیب هلند
+🇧🇷|brazil|برزیل
+🇧🇸|bahamas|باهاما
+🇧🇹|bhutan|بوتان
+🇧🇻|bouvet island|جزیرهٔ بووه
+🇧🇼|botswana|بوتسوانا
+🇧🇾|belarus|بلاروس
+🇧🇿|belize|بلیز
+🇨🇦|canada|کانادا
+🇨🇨|cocos (keeling) islands|جزایر کوکوس
+🇨🇩|congo - kinshasa|کنگو - کینشاسا
+🇨🇫|central african republic|جمهوری افریقای مرکزی
+🇨🇬|congo - brazzaville|کنگو - برازویل
+🇨🇭|switzerland|سوئیس
+🇨🇮|côte d’ivoire|ساحل عاج
+🇨🇰|cook islands|جزایر کوک
+🇨🇱|chile|شیلی
+🇨🇲|cameroon|کامرون
+🇨🇳|china|چین
+🇨🇴|colombia|کلمبیا
+🇨🇵|clipperton island|جزایر کلیپرتون
+🇨🇶|sark|سارک
+🇨🇷|costa rica|کاستاریکا
+🇨🇺|cuba|کوبا
+🇨🇻|cape verde|کیپ‌ورد
+🇨🇼|curaçao|کوراسائو
+🇨🇽|christmas island|جزیرهٔ کریسمس
+🇨🇾|cyprus|قبرس
+🇨🇿|czechia|چک
+🇩🇪|germany|آلمان
+🇩🇬|diego garcia|دیه‌گو گارسیا
+🇩🇯|djibouti|جیبوتی
+🇩🇰|denmark|دانمارک
+🇩🇲|dominica|دومینیکا
+🇩🇴|dominican republic|جمهوری دومینیکن
+🇩🇿|algeria|الجزایر
+🇪🇦|ceuta & melilla|سبته و ملیله
+🇪🇨|ecuador|اکوادور
+🇪🇪|estonia|استونی
+🇪🇬|egypt|مصر
+🇪🇭|western sahara|صحرای غربی
+🇪🇷|eritrea|اریتره
+🇪🇸|spain|اسپانیا
+🇪🇹|ethiopia|اتیوپی
+🇪🇺|european union|اتحادیهٔ اروپا
+🇫🇮|finland|فنلاند
+🇫🇯|fiji|فیجی
+🇫🇰|falkland islands|جزایر فالکلند
+🇫🇲|micronesia|میکرونزی
+🇫🇴|faroe islands|جزایر فارو
+🇫🇷|france|فرانسه
+🇬🇦|gabon|گابن
+🇬🇧|united kingdom|بریتانیا
+🇬🇩|grenada|گرنادا
+🇬🇪|georgia|گرجستان
+🇬🇫|french guiana|گویان فرانسه
+🇬🇬|guernsey|گرنزی
+🇬🇭|ghana|غنا
+🇬🇮|gibraltar|جبل‌الطارق
+🇬🇱|greenland|گرینلند
+🇬🇲|gambia|گامبیا
+🇬🇳|guinea|گینه
+🇬🇵|guadeloupe|گوادلوپ
+🇬🇶|equatorial guinea|گینهٔ استوایی
+🇬🇷|greece|یونان
+🇬🇸|south georgia & south sandwich islands|جورجیای جنوبی و جزایر ساندویچ جنوبی
+🇬🇹|guatemala|گواتمالا
+🇬🇺|guam|گوام
+🇬🇼|guinea-bissau|گینهٔ بیسائو
+🇬🇾|guyana|گویان
+🇭🇰|hong kong sar china|هنگ‌کنگ، منطقهٔ ویژهٔ اداری چین
+🇭🇲|heard & mcdonald islands|هرد و جزایر مک‌دونالد
+🇭🇳|honduras|هندوراس
+🇭🇷|croatia|کرواسی
+🇭🇹|haiti|هائیتی
+🇭🇺|hungary|مجارستان
+🇮🇨|canary islands|جزایر قناری
+🇮🇩|indonesia|اندونزی
+🇮🇪|ireland|ایرلند
+🇮🇱|israel|اسرائیل
+🇮🇲|isle of man|جزیرهٔ من
+🇮🇳|india|هند
+🇮🇴|british indian ocean territory|قلمرو بریتانیا در اقیانوس هند
+🇮🇶|iraq|عراق
+🇮🇷|iran|ایران
+🇮🇸|iceland|ایسلند
+🇮🇹|italy|ایتالیا
+🇯🇪|jersey|جرزی
+🇯🇲|jamaica|جامائیکا
+🇯🇴|jordan|اردن
+🇯🇵|japan|ژاپن
+🇰🇪|kenya|کنیا
+🇰🇬|kyrgyzstan|قرقیزستان
+🇰🇭|cambodia|کامبوج
+🇰🇮|kiribati|کیریباتی
+🇰🇲|comoros|کومور
+🇰🇳|st. kitts & nevis|سنت کیتس و نویس
+🇰🇵|north korea|کرهٔ شمالی
+🇰🇷|south korea|کرهٔ جنوبی
+🇰🇼|kuwait|کویت
+🇰🇾|cayman islands|جزایر کِیمن
+🇰🇿|kazakhstan|قزاقستان
+🇱🇦|laos|لائوس
+🇱🇧|lebanon|لبنان
+🇱🇨|st. lucia|سنت لوسیا
+🇱🇮|liechtenstein|لیختن‌اشتاین
+🇱🇰|sri lanka|سری‌لانکا
+🇱🇷|liberia|لیبریا
+🇱🇸|lesotho|لسوتو
+🇱🇹|lithuania|لیتوانی
+🇱🇺|luxembourg|لوکزامبورگ
+🇱🇻|latvia|لتونی
+🇱🇾|libya|لیبیا
+🇲🇦|morocco|مراکش
+🇲🇨|monaco|موناکو
+🇲🇩|moldova|مولداوی
+🇲🇪|montenegro|مونته‌نگرو
+🇲🇫|st. martin|سنت مارتین
+🇲🇬|madagascar|ماداگاسکار
+🇲🇭|marshall islands|جزایر مارشال
+🇲🇰|north macedonia|مقدونیهٔ شمالی
+🇲🇱|mali|مالی
+🇲🇲|myanmar (burma)|میانمار (برمه)
+🇲🇳|mongolia|مغولستان
+🇲🇴|macao sar china|ماکائو، منطقهٔ ویژهٔ اداری چین
+🇲🇵|northern mariana islands|جزایر ماریانای شمالی
+🇲🇶|martinique|مارتینیک
+🇲🇷|mauritania|موریتانی
+🇲🇸|montserrat|مونت‌سرات
+🇲🇹|malta|مالت
+🇲🇺|mauritius|موریس
+🇲🇻|maldives|مالدیو
+🇲🇼|malawi|مالاوی
+🇲🇽|mexico|مکزیک
+🇲🇾|malaysia|مالزی
+🇲🇿|mozambique|موزامبیک
+🇳🇦|namibia|نامیبیا
+🇳🇨|new caledonia|کالدونیای جدید
+🇳🇪|niger|نیجر
+🇳🇫|norfolk island|جزیرهٔ نورفولک
+🇳🇬|nigeria|نیجریه
+🇳🇮|nicaragua|نیکاراگوئه
+🇳🇱|netherlands|هلند
+🇳🇴|norway|نروژ
+🇳🇵|nepal|نپال
+🇳🇷|nauru|نائورو
+🇳🇺|niue|نیوئه
+🇳🇿|new zealand|نوزیلند
+🇴🇲|oman|عمان
+🇵🇦|panama|پاناما
+🇵🇪|peru|پرو
+🇵🇫|french polynesia|پلی‌نزی فرانسه
+🇵🇬|papua new guinea|پاپوا گینهٔ نو
+🇵🇭|philippines|فیلیپین
+🇵🇰|pakistan|پاکستان
+🇵🇱|poland|لهستان
+🇵🇲|st. pierre & miquelon|سن پیر و میکلن
+🇵🇳|pitcairn islands|جزایر پیت‌کرن
+🇵🇷|puerto rico|پورتوریکو
+🇵🇸|palestinian territories|سرزمین‌های فلسطینی
+🇵🇹|portugal|پرتغال
+🇵🇼|palau|پالائو
+🇵🇾|paraguay|پاراگوئه
+🇶🇦|qatar|قطر
+🇷🇪|réunion|رئونیون
+🇷🇴|romania|رومانی
+🇷🇸|serbia|صربستان
+🇷🇺|russia|روسیه
+🇷🇼|rwanda|رواندا
+🇸🇦|saudi arabia|عربستان سعودی
+🇸🇧|solomon islands|جزایر سلیمان
+🇸🇨|seychelles|سیشل
+🇸🇩|sudan|سودان
+🇸🇪|sweden|سوئد
+🇸🇬|singapore|سنگاپور
+🇸🇭|st. helena|سنت هلن
+🇸🇮|slovenia|اسلوونی
+🇸🇯|svalbard & jan mayen|سوالبارد و یان ماین
+🇸🇰|slovakia|اسلواکی
+🇸🇱|sierra leone|سیرالئون
+🇸🇲|san marino|سان‌مارینو
+🇸🇳|senegal|سنگال
+🇸🇴|somalia|سومالی
+🇸🇷|suriname|سورینام
+🇸🇸|south sudan|سودان جنوبی
+🇸🇹|são tomé & príncipe|سائوتومه و پرینسیپ
+🇸🇻|el salvador|السالوادور
+🇸🇽|sint maarten|سنت مارتن
+🇸🇾|syria|سوریه
+🇸🇿|eswatini|اسواتینی
+🇹🇦|tristan da cunha|تریستان دا کونا
+🇹🇨|turks & caicos islands|جزایر تورکس و کایکوس
+🇹🇩|chad|چاد
+🇹🇫|french southern territories|سرزمین‌های جنوبی فرانسه
+🇹🇬|togo|توگو
+🇹🇭|thailand|تایلند
+🇹🇯|tajikistan|تاجیکستان
+🇹🇰|tokelau|توکلائو
+🇹🇱|timor-leste|تیمور-لسته
+🇹🇲|turkmenistan|ترکمنستان
+🇹🇳|tunisia|تونس
+🇹🇴|tonga|تونگا
+🇹🇷|türkiye|ترکیه
+🇹🇹|trinidad & tobago|ترینیداد و توباگو
+🇹🇻|tuvalu|تووالو
+🇹🇼|taiwan|تایوان
+🇹🇿|tanzania|تانزانیا
+🇺🇦|ukraine|اوکراین
+🇺🇬|uganda|اوگاندا
+🇺🇲|u.s. outlying islands|جزایر دورافتادهٔ ایالات متحده
+🇺🇳|united nations|سازمان ملل متحد
+🇺🇸|united states|ایالات متحده
+🇺🇾|uruguay|اروگوئه
+🇺🇿|uzbekistan|ازبکستان
+🇻🇦|vatican city|واتیکان
+🇻🇨|st. vincent & grenadines|سنت وینسنت و گرنادین
+🇻🇪|venezuela|ونزوئلا
+🇻🇬|british virgin islands|جزایر ویرجین بریتانیا
+🇻🇮|u.s. virgin islands|جزایر ویرجین ایالات متحده
+🇻🇳|vietnam|ویتنام
+🇻🇺|vanuatu|وانواتو
+🇼🇫|wallis & futuna|والیس و فوتونا
+🇼🇸|samoa|ساموآ
+🇽🇰|kosovo|کوزوو
+🇾🇪|yemen|یمن
+🇾🇹|mayotte|مایوت
+🇿🇦|south africa|افریقای جنوبی
+🇿🇲|zambia|زامبیا
+🇿🇼|zimbabwe|زیمبابوه`;
+EMOJI['🏳️'] = FLAGS.split('\n').map(l => l.split('|').join(' ')).join('|');
+/* Persian keywords, generated from CLDR common/annotations/fa.xml — FA holds the first five per emoji,
+   FA2 the rest, so FA + FA2 is the complete fa annotation set. Appended to the English ones so one
+   search box takes both languages. */
+const FA = `😀|خنده صورت صورت با لبخند لبخند نیش باز
+😃|باز خنده دهان صورت صورت خندان
+😄|باز چشم خندان خنده دهان
+😁|تبسم چشم خنده خندهٔ دندانی خنده دندونی
+😆|باز بسته چشم چشم نیم‌بسته خنده
+😅|باز خنده خنده و عرق خوشحالی دهان شادی
+🤣|از خنده غش کردن خنده خنده‌دار خندیدن خوشحال
+😂|احساس اشک شادی بامزه خنده خنده بلند
+🙂|صورت لبخند لبخند ملایم
+🙃|صورت لبخند معکوس وارونه
+😉|چشمک سکسی شوخی صورت عشوه
+😊|چشم خجالت سرخ شدن صورت لبخند
+😇|صورت فانتزی فرشته لبخند معصوم
+🥰|۳ دوستت دارم ستایش شما شیفتگی
+😍|چشم چشم‌های عاشق صورت عاشق عشق
+🤩|جذاب چشمان خندان خنده ستاره
+😘|بوسه بوسه فرستادن بوسیدن صورت قلب
+😋|به‌به خوشمزه صورت صورت با زبان آب افتاده صورت درحال لیسیدن لب
+😛|زبان زبان بیرون آمده زبانک زبونک صورت
+😜|جوک چشم چشمک زدن زبان زبانک انداختن و چشمک زدن
+🤪|احمق بزرگ بی‌عقل چشم چشم ها
+🤑|پول دهان صورت صورت پول‌دوست
+🤗|آغوش بغل کردن در آغوش گرفتن صورت لبخند
+🤭|آخ اوه ای وای دست روی دهان راز
+🤫|بی‌صدا ساکت سکوت صورت هیس
+🤔|تفکر درحال تفکر صورت فکر کردن متفکر
+🤐|دهان دهان چفت زیپ صورت قابل اعتماد
+🤨|سوءظن شک شکاک صورت با ابروی بالا صورت با ابروی بالاداده
+😐|بی‌احساس بی‌روح بی‌طرف بی‌مزه جدی
+😑|بدون احساس بدون حالت بی‌بیان بی‌حالت صورت
+😶|آرام بی‌صدا دهان ساکت صورت
+😏|پوزخند تمسخر صورت
+😒|بی‌حوصله صورت کسل کسل‌کننده
+🙄|اوه چشم چشم چرخوندن چشم‌ها سایه
+😬|ادا و اصول دهن‌کجی شکلک صورت منزجر
+😌|آسوده خاطر آسوده‌خاطر خیال راحت صورت
+😔|افسرده اندیشناک پژمرده چهره غمگین صورت
+😪|خواب خواب‌آلود صورت
+😴|تخت خواب چرت چهره خروپف خسته
+😷|بیمار تب دارو دکتر سرد
+🤒|آدم بیمار تب تب‌دار دماسنج
+🤢|استفراغ بالا آوردن بهم خوردن حال تهوع حال بد
+🤮|استفراغ بالا آوردن تهوع، بیماری دچار تهوع درحال استفراغ
+🥵|برافروخته تب تب و لرز تب‌دار حرارت
+🥶|آبی خیلی سرد دندان دندون لرز زیر صفر
+🥴|از خود بیخود چشمان بالا و پایین چشمهای تا به تا حیران خل
+😵|صورت گیج
+🤯|دود از سر بلند شدن سر منفجرشده شوکه شده شوکه‌شده غیر ممکن
+🤠|صورت صورت کلاه به سر صورت کلاه‌به‌سر کابوی کلاه
+🥳|بوغ بوق بوق و سرنا پارتی تولد
+😎|باحال جالب خورشید روشن صورت
+🤓|احساس باهوش حرفه‌ای خرخون خوره
+🧐|با کلاس بدگمانی پولدار تخیلی ثروتمند
+😕|صورت گیج گیج شده گیج‌شده مغشوش
+😟|آشوب چهره نگران صورت نگران
+🙁|اخم دلخور صورت غصه غم
+😮|باز تعجب دهان دهان باز از تعجب صورت
+😲|بهت‌زده شوکه شده شوکه‌شده صورت کاملاً
+😳|بهت حیرت خجالت سرخ شده سرخ‌شده
+🥺|التماس اندوهگین تمنا چرا چشم‌ها
+😦|اخم باز باورنکردنی توقع نداشتن چهره
+😨|ترس ترسناک ترسیده صورت مضطرب
+😰|آبی باز ترس دهان سرد
+😢|اشک صورت گریان گریه گریه کردن
+😭|اشک صورت گریه کردن ناراحت هق‌هق
+😱|ترس ترسناک ترسیده جویدن ناخن از ترس جیغ
+😖|به‌هم‌ریخته سردرگم صورت گیج
+😣|استقامت اصرار پافشاری تلاش سماجت
+😞|صورت غمگین ناامید ناراحت
+😓|سرد سرما صورت عرق
+😩|از پا افتاده ازپاافتاده بی‌حوصله خسته صورت
+😫|خستگی خسته صورت
+🥱|بی‌حوصله چرت چهره خروپف خسته
+😤|برنده پیروزی دود از دماغ ژست برندگی با دلخوری صورت
+😡|خشم خشمگین دیوانه سرخ صورت
+😠|دیوانه صورت عصبانی
+🤬|صورت با نمادهایی روی دهان عصبانی فحش ناسزا ناسزاگویان
+😈|افسانه تخیلی جن خنده شرورانه خنده شیطانی
+💀|اسکلت بدن جمجمه جن و پری صورت
+💩|ان پشکل پی‌پی صورت طنز
+🤡|بی‌عرضه تلخک دلقک صورت لوده
+👻|جانور جن و پری روح صورت فانتزی
+👽|آدم فضایی تخیلی جانور جن و پری صورت
+🤖|ربات روبات صورت هیولا
+👍|1+ انگشت شست ایول باشه بالا
+👎|1- پایین دست رد کردن شست
+👌|اوکی باشه بدن بله تأیید
+✌|بدن پیروزی دست علامت پیروزی وی
+🤞|انگشت انگشتان گره خورده بخت پنجه دست
+🤟|دست دوست دارم دوستت دارم سه انگشت علامت دوستت دارم
+🤘|انگشت بدن دست راک شاخ
+🤙|تلفن تماس بگیر دست دست به شکل تلفن زنگ
+👈|اشاره اشاره به چپ انگشت بدن پشت دست
+👉|اشاره اشاره به راست انگشت بدن پشت دست
+👆|اشاره اشاره به بالا با پشت دست انگشت بالا بدن
+👇|اشاره اشاره به پایین انگشت بدن پایین
+☝|اشاره اشاره به بالا انگشت بالا بدن
+✋|احترام بدن بزن قدش دست دست بالا برده
+👋|آهای اونجایی؟ با توام بدن بیرون
+🖐|انگشت انگشتان بدن بزن قدش پنج
+🖖|اسپاک انگشت بدن پیشتازان فضا دست
+👏|بدن دست دست زدن
+🙌|بالابرده تحسین تمجید جشن دست
+👐|باز بدن دست دست‌های باز
+🤲|آرزو دست دعا دعا راز و نیاز عبادت
+🤝|دست دست دادن قرار قرار کاری قول
+🙏|تشکر تعظیم خواهش خواهش می‌کنم درخواست
+✍|دست نوشتن نوشتن با دست
+💪|بدن عضله بازو عضلهٔ بازو ماهیچه مصور
+👀|بدن چشم دو چشم دیدن صورت
+👁|بدن چشم
+🧠|باهوش خردمند زیرک عاقل مغز
+👂|بدن گوش
+👃|بدن بینی دماغ
+👄|بدن دهان لب
+🫶|افراد بدن دست‌ها دوستت دارم شکل قلب با دست
+🤌|اشاره با دست انگشتان اَه جمع‌شده چی؟
+🫡|آفتابی احترام احساسات افراد اوکی
+❤|قلب قلب قرمز
+🧡|قلب نارنجی نارنجی
+💛|زرد قلب
+💚|سبز قلب
+💙|آبی قلب
+💜|احساسات بنفش بهترین دل دوستت دارم
+🖤|تار تاریک تیره دل سنگ‌دل
+🤍|دل سفید قلب
+🤎|دل قلب قهوه‌ای
+💔|شکستن شکسته قلب
+❣|سجاوندی علامت علامت تعجب علامت تعجب قلبی قلب
+💕|دو قلب عشق قلب
+💞|چرخان قلب
+💓|تپش تپیدن قلب قلب تپنده
+💗|تپش عصبی قلب هیجان‌زده
+💖|درخشش قلب قلب درخشان هیجان‌زده
+💘|الهه عشق الههٔ عشق تیر عاشقانه قلب
+💝|روبان قلب قلب با روبان ولنتاین
+💯|۱۰۰ امتیاز بی‌عیب‌ونقص تمام حقیقت
+💢|دیوانه عصبانی کمیک مصور نماد عصبانیت
+💥|برخورد بوم صدای انفجار کمیک مصور
+💫|ستاره ستاره دنباله دار سرگیجه کمیک مصور
+💦|آب تراوش تعرق چکیدن عرق
+💨|به سرعت باد دوان سریع کمیک گرد پا
+💬|بالن بالن گفتار حباب دیالوگ کمیک
+💭|بالن بالن افکار بالن تفکر حباب فکر
+💤|خرناس خروپف خسته خواب خواب‌آلود
+✨|جرقه درخشش ستاره
+🔥|آتش ابزار شعله
+⭐|ستاره ستاره سفید
+🌟|جرقه درخشان ستاره فروزان
+⚡|الکتریسیته الکتریکی برق بنگ خطر
+🎉|بزرگداشت بمب کاغذ رنگی جشن عید کاغذ رنگی
+🎊|پولک توپ توپ پولکی جشن
+🐶|حیوان خانگی سگ صورت
+🐱|جانور حیوان حیوان خانگی صورت گربه
+🐭|صورت موش
+🐹|حیوان خانگی صورت همستر
+🐰|بانی حیوان خانگی خرگوش صورت
+🦊|جانور حیوان روباه صورت
+🐻|خرس صورت
+🐼|پاندا صورت
+🐨|کوآلا کوالا
+🐯|ببر صورت
+🦁|برج فلکی زودیاک شیر شیر جنگل صورت
+🐮|جانور حیوان صورت گاو
+🐷|خوک صورت
+🐸|جانور حیوان صورت قورباغه
+🐵|جانور حیوان صورت میمون
+🐔|جوجه مرغ
+🐧|پنگوئن جانور حیوان
+🐦|پرنده
+🦄|اسب تک شاخ تک‌شاخ صورت
+🐝|جانور حشره حیوان زنبور عسل
+🦋|پروانه حشره زیبا عاشق
+🐢|سنگ‌پشت کاس‌پشت کاسه‌پشت لاک‌پشت
+🐍|افعی اهریمن حامل زودیاک مار
+🐙|اختاپوس جانور حیوان هشت‌پا
+🐬|دلفین
+🐳|آب‌فشانی صورت نهنگ نهنگ در حال آب‌فشانی وال
+🦈|کوسه ماهی
+🌵|کاکتوس گیاه
+🌲|درخت گیاه همیشه‌سبز
+🌴|درخت گیاه نخل
+🍀|۴ برگ چهار شبدر شبدر چهاربرگ
+🌸|شکوفه گل گیاه گیلاس
+🌹|رز گل گیاه
+🌻|خورشید گل گل آفتابگردان گیاه
+🌈|آب‌وهوا باران جشن غرور رنگین کمان علامت همجنسگرایان
+☀|آب‌وهوا آفتابی اشعه پرنور خورشید
+🌙|آب‌وهوا داس ماه فضا ماه مه‌داس
+☁|آب‌وهوا ابر
+❄|آب‌وهوا برف برف‌دانه بلور برف سرما
+🌊|آب آب‌وهوا اقیانوس موج
+🍎|سیب سیب سرخ قرمز گیاه میوه
+🍌|گیاه موز میوه
+🍉|گیاه میوه هندوانه
+🍇|انگور گیاه میوه
+🍓|توت توت‌فرنگی گیاه میوه
+🍒|گیاه گیلاس میوه
+🍑|گیاه میوه هلو
+🥑|آووکادو خوراکی غذا میوه
+🍆|بادمجان خوراک خوراکی سبزیجات غذا
+🌶|تند داغ فلفل فلفل سرخ فلفل قرمز
+🥕|خوراکی سبزیجات غذا هویج
+🌽|بلال خوراک خوراکی دانه ذرت ذرت
+🍞|تکه قرص لقمه نان نان جو
+🧀|پنیر خوراک خوراکی غذا قاچ پنیر
+🍔|برگر چیزبرگر همبرگر
+🍟|سرخ‌کرده سیب‌زمینی
+🍕|پنیر پیتزا قاچ
+🌭|خوراکی ساندویچ سوسیس غذا هات داگ
+🌮|تاکو خوراک خوراکی غذا مکزیکی
+🍣|خوراک ژاپنی سوشی
+🍜|بخار داغ رامن رشته کاسه
+🍩|پیراشکی خوراک خوراکی دسر دونات
+🍪|دسر شیرین شیرینی کلوچه کوکی
+🎂|تولد تولد مبارک تولدت مبارک جشن دسر
+🍫|تخته شکلات تکه دسر شکلات شکلات کاکائوی
+🍿|بوداده پاپ کرن ذرت
+☕|بخار چای داغ قهوه نوشیدن
+🍵|چای فنجان چای فنجان چای بدون دسته فنجان و نعلبکی لیوان
+🧋|آشامیدنی تایوان چای چای حباب دار چای حباب‌دار
+🍺|آبجو بار لیوان ماگ میخانه
+🍷|بار جام شراب شراب میخانه نوشیدن
+🥂|به سلامتی پیاله جشن جلینگ صدای به هم خوردن دو پیاله
+⚽|توپ فوتبال ورزش
+🏀|بسکتبال توپ
+🎮|بازی بازی ویدیویی دسته کنترل‌کننده
+🎲|بازی تاس
+🎯|بازی برخورد پرتاب پیکان در قلب هدف دارت
+🏆|جام ورزشی جایزه جایزه ورزشی کاپ قهرمانی
+🥇|اول جایگاه اول سکوی اول طلا مدال
+🎸|الکتریک راک ساز گیتار موسیقی
+🎹|پیانو ساز کیبورد موسیقی
+🎧|دوگوشی گوشی هدفون
+🎵|چنگ موسیقی نت
+🎬|تخته‌نشان فیلم کلاکت
+📷|دوربین عکس ویدیو
+💻|پی‌سی رایانه رایانه کیفی رایانهٔ کیفی شخصی
+🖥|رایانه رایانه میزی رایانهٔ میزی رومیزی
+⌨|رایانه صفحه‌کلید
+🖱|۳ دکمه رایانه سه ماوس
+📱|تلفن گوشی موبایل همراه
+🔋|باتری باطری شارژ شارژ کردن
+💡|الکتریسیته ایده برق حباب لامپ
+🔦|ابزار الکتریسیته چراغ‌قوه نور
+📚|چند کتاب کتاب
+📝|مداد یادداشت یادداشت‌برداری
+✏|با مداد نوشتن مداد مداد رنگی
+📌|پونز پین سنجاق
+📎|کلیپ گیره گیره کاغذ گیرهٔ کاغذ
+✂|ابزار ابزار بریدن قیچی
+🔒|بسته قفل
+🔑|قفل کلید گذرواژه
+🔨|ابزار پتک چکش
+🛠|آچار ابزار چکش چکش و آچار
+⚙|ابزار چرخ‌دنده
+🧲|Vote آهن‌ربا آهنربای نعلی جاذبه جذب حرف یو
+💰|پول دلار کیسه پول کیسهٔ پول کیف
+💳|اعتبار بانک پول کارت کارت اعتباری
+📦|بسته بسته پستی بستهٔ پستی صندوق
+✉|ایمیل پاکت نامه نامه
+📅|تاریخ تقویم
+⏰|زنگ ساعت ساعت ساعت رومیزی ساعت زنگ‌دار
+⌛|تایمر زمان‌سنج ساعت شنی شن
+🚀|فضا موشک موشک فضایی وسیلهٔ فضایی وسیله نقلیه
+✈|پرواز، جت، سفر، مسافرت طیاره هواپیما وسیلهٔ نقلیه
+🚗|اتومبیل خودرو خودروی سواری ماشین وسیله نقلیه
+🏠|خانه ساختمان منزل
+🎁|جشن جعبه کادو هدیه هدیهٔ کادوشده
+✅|✓ دکمه علامت تأیید علامت تیک علامت تیک سبز
+☑|علامت تأیید علامت تیک علامت تیک خاکستری مربع انتخاب با تیک مربع با علامت تیک
+✔|علامت تأیید علامت تیک علامت تیک مشکی
+❌|x ایکس قرمز ضرب ضربدر علامت ضرب
+❎|دکمه ایکس دکمه ایکس سبز دکمه بستن علامت مربع
+➕|+ بعلاوه به‌علاوه ریاضی علامت
+➖|- − تفریق ریاضی علامت
+➗|÷ تقسیم تقسیم کردن ریاضی علامت
+✖|× x ایکس مشکی ضرب ضرب کردن
+❓|؟ سؤال علامت علامت سؤال قرمز علامت‌گذاری
+❗|! تعجب علامت علامت تعجب قرمز علامت‌گذاری
+‼|دو علامت تعجب علامت تعجب علامت تعجب دوتایی علامت‌گذاری
+⚠|اخطار اعلام خطر اعلام خطر کردن تذکر هشدار
+🚫|ممنوع نه ورود
+⛔|ترافیک خیر ممنوع نه ورود
+🔴|دایره شکل هندسی قرمز
+🟠|پرهون دایره نارنجی
+🟡|پرهون دایره زرد
+🟢|پرهون دایره سبز
+🔵|آبی دایره شکل هندسی
+🟣|بنفش پرهون دایره
+⚫|دایره دایره مشکی شکل هندسی
+⚪|دایره دایره سفید شکل هندسی
+🔺|بالا شکل هندسی قرمز مثلث مثلث با رأس بالا
+🔶|شکل هندسی لوزی لوزی نارنجی بزرگ نارنجی
+▶|پخش پیکان دکمه پخش دکمهٔ پخش راست
+⏸|دکمه مکث دکمهٔ مکث دوتایی عمودی مکث
+⏹|توقف دکمه توقف دکمهٔ توقف مربع
+🔁|پیکان تکرار دکمه تکرار دکمهٔ تکرار
+🔀|پیکان دکمهٔ پخش تصادفی متقاطع
+⬆|پیکان پیکان بالا جهت اصلی شمال مسیر
+⬇|پایین پیکان جنوب جهت اصلی مسیر
+⬅|پیکان پیکان چپ جهت اصلی غرب مسیر
+➡|پیکان پیکان راست جهت اصلی شرق مسیر
+↩|پیکان پیکان خمیده راست
+🔗|اتصال پیوند حلقه حلقهٔ زنجیر دانه زنجیر
+©|حق تکثیر حق چاپ حق طبع و نشر حق نسخه‌برداری حق نشر
+®|ثبت‌شده علامت تجاری ثبت‌شده نشان تجاری ثبت‌شده
+™|TM تی‌ام علامت علامت تجاری علامت تجاری ثبت شده
+🆗|ok باشه تأیید دکمهٔ OK دکمه اوکی
+🆕|جدید دکمهٔ NEW کلمه NEW نو
+🆒|ای ول ایوالله باحال دکمهٔ COOL سرد
+🔞|۱۸ زیر ۱۸ سال ممنوع کمتر از سن قانونی محدودیت سن محدودیت سنی`;
+const FA2 = `😃|لبخند
+😄|صورت صورتک با پوزخند و چشمان خندان لب و چشم خندان لبخند
+😁|صورت صورت شاد با چشمان خندان لبخند نیشخند
+😆|دهان شاد صورت لبخند لبخندزنان نیشخند هاها هرهر
+😅|صورت صورت خندان و عرق‌کرده عرق لبخند
+🤣|شاد صورتک قاه قاه قهقهه هاها هرهر
+😂|خوشحالی روده‌بر صورتک قهقهه کرکر خنده لذت هاها هرهر
+😉|لاس
+😊|لبخند خجالتی
+😇|مقدس ملیح هاله هاله‌دار
+🥰|صورتک عاشقی عشق قلب قلب‌ها لبخند لبخندزنان
+😍|قلب لبخند
+🤩|صورت فوق‌العاده لبخند هیجان زده هیجان‌انگیز
+😋|لبخند لذیذ
+😛|صورت با زبان بیرون‌آمده
+😜|زبونک و چشمک شوخی صورت صورت با چشمک و زبان بیرون آمده صورتک
+🤪|چشم های دیوانه دیوانه صورت دیوانه صورتک لوده کوچک
+🤭|سورپرایز شوک صورت با دست جلوی دهان صورتک با دست روی دهان وا
+🤫|هیس، ساکت، سکوت
+🤐|قفل
+🤨|عدم اعتماد عدم تایید
+😐|خنثی صورت
+😑|گنگ
+😶|صورت بدون لب
+🙄|صورت قیافه کلافه نگاه عاقل اندر سفیه نگاه کلافه هرچی
+😔|غمگین محزون ناامید ناراحت
+😴|خواب خواب‌آلود خوابیدن خوابیده شب شب بخیر شب خوش صورت صورتک قیافه خواب‌آلود هرچی وقت خواب
+😷|سرما سرماخورده صورت صورت با ماسک پزشکی ماسک مریض
+🤒|صورت مریض
+🤢|حال به‌هم خوردن حالت تهوع صورت سبز
+🤮|مریض ناخوش
+🥵|خیلی گرم دارم میمیرم داغ زبان سوزان صورت عرق عرق‌کرده قرمز قرمزشده کله گرم گرما گرمازده لرز
+🥶|سرد سرما سرمازدگی سرمازده شکلک صورت صورتک قندیل کبودشده لرز لرزیدن یخ یخ‌زده
+🥴|خل و چل خنگ دهان لرزان سرخوش سرگشته شنگول گیج لوچ مبهوت مست مست و ملنگ ملنگ منگ نشئه هپروت
+🤯|متعجب
+🤠|گاوچران
+🥳|تولد مبارک تولدت مبارک جشن جشن و سور سرنا سور شکلک صورت صورتک کلاه کله مهمانی هورا هیجان
+😎|صورت خندان با عینک آفتابی عینک عینک آفتابی لبخند
+🤓|زرنگ زیرک شکلک صورت عجیب و غریب عینک متخصص متفاوت نابغه هوشمند
+🧐|سوءظن صورت با ذره بین صورت با عینک یک‌چشمی
+🙁|غمگین ناراحت
+😮|غافلگیری همدردی
+😲|مات مبهوت متعجب هاج‌وواج
+😳|گیج گیج و منگ منگ
+🥺|حیوونکی خواهش درشت دلسوزی زیبا صورتک
+😦|چهره درهم کشیده با دهان باز چهره درهم‌کشیده با دهان باز دهان صورت نا باور
+😨|نگران
+😰|صورت عرق
+😢|ناراحت
+😭|هق‌هق گریه
+😱|صورت وحشتناک
+😣|صورت
+😩|کسل‌کننده
+🥱|خمیازه خواب خواب‌آلود خواب‌الود دهن دره دهن‌دره شب شب بخیر شکلک خمیازه صدای خمیازه صورت خمیازه‌کش کسل هرچی وقت خواب
+😤|عصبانی غرور فتح ناراحت
+😡|عصبانی قرمز لبو
+😈|شاخ شرور صورت صورت خندان با دوشاخ صورت لبخندزنان با دوشاخ فانتزی لبخند
+💀|مرگ هیولا
+💩|گه مدفوع هیولا یه تپهٔ گه
+👻|هیولا
+👽|فانتزی فرازمینی فضا فضایی موجود فضایی هیولا
+👍|بله پرچم بالا پسندیدن حتما حله خوب دست شست عالی فوق‌العاده قانونی قبول قطعا گرفتم!
+👎|نپسندیدن نه
+👌|حتما حتمی دست سه عالی علامت اوکی علامت تایید قبول قطعا گرفتم!
+🤞|شانس گره
+🤘|شیطان نماد شاخ
+🤙|زنگ بزن
+👈|دست
+👉|دست
+👆|پشت دست دست
+👇|پشت دست دست
+☝|دست
+✋|دست بالابرده سلام
+👋|تا بعد تکان تکان دادن تکان دادن دست خداحافظ خوشامدگویی دست سلام
+🖐|خداحافظی دست دست با انگشتان باز سلام
+🖖|سلام ولکان
+🙌|دست‌های بالا آورده ژست هورا
+🤲|نماز
+🤝|ملاقات موافق
+🙏|دست دستان دعاگو دعا دعا کردن سپاس لطفاً
+💪|ورزیده
+🫶|عاشقتم عشق قلب
+🤌|دست دست نگه داشتن ریلکس سؤال ساکت شو صبر طنزآلود هان؟
+🫡|بله بله خانم بله قربان چهره سلام‌کنان سلام سلام نظامی شکلک موفق باشید
+💜|عشق قلب
+🖤|سیاه سیاه‌دل شرور شیطانی قلب
+❣|نشانه‌گذاری
+💘|قلب تیرخورده کوپید
+💯|درست است صد کامل نمره وفادار
+💦|قطره قطره‌های عرق کمیک مصور
+💨|مصور
+💬|گفتگو مصور
+💭|کمیک مصور
+💤|شب شب بخیر کمیک مصور
+⚡|ولتاژ ولتاژ بالا
+🎉|مهمانی
+🐍|مارگیر
+🍀|گیاه
+☀|خورشیدی روشن فضا
+🌙|هلال
+🍆|گیاه
+🌶|گیاه
+🌽|غذا گیاه
+🍜|نودل
+🍩|شیرین غذا
+🎂|روز تولد شیرین شیرینی غذا کیک
+🍫|شیرین کاکائو
+☕|نوشیدنی نوشیدنی گرم
+🍵|نوشیدن نوشیدنی
+🧋|چای حُبابی حباب شیر غذا مروارید نوشیدنی
+🍺|نوشیدن
+🍷|نوشیدنی الکلی
+🥂|صدای به‌هم خوردن پیاله‌ها مشروب نوشیدن
+🎯|ضربه مستقیم هدف وسط هدف
+🥇|نخست نفر اول
+💻|لبتاب
+🖱|موشواره
+💡|نور
+🧲|قطب مثبت قطب منفی مغناطیسی نعل نعل اسب نعلی شکل
+🚗|وسیلهٔ نقلیه
+❌|لغو نادرست
+➖|منها
+✖|علامت لغو
+❗|نقطه‌گذاری
+▶|مثلث
+⏸|نوار
+🔗|دانهٔ زنجیر
+©|کپی رایت
+™|نشان تجاری نماد بازرگانی
+🆗|قبول
+🆒|کلمه COOL کول
+🔞|ممنوع هجده هجده سال`;
+const FA_MAP = new Map((FA + '\n' + FA2).split('\n').map(l => { const i = l.indexOf('|'); return [l.slice(0, i), l.slice(i + 1)]; }));
+/* CLDR is formal: its only name for 🇺🇸 is "ایالات متحده", and "لایک" is absent entirely, so these
+   colloquial words cannot come from annotations. Kept separate on purpose — delete this block and
+   Persian search still works, just without the slang. */
+const FA_X = `🇺🇸|آمریکا امریکا آمریکایی یانکی
+🇬🇧|انگلیس انگلستان بریتانیای
+🇮🇷|ایران آژیر ایرانی
+🇩🇪|آلمان جرمنی
+🇳🇱|هلند هالند
+🇪🇸|اسپانیایی
+🇷🇺|روسیه روس
+🇰🇷|کره جنوبی کره ای
+🇹🇷|ترکیه تورکیه
+🇸🇦|عربستان عربستان سعودی
+🇦🇪|امارات دبی ابوظبی
+🇿🇦|آفریقای جنوبی
+💋|بوس بوسه بوسیدن هوس
+😘|بوس بوسه بوسیدن
+😍|🥰|عشق عاشق دوستت دارم
+🤗|🫶|بغل در آغوش
+👍|لایک آی لایک لایک کردم اوکی
+👎|دیسلایک نایک بیزار نمیخوام
+🙏|تشکر ممنون ممنونم مرسی سپاس
+👋|سلام درود خداحافظ
+👏|کف زدن کف تشویق
+🫡|احترام سربلند
+🤔|فکر فکر کن
+😴|🥱|💤|خواب خواب‌آلود خسته خمیازه
+💀|مرگ بمیر دیگه تموم شد
+🤡|دلقک احمق لوده
+🔥|آتیش داغ
+💯|صد ۱۰۰ کامل عالی
+⭐|ستاره امتیاز
+🎉|🎊|جشن مبارک تولد هورا
+🎁|کادو هدیه
+💡|ایده فکر لامپ
+🔑|کلید رمز پسورد
+💰|💳|پول کارت بانکی
+📅|تقویم تاریخ مناسبت
+⏰|⌛|ساعت تایمر زمان‌سنج
+🚀|پرتاب استارت
+✈|هواپیما پرواز سفر
+🚗|ماشین خودرو اتومبیل
+🏠|خونه
+📱|موبایل گوشی تلفن همراه
+💻|لپ‌تاپ کامپیوتر نوت بوک
+📷|دوربین عکس
+🎧|هدفون هندزفری
+🎵|موسیقی آهنگ
+🎬|فیلم سینما
+🎮|بازی گیم
+⚽|فوتبال
+🏆|جام قهرمانی برد مدال
+🎯|هدف تیر
+☕|قهوه
+🍵|چای
+🍔|برگر همبرگر
+🍕|پیتزا
+🍟|سیب‌زمینی چیپس
+🌭|هات داگ سوسیس
+🎂|کیک تولد جشن
+🍎|سیب
+🍌|موز
+🍉|هندوانه طالبی
+🐶|سگ کیف
+🐱|گربه پیشی
+🐭|موش
+🐰|خرگوش
+🦊|روباه
+🐻|خرس
+🦁|شیر
+🐮|گاو
+🐷|خوک
+🐸|قورباغه
+🐵|میمون
+🦄|تک‌شاخ اسب
+🐝|زنبور
+🦋|پروانه
+🐙|اختاپوس
+☀|خورشید آفتاب
+🌙|ماه
+🌹|🌸|گل رز شکوفه
+🌈|رنگین کمان
+❄|برف
+🌊|دریا موج آب
+😡|عصبانی عصبانیت
+😢|😭|گریه ناراحت زار زار گریستن
+😱|جیغ ترس ترسیده وحشت
+😮|😲|تعجب وای حیرت
+😎|خفن کول باحال شیک
+🥳|جشن هورا مبارک
+🤠|کابوی کابو`;
+const FA_X_MAP = new Map(FA_X.split('\n').map(l => { const i = l.indexOf('|'); return [l.slice(0, i).replace(/\uFE0F/g, ''), l.slice(i + 1)]; }));
+/* fold everything a Persian keyboard, an Arabic keyboard or a phone keyboard can disagree about:
+   Arabic presentation forms, harakat, tatweel, ZWNJ, digit shapes and the ك/ي/ة/أ letter variants */
+const fold = s => s.normalize('NFKC').toLowerCase()
+  .replace(/[\u064B-\u0655\u0670\u0640]/g, '')
+  .replace(/\u200C/g, ' ')
+  .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627')
+  .replace(/\u0624/g, '\u0648').replace(/\u0626/g, '\u06CC').replace(/\u0649/g, '\u06CC')
+  .replace(/\u0629/g, '\u0647').replace(/\u0643/g, '\u06A9').replace(/[\u06D5]/g, '\u0647')
+  .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660).replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0)
+  .replace(/\s+/g, ' ').trim();
+/* rank so the best hit is on top: whole word, then word start, then anywhere in the phrase */
+const rank = (n, q) => {
+  if (!q) return 0;
+  const w = n.split(' ');
+  if (w.includes(q)) return 0;
+  for (const x of w) if (x.startsWith(q)) return 1;
+  if (n.includes(q)) return 2;
+  if (w.some(x => x.length > 2 && q.includes(x))) return 3;
+  return 99;
+};
 const ALL = [];
-for (const [cat, s] of Object.entries(EMOJI)) for (const it of s.split('|')) { const i = it.indexOf(' '); ALL.push({ e: it.slice(0, i), n: it.slice(i + 1), cat }); }
+for (const [cat, s] of Object.entries(EMOJI)) for (const it of s.split('|')) {
+  const i = it.indexOf(' ');
+  const e = it.slice(0, i);
+  const k = e.replace(/\uFE0F/g, '');
+  ALL.push({ e, n: fold(it.slice(i + 1) + ' ' + (FA_MAP.get(k) || '') + ' ' + (FA_X_MAP.get(k) || '')), cat });
+}
 let emojiCat = '😀';
 const grid = $('#emojiGrid');
 $('#cats').innerHTML = ['🕘', ...Object.keys(EMOJI)].map(c => `<button data-c="${c}">${c}</button>`).join('');
 function renderEmoji() {
-  const q = $('#emojiSearch').value.trim().toLowerCase();
+  const q = fold($('#emojiSearch').value);
   $$('#cats button').forEach(b => b.classList.toggle('on', !q && b.dataset.c === emojiCat));
   let list;
-  if (q) list = ALL.filter(x => x.n.includes(q)).map(x => x.e);
+  if (q) list = ALL.map(x => ({ e: x.e, r: rank(x.n, q) })).filter(x => x.r < 99).sort((a, b) => a.r - b.r).map(x => x.e);
   else if (emojiCat === '🕘') list = S.recentEmoji;
   else list = ALL.filter(x => x.cat === emojiCat).map(x => x.e);
   grid.innerHTML = list.length ? list.map(e => `<button class="spring">${e}</button>`).join('') : `<div class="empty" style="grid-column:1/-1">${q ? 'No emoji found' : 'Nothing yet'}</div>`;
