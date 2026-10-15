@@ -607,7 +607,7 @@ fn main() {
     );
     let init = format!(
         "window.onerror=(m,s,l)=>window.ipc.postMessage(JSON.stringify({{t:\"log\",text:m+\" @\"+l}}));window.__init = {};\
-         addEventListener('DOMContentLoaded',()=>{{const s=document.createElement('style');s.textContent={};document.head.appendChild(s);}});",
+         addEventListener('DOMContentLoaded',()=>{{const s=document.createElement('style');s.textContent={:?};document.head.appendChild(s);}});",
         json!({ "settings": settings, "notes": notes, "platform": sys::PLATFORM, "home": sys::home(),
                 "version": VERSION, "contextMenu": sys::context_menu_enabled(),
                 "screens": all_screens.iter().map(|s| json!({ "name": s.name, "w": s.w, "h": s.h })).collect::<Vec<_>>() }),

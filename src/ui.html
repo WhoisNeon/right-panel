@@ -86,11 +86,13 @@
   .chip.on { background: var(--inv); color: var(--inv-ink); }
 
   /* emoji */
-  .cats { display: flex; gap: 2px; }
-  .cats button { flex: 1; border: 0; background: none; font-size: 16px; height: 30px; border-radius: 9px; cursor: pointer; opacity: .5; }
+  .cats { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .cats::-webkit-scrollbar { display: none; }
+  .cats button { flex: 1 0 auto; min-width: 26px; border: 0; background: none; font-size: 16px; height: 30px; border-radius: 9px; cursor: pointer; opacity: .5; }
   .cats button.on, .cats button:hover { opacity: 1; background: var(--soft); }
   .emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; height: 220px; align-content: start; }
-  .emoji-grid button { border: 0; background: none; font-size: 22px; height: 36px; border-radius: 10px; cursor: pointer; }
+  .emoji-grid button { border: 0; background: none; font-size: 22px; height: 36px; border-radius: 10px; cursor: pointer; min-width: 0; }
+  .emoji-grid.flags button { font-size: 17px; }
   .emoji-grid button:hover { background: var(--soft2); transform: scale(1.22); }
 
   /* lists (clipboard, snippets, units…) */
@@ -796,7 +798,7 @@ const toastEl = $('#toast'); let tt;
 function toast(msg) { toastEl.textContent = msg; toastEl.classList.remove('show'); void toastEl.offsetWidth; toastEl.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('show'), 1600); }
 function copy(text, msg) { send('copy', { text }); toast(msg || 'Copied'); }
 // insert into the app you were using (or just copy, per settings)
-function deliver(text) { if (S.paste) { app.close(); send('paste', { text }); } else copy(text); }
+function deliver(text, keepOpen) { if (S.paste) { if (!keepOpen) app.close(); send('paste', { text }); } else copy(text); }
 
 /* ---- emoji ---- */
 const EMOJI = {
@@ -1643,6 +1645,7 @@ $('#cats').innerHTML = ['🕘', ...Object.keys(EMOJI)].map(c => `<button data-c=
 function renderEmoji() {
   const q = fold($('#emojiSearch').value);
   $$('#cats button').forEach(b => b.classList.toggle('on', !q && b.dataset.c === emojiCat));
+  grid.classList.toggle('flags', emojiCat === '🏳️');
   let list;
   if (q) list = ALL.map(x => ({ e: x.e, r: rank(x.n, q) })).filter(x => x.r < 99).sort((a, b) => a.r - b.r).map(x => x.e);
   else if (emojiCat === '🕘') list = S.recentEmoji;
@@ -1657,7 +1660,7 @@ grid.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const em = b.textContent;
   S.recentEmoji = [em, ...S.recentEmoji.filter(x => x !== em)].slice(0, 28); save();
-  deliver(em);
+  deliver(em, true);
 });
 if (S.recentEmoji.length) emojiCat = '🕘';
 renderEmoji();
