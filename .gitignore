@@ -1,6 +1,7 @@
 /target
 /dist
 /pkg
+node_modules/
 
 # local scaffolding, not part of the app
 /test-ui.html
