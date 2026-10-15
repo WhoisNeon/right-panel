@@ -117,6 +117,9 @@ pub fn clip_seq() -> u64 {
 /// Auto-paste needs OS permissions here, so items are copied instead (UI switches to copy mode).
 pub fn paste_into_previous() {}
 
+/// Typing into another app needs the same permissions; the emoji tool falls back to copying there.
+pub fn type_into_previous(_text: &str) {}
+
 /* ---------------- media ---------------- */
 pub fn press(name: &str) {
     if cfg!(target_os = "macos") {

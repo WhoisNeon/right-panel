@@ -9,6 +9,13 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.12
+- **Right-click a tool** — in the dock or in More, right-click any tool for *Move to dock / Move into More* and *Disable tool*; Settings → Widgets switches it back on. Dragging a tool onto the More icon also moves it to More
+- **Copy, never paste** — everything you click lands on the clipboard: snippets, Generate, the text tools, the notes. The "Paste on click" setting is gone. Clicking an emoji types it straight into the app you came from, with no clipboard round-trip
+- **Menus behave** — the WebView's own right-click menu is gone, the dropdowns and the colour picker fade and scale open and shut, the dropdown list no longer looks see-through, and the caret next to a dropdown label is gone
+- **Icons everywhere** — New, Copy, Delete, Add, Clear, Save, Cancel, Regenerate and Quit carry icons, and the calculator's ± key is a proper glyph instead of text
+- **Smaller fixes** — the emoji category tabs show their icons again, the selected theme swatch is no longer sliced at the top, the toggled Keep Awake tile stays readable on hover, and Settings slides between Widgets, Theme and General
+
 ### New in 1.4.11
 - **Build your own theme** — Settings → Look has a theme builder: name it, pick a background and an accent, and every other colour (raised surfaces, separators, muted labels, hover and selected states) is derived from those two. The text colour on the accent is chosen for you — black or white, whichever reads better on the colour you picked
 - **A real colour picker** — choose a colour by eye from the square or type a hex code; it is used wherever a colour is chosen, including the Colour tool, and it shows the same value as hex, rgb and hsl

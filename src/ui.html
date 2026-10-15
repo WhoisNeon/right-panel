@@ -96,7 +96,8 @@
   /* small gap between the content and its scrollbar; textareas keep their own padding */
   .scroll:not(textarea) { padding-right: 4px; }
   .spring { transition: transform .35s var(--pop), background .2s; }
-  .btn { border: 0; background: var(--soft); border-radius: 12px; padding: 9px 12px; font-size: 13px; cursor: pointer; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 12px; font-size: 13px; cursor: pointer; }
+  .btn svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .btn:hover { background: var(--soft2); }
   .btn.primary { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
   .btn.iconbtn { flex: none; display: grid; place-items: center; padding: 9px 11px; }
@@ -164,7 +165,7 @@
   .tile b svg, .grid3 > button b svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
   .tile b img { width: 24px; height: 24px; object-fit: contain; }
   .tile:hover, .grid3 > button:hover { background: var(--soft2); transform: translateY(-3px); border-radius: 18px; }
-  .tile.on { background: var(--inv); color: var(--inv-ink); }
+  .tile.on, .tile.on:hover { background: var(--inv); color: var(--inv-ink); }
   .ph-tile { border-radius: 14px; border: 2px dashed var(--muted); min-height: 66px; animation: phIn .25s var(--pop); }
   .hint { font-size: 11px; color: var(--muted); text-align: center; }
 
@@ -184,7 +185,6 @@
   .keys button { border: 0; background: var(--soft); color: var(--ink); border-radius: 10px; height: 38px; font-size: 15px; font-family: inherit; cursor: pointer; display: grid; place-items: center; }
   .keys button:hover { background: var(--soft2); }
   .keys button:active { transform: scale(.94); }
-  .keys button.fn { color: var(--muted); font-size: 13px; }
   .keys button.op { color: var(--inv-ink); background: var(--inv); }
   /* only "=" wears the accent; the four operators just sit a shade above the digits */
   .keys button.opk { background: var(--soft2); color: var(--inv); font-weight: 600; }
@@ -241,9 +241,8 @@
   .chip.engine { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; min-width: 0; }
   .chip.engine span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .chip.engine svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  /* brand marks are solid glyphs: fill them, the 1.7px outline would fatten the shape */
   .chip.engine svg.brand { fill: currentColor; stroke: none; }
-  /* Neshan ships as outline paths, so it keeps its stroke and gains the fill the other logos have */
-  .chip.engine svg.brandfill { fill: currentColor; }
 
   /* settings */
   .set { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 4px 2px; }
@@ -261,14 +260,23 @@
   .tabs button.on { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
   .pick { position: relative; }
   .pick > .field { cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
-  .pick > .field::after { content: " ▾"; color: var(--muted); }
-  .pick .opts { display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto;
-    background: var(--liquid); border-radius: 12px; padding: 4px; box-shadow: 0 0 0 1px var(--line), 0 10px 30px -10px rgba(0,0,0,.5); }
-  .pick.open .opts { display: block; }
+  /* --liquid is the panel's own colour, so a list filled with it looked see-through and the rows
+     it covered stayed readable — and clickable — through it. Lift it with --soft instead. */
+  .pick .opts { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto;
+    background-color: var(--liquid); background-image: linear-gradient(var(--soft), var(--soft)); border-radius: 12px; padding: 4px;
+    box-shadow: 0 0 0 1px var(--line), 0 10px 30px -10px rgba(0,0,0,.5); transform-origin: top right;
+    opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-4px) scale(.97);
+    transition: opacity .16s, transform .2s var(--pop), visibility 0s .2s; }
+  .pick.open .opts { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
   .pick .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .pick .opts button:hover, .pick .opts button.on { background: var(--soft2); }
   .spage { display: none; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .spage.on { display: flex; animation: rise .4s cubic-bezier(.2,.8,.2,1) both; }
+  /* switching tabs slides the new page in from the side you moved toward */
+  .spage.on.from-r { animation: slideR .34s cubic-bezier(.2,.8,.2,1) both; }
+  .spage.on.from-l { animation: slideL .34s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes slideR { from { opacity: 0; transform: translateX(28px); } }
+  @keyframes slideL { from { opacity: 0; transform: translateX(-28px); } }
   .wsec { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 4px 2px 0; display: flex; justify-content: space-between; }
   /* a .wrow is exactly 34px tall, so 5 rows + 4 gaps = 186px in both lists (dock and More) */
   .wlist { display: flex; flex-direction: column; gap: 4px; min-height: 36px; max-height: 186px; border-radius: 12px; }
@@ -299,7 +307,9 @@
   .ctxmenu i.sep { display: block; height: 1px; margin: 4px 8px; background: currentColor; opacity: .18; }
   .notename { width: 100%; border: 0; outline: 0; background: var(--soft2); color: var(--ink); border-radius: 99px; padding: 5px 11px; font: inherit; font-size: 12px; }
   .ph-row { height: 34px; border-radius: 11px; border: 2px dashed var(--muted); flex: none; }
-  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  /* the 4px top/bottom padding is the room the selected swatch's 4px ring needs; without it
+     the ring is sliced off by the scrolling .spage above */
+  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 4px 0; }
   .theme { border: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); padding: 0; }
   .theme i { width: 46px; height: 46px; border-radius: 15px; position: relative; display: block; box-shadow: inset 0 0 0 1px rgba(128,128,128,.35); transition: transform .35s var(--pop), border-radius .35s var(--spring); }
   .theme i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px; border-radius: 50%; background: var(--dot); }
@@ -309,8 +319,11 @@
 
   /* custom colour picker — the panel draws its own, so no native colour dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
-    box-shadow: 0 0 0 1px var(--line), 0 18px 40px -12px rgba(0,0,0,.6); }
+    box-shadow: 0 0 0 1px var(--line), 0 18px 40px -12px rgba(0,0,0,.6);
+    opacity: 0; visibility: hidden; pointer-events: none; transform: scale(.96) translateY(4px);
+    transition: opacity .16s, transform .2s var(--pop), visibility 0s .2s; }
   .cpick[hidden] { display: none; }
+  .cpick.show { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
   .cpick .sv { position: relative; height: 104px; border-radius: 10px; touch-action: none;
     background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(var(--h, 0deg) 100% 50%)); }
   .cpick .hue { position: relative; height: 12px; border-radius: 99px; touch-action: none;
@@ -379,7 +392,7 @@
   </div>
 
   <div class="panel" data-name="clip">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Clipboard</h4><button class="link" id="clipClear">Clear</button></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Clipboard</h4><button class="link" id="clipClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button></div>
     <input class="field" dir="auto" id="clipSearch" placeholder="Search history…">
     <div class="list scroll" id="clipList"></div>
   </div>
@@ -404,11 +417,11 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Notes</h4><span class="link" id="noteInfo">saved</span></div>
     <div class="chips" id="noteTabs"></div>
     <textarea class="field scroll" dir="auto" id="note" placeholder="Write something…"></textarea>
-    <div class="row"><button class="btn" id="noteNew">New</button><button class="btn" id="noteCopy">Copy</button><button class="btn" id="noteDel">Delete</button></div>
+    <div class="row"><button class="btn" id="noteNew"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>New</button><button class="btn" id="noteCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button><button class="btn" id="noteDel"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Delete</button></div>
   </div>
 
   <div class="panel" data-name="more">
-    <div class="head"><h4>Tools</h4><span class="hint">drag a tile onto the dock</span></div>
+    <div class="head"><h4>Tools</h4></div>
     <div class="grid3 tiles" id="tiles"></div>
   </div>
 
@@ -438,7 +451,7 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Text tools</h4></div>
     <textarea class="field" dir="auto" id="ttIn" rows="2" placeholder="Type or paste text here…"></textarea>
     <div class="grid3" id="textTools"></div>
-    <div class="ttout"><textarea class="field" dir="auto" id="ttRes" readonly rows="2" placeholder="result appears here"></textarea><button class="btn primary" id="ttCopy">Copy</button></div>
+    <div class="ttout"><textarea class="field" dir="auto" id="ttRes" readonly rows="2" placeholder="result appears here"></textarea><button class="btn primary" id="ttCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div>
   </div>
 
   <div class="panel" data-name="pass">
@@ -451,7 +464,7 @@
     </div>
     <div class="set"><span>Length <b id="pwLenV">16</b></span></div>
     <input type="range" min="4" max="64" value="16" id="pwLen">
-    <div class="row"><button class="btn" id="pwGen">Regenerate</button><button class="btn primary" id="pwCopy">Copy</button></div>
+    <div class="row"><button class="btn" id="pwGen"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></svg>Regenerate</button><button class="btn primary" id="pwCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div>
   </div>
 
   <div class="panel" data-name="unit">
@@ -465,10 +478,10 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4></div>
     <textarea class="field" dir="auto" id="ncIn" rows="2" placeholder="Type or paste text…"></textarea>
     <div class="ncout" id="ncOut">
-      <div class="set"><span>English</span><span><textarea class="field" dir="auto" id="ncEn" readonly rows="2"></textarea><button class="btn" data-nc="en">Copy</button></span></div>
-      <div class="set"><span>Farsi</span><span><textarea class="field" dir="auto" id="ncFa" readonly rows="2"></textarea><button class="btn" data-nc="fa">Copy</button></span></div>
-      <div class="set"><span>Arabic</span><span><textarea class="field" dir="auto" id="ncAr" readonly rows="2"></textarea><button class="btn" data-nc="ar">Copy</button></span></div>
-      <button class="btn" id="ncClear">Clear</button>
+      <div class="set"><span>English</span><span><textarea class="field" dir="auto" id="ncEn" readonly rows="2"></textarea><button class="btn" data-nc="en"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
+      <div class="set"><span>Farsi</span><span><textarea class="field" dir="auto" id="ncFa" readonly rows="2"></textarea><button class="btn" data-nc="fa"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
+      <div class="set"><span>Arabic</span><span><textarea class="field" dir="auto" id="ncAr" readonly rows="2"></textarea><button class="btn" data-nc="ar"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
+      <button class="btn" id="ncClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button>
     </div>
   </div>
 
@@ -479,7 +492,7 @@
   </div>
 
   <div class="panel" data-name="gen">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Generate &amp; paste</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Generate</h4></div>
     <div class="list" id="genList"></div>
   </div>
 
@@ -489,7 +502,7 @@
   </div>
 
   <div class="panel" data-name="snippets">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4><span class="hint">click to paste</span></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4><span class="hint">click to copy</span></div>
     <input class="field" dir="auto" id="snipIn" placeholder="Type a snippet and press Enter…">
     <div class="list scroll" id="snipList"></div>
   </div>
@@ -517,18 +530,17 @@
     </div>
     <div class="spage" data-p="look">
       <div class="themes" id="themes"></div>
-      <div class="wsec"><span>Your themes</span><span class="addpair"><button class="link" id="themeAdd">Add</button></span></div>
+      <div class="wsec"><span>Your themes</span><span class="addpair"><button class="link" id="themeAdd"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>Add</button></span></div>
       <div class="tlist" id="themeList"></div>
       <div class="tedit" id="themeEdit" hidden>
         <input class="field" dir="auto" id="teName" placeholder="Theme name">
         <div class="set"><span>Background</span><button class="cchip" id="teBg" aria-label="Background colour"></button></div>
         <div class="set"><span>Accent</span><button class="cchip" id="teAccent" aria-label="Accent colour"></button></div>
-        <div class="row"><button class="btn" id="teCancel">Cancel</button><button class="btn primary" id="teSave">Save</button></div>
+        <div class="row"><button class="btn" id="teCancel"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg>Cancel</button><button class="btn primary" id="teSave"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>Save</button></div>
       </div>
     </div>
     <div class="spage" data-p="general">
       <div class="set"><span id="startLbl">Start with Windows</span><button class="toggle" id="tStartup"></button></div>
-      <div class="set" id="pasteRow"><span>Paste on click</span><button class="toggle" id="tPaste"></button></div>
       <div class="set"><span>Magnify icons on hover</span><button class="toggle" id="tMagnify"></button></div>
       <div class="set" id="openModRow"><span>Open panel<small class="hint" style="display:block;text-align:left">Hold at the screen edge</small></span><select class="field" id="openModSel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
       <div class="set"><span>Animation speed</span><select class="field" id="speedSel" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
@@ -537,8 +549,8 @@
       <div class="set" id="ctxRow"><span>Add to right-click menu<small class="hint" style="display:block">Files &amp; folders → “Add to Right Panel”</small></span><button class="toggle" id="tContext"></button></div>
       <div class="set"><span>Check for updates</span><button class="toggle" id="tUpdates"></button></div>
       <div class="item plain" id="aboutRow">Right Panel <b id="verNow"></b><small id="updLine">Click to check for updates</small></div>
-      <button class="btn primary" id="updBtn" style="display:none">Download &amp; install update</button>
-      <button class="btn" id="quitBtn">Quit Right Panel</button>
+      <button class="btn primary" id="updBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></svg><span>Download &amp; install update</span></button>
+      <button class="btn" id="quitBtn"><svg viewBox="0 0 24 24"><path d="M12 2v10" /> <path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></svg>Quit Right Panel</button>
     </div>
   </div>
 </div>
@@ -550,6 +562,7 @@
   <i class="sep"></i>
   <button data-act="delete" class="danger"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Delete note</button>
 </div>
+<div class="ctxmenu" id="toolMenu" hidden></div>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
 <div class="cpick" id="cpick" hidden>
@@ -563,7 +576,7 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const send = (t, o = {}) => window.ipc.postMessage(JSON.stringify({ t, ...o }));
 const init = window.__init || {};
 const OS = init.platform || 'windows';   // windows | macos | linux
-const S = Object.assign({ theme: 'midnight', accent: '#000000', startup: false, paste: true, magnify: true, recentEmoji: [], recentColors: [], themes: [],
+const S = Object.assign({ theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
   edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] }, init.settings || {});
 const save = () => send('settings', { settings: S });
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -1032,7 +1045,11 @@ function dropDrag(e) {
   const { id, el, ghost } = dragging;
   const z = [ph.dock, ph.tiles, ph.row].map(x => x.parentElement && zoneOf(x)).find(Boolean);
   ghost?.remove(); el.classList.remove('ghost'); dragging = null;
-  if (dragMoved && z && z.ph.parentElement === z.box) {
+  // dropped straight on the More button: that tool belongs in More. Without this the pointer is
+  // still over #tools, so the drop would just reorder the dock the tool already sits in.
+  const onMore = dragMoved && id !== 'more' && document.elementFromPoint(e.clientX, e.clientY)?.closest('.tool[data-w="more"]');
+  if (onMore) { clearPh(); moveWidget(id, 'more', 0); }
+  else if (dragMoved && z && z.ph.parentElement === z.box) {
     const idx = [...z.box.children].filter(k => k === z.ph || (k.matches(z.sel) && k !== el)).indexOf(z.ph);
     clearPh();
     if (z.move) z.move(id, idx); else moveWidget(id, z.list, idx, z.box.classList.contains('wlist'));
@@ -1090,8 +1107,14 @@ $('.spage[data-p=widgets]').addEventListener('click', e => {
 });
 $('#stabs').addEventListener('click', e => {
   const p = e.target.dataset.p; if (!p) return;
-  $$('#stabs button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
-  $$('.spage').forEach(x => x.classList.toggle('on', x.dataset.p === p));
+  const btns = $$('#stabs button');
+  const from = btns.findIndex(b => b.classList.contains('on')), to = btns.findIndex(b => b.dataset.p === p);
+  if (to < 0 || to === from) return;
+  btns.forEach((b, i) => b.classList.toggle('on', i === to));
+  $$('.spage').forEach(x => { x.classList.remove('from-l', 'from-r'); x.classList.toggle('on', x.dataset.p === p); });
+  const page = $(`.spage[data-p="${p}"]`);
+  void page.offsetWidth;                       // let the browser see the "before" frame, or the slide is skipped
+  page.classList.add(to > from ? 'from-r' : 'from-l');
 });
 $('#addApp').onclick = () => send('addApp');
 
@@ -1118,8 +1141,8 @@ tabUi.addEventListener('mouseover', e => {          // the whole tab, so the Set
   clearTimeout(tipT); tipT = setTimeout(() => showTip(el), 300);
 });
 tabUi.addEventListener('mouseout', e => { if (e.target.closest('.tool')) hideTip(); });
-// insert into the app you were using (or just copy, per settings)
-function deliver(text, keepOpen) { if (S.paste) { if (!keepOpen) app.close(); send('paste', { text }); } else copy(text); }
+/* clicking a value copies it; the panel never pastes on your behalf */
+function deliver(text) { copy(text); }
 
 /* ---- emoji ---- */
 const EMOJI = {
@@ -1966,7 +1989,7 @@ const grid = $('#emojiGrid');
 const CAT_ICON = ['history', 'smile', 'thumbs-up', 'heart', 'paw-print', 'utensils', 'lightbulb', 'shapes', 'flag'];
 const CAT_NAME = ['Recent', 'Smileys', 'People', 'Hearts', 'Animals', 'Food', 'Objects', 'Symbols', 'Flags'];
 $('#cats').innerHTML = ['🕘', ...Object.keys(EMOJI)].map((c, i) =>
-  `<button data-c="${c}" aria-label="${CAT_NAME[i]}">${I(CAT_ICON[i])}</button>`).join('');
+  `<button data-c="${c}" aria-label="${CAT_NAME[i]}">${I(LUC[CAT_ICON[i]])}</button>`).join('');
 function renderEmoji() {
   const q = fold($('#emojiSearch').value);
   $$('#cats button').forEach(b => b.classList.toggle('on', !q && b.dataset.c === emojiCat));
@@ -1985,7 +2008,8 @@ grid.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const em = b.textContent;
   S.recentEmoji = [em, ...S.recentEmoji.filter(x => x !== em)].slice(0, 28); save();
-  deliver(em, true);
+  if (OS === 'windows') { send('type', { text: em }); toast('Typed'); }   // typed straight into the app you came from
+  else copy(em);                                                          // typing into another app needs OS permissions there
 });
 if (S.recentEmoji.length) emojiCat = '🕘';
 renderEmoji();
@@ -2095,13 +2119,14 @@ function openPicker(trigger, hex, onInput, onDone) {
   cpCb = onInput; cpDone = onDone;
   cpSet(hex || '#000000');
   cpEl.hidden = false;
-  const r = trigger.getBoundingClientRect(), w = cpEl.offsetWidth, h = cpEl.offsetHeight;
+  const r = trigger.getBoundingClientRect(), w = cpEl.offsetWidth, h = cpEl.offsetHeight;   // measuring also gives the browser the "before" frame the open animation needs
   cpEl.style.left = clamp(DIR > 0 ? r.left - w - 8 : r.right + 8, 6, Math.max(6, innerWidth - w - 6)) + 'px';
   cpEl.style.top = clamp(r.top, 6, Math.max(6, innerHeight - h - 6)) + 'px';
+  cpEl.classList.add('show');
 }
-function closePicker(done) { const f = cpDone; cpEl.hidden = true; cpCb = cpDone = null; if (done && f) f(); }
+function closePicker(done) { const f = cpDone; cpEl.classList.remove('show'); cpCb = cpDone = null; if (done && f) f(); }
 addEventListener('pointerdown', e => {
-  if (cpEl.hidden || cpEl.contains(e.target) || e.target.closest('.cchip,#bigSwatch')) return;
+  if (!cpEl.classList.contains('show') || cpEl.contains(e.target) || e.target.closest('.cchip,#bigSwatch')) return;
   closePicker(true);
 }, true);
 
@@ -2215,7 +2240,31 @@ noteMenu.onclick = e => {
   else if (act === 'copy') copy(notes[menuIdx].text, 'Note copied');
   else if (act === 'delete') deleteNote(menuIdx);
 };
-addEventListener('pointerdown', e => { if (!noteMenu.hidden && !noteMenu.contains(e.target)) noteMenu.hidden = true; }, true);
+addEventListener('pointerdown', e => { [noteMenu, toolMenu].forEach(m => { if (!m.hidden && !m.contains(e.target)) m.hidden = true; }); }, true);
+
+/* ---- right-click on a dock / More tool: move it across, or switch it off. Also the only place
+   the WebView's own menu is suppressed, so the panel never shows Chromium's Back/Save as/Print ---- */
+const toolMenu = $('#toolMenu');
+let menuTool = null;
+addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const t = e.target.closest('.tool[data-w], .tile[data-w]');
+  if (!t || t.dataset.w === 'more' || !info(t.dataset.w)) return;
+  const id = menuTool = t.dataset.w, toDock = !!$(`#tiles .tile[data-w="${id}"]`), off = S.hidden.includes(id);
+  toolMenu.innerHTML =
+    (toDock ? `<button data-act="move">${I(LUC['chevron-up'])}Move to dock</button>` : `<button data-act="move">${I(LUC['chevron-down'])}Move into More</button>`)
+    + `<button data-act="${off ? 'show' : 'hide'}"${off ? '' : ' class="danger"'}>${I(off ? LUC.eye : LUC['eye-off'])}${off ? 'Enable tool' : 'Disable tool'}</button>`;
+  toolMenu.hidden = false;
+  toolMenu.style.left = Math.max(6, Math.min(e.clientX, innerWidth - toolMenu.offsetWidth - 8)) + 'px';
+  toolMenu.style.top = Math.max(6, Math.min(e.clientY, innerHeight - toolMenu.offsetHeight - 8)) + 'px';
+});
+toolMenu.onclick = e => {
+  const act = e.target.closest('[data-act]')?.dataset.act; if (!act || !menuTool) return;
+  toolMenu.hidden = true;
+  const id = menuTool; menuTool = null;
+  if (act === 'move') { const docked = !!dockEl(id); moveWidget(id, docked ? 'more' : 'dock', docked ? 0 : S.dock.length, true); }
+  else { S.hidden = S.hidden.includes(id) ? S.hidden.filter(x => x !== id) : [...S.hidden, id]; save(); renderAll(); }
+};
 note.addEventListener('input', () => {
   notes[noteAt].text = note.value; $('#noteInfo').textContent = 'saving…';
   clearTimeout(nt); nt = setTimeout(() => { saveNotes(`saved · ${note.value.length} chars`); $('#noteTabs').innerHTML = notes.map((n, i) => `<button class="chip spring ${i === noteAt ? 'on' : ''}" data-n="${i}">${esc(noteTitle(n))}</button>`).join(''); }, 400);
@@ -2338,7 +2387,7 @@ const SI = {
  };
 /* Simple Icons are single filled paths on a 24 grid; Neshan is drawn on a 48 grid */
 const IB = d => `<svg class="brand" viewBox="0 0 24 24"><path d="${d}"/></svg>`;
-const NESHAN = '<svg class="brandfill" viewBox="0 0 48 48"><path d="m6.656 13.966l6.557 3.784m21.456 12.42l6.562 3.788m-24.643 2.64q2.116 0 4.227-.102c9.161-.499 14.27-3.68 14.926-12.232c0-6.606-5.247-11.75-12.154-12c-5.814.378-11.274 4.006-11.628 11.615c.28 4.31 1.346 6.422 4.63 12.72z"/><path d="m34.908 5l5.015 10.642c2.766 5.932 2.215 10.538.783 14.79l1.164 2.306c.586 1.193.265 1.947-.784 2.35l-3.068.126c-3.224 4.14-7.561 6.788-13.604 7.151L13.093 43L8.037 32.93c-2.943-5.588-2.488-10.631-.889-15.489L5.943 15.05c-.344-1.504.221-1.961.995-2.18l3.11-.147c4.782-5.576 8.962-6.076 13.076-6.771z"/><path d="m21.811 15.996l1.842 1.092c2.312-1.145 6.106.318 6.296 3.634l1.927 1.113l-1.1 1.906c1.491 2.935-1.116 6.41-3.59 6.217l-1.145 1.984l-1.834-1.059c-2.812 1.264-5.995-.66-6.324-3.651l-1.927-1.112l1.097-1.9c-1.293-3.356 1.25-6.204 3.664-6.347z"/></svg>';
+const NESHAN = '<svg class="brand" viewBox="0 0 48 48"><path d="M37.908 36.943c.71 0 1.401-.054 2.106-.085.935-.04 1.895-.014 2.42-.969.632-1.146-.18-2.407-.687-3.422-.178-.356-.543-.837-.482-1.253.123-.843.483-1.682.661-2.52.36-1.69.53-3.448.454-5.177-.212-4.826-2.611-9.278-4.713-13.513a105 105 0 0 1-1.853-3.95c-.239-.535-.518-1.486-.959-1.877-.255-.226-.755-.15-1.071-.137-.965.042-1.932.184-2.896.252-3.916.274-7.901.447-11.758 1.219-2.88.575-5.567 1.668-7.898 3.477-.818.634-1.55 1.338-2.281 2.069-.323.322-.658.834-1.061 1.05-.236.127-.525.08-.782.105-1.128.108-2.878-.192-3.578.952-.687 1.123-.076 2.387.44 3.42.21.42.582.917.493 1.405-.146.795-.451 1.578-.633 2.369-.344 1.504-.567 3.108-.583 4.65-.053 5.118 2.408 9.424 4.629 13.865l2.237 4.476c.252.503.526 1.467 1.04 1.752.511.283 1.373.048 1.922.01 1.52-.104 3.043-.159 4.563-.263 3.071-.21 6.18-.138 9.214-.75 2.62-.526 5.137-1.69 7.283-3.271a18.4 18.4 0 0 0 2.92-2.656c.34-.386.72-.719.853-1.228m-16.41-24.094c-1.53.208-2.996.61-4.387 1.288a11.7 11.7 0 0 0-2.808 1.93c-2.329 2.168-3.645 5.594-3.506 8.766.114 2.6.955 5.135 2.08 7.459.58 1.201 1.157 2.404 1.756 3.598.201.402.455 1.153.845 1.401.368.235 1.124.09 1.545.09 1.38 0 2.842-.036 4.212-.2 4.442-.531 9.478-1.681 11.82-5.942 1.437-2.615 2.155-5.919 1.517-8.863-1.237-5.708-7.104-10.34-13.073-9.527" fill-rule="evenodd"/><path d="M29.66 20.885c-.05-2.425-2.26-4.23-4.564-4.46a6 6 0 0 0-1.491.036c-.304.048-.659.197-.966.159-.702-.088-1.285-1.033-2.017-.944-.845.104-.933 1.55-1.596 1.947-.522.313-1.193.38-1.74.705-1.36.81-2.37 2.38-2.529 3.96-.045.453-.047.956.024 1.404.052.337.215.71.174 1.053-.086.738-1.118 1.428-.96 2.193.158.764 1.463.909 1.924 1.452.203.239.244.628.345.918a5.3 5.3 0 0 0 .676 1.317c1.012 1.433 2.73 2.232 4.471 2.192.54-.012 1.05-.236 1.58-.26.765-.034 1.602 1.267 2.36.872.66-.344.71-1.416 1.271-1.874.267-.218.7-.198 1.02-.296.47-.145.923-.409 1.315-.701 1.407-1.046 2.148-2.772 2.105-4.496-.013-.548-.317-1.134-.273-1.668.056-.672.753-1.194.92-1.842.208-.813-1.409-1.544-2.05-1.668"/></svg>';
 const ENGINES = {
   Google:       { c: 'Search',    u: 'https://www.google.com/search?q=%s',                  i: IB(SI.google) },
   Brave:        { c: 'Search',    u: 'https://search.brave.com/search?q=%s',                i: IB(SI.brave) },
@@ -2426,19 +2475,16 @@ setInterval(() => { if (panel === 'clock') renderZones(); }, 15000);
 const OP_ICON = {
   '+': LUC.plus, '-': LUC.minus, '*': LUC.x, '/': LUC.divide,
 };
-/* the drawn keys: the digits, CE, C and +/- stay plain text; the rest are icons */
-const FN_ICON = {
-  back: LUC.delete,
-  equals: LUC.equal,
-};
-const KEY_SVG = { back: FN_ICON.back, div: OP_ICON['/'], times: OP_ICON['*'], minus: OP_ICON['-'],
-  plus: OP_ICON['+'], equals: FN_ICON.equals };
+/* Lucide has no ± glyph, so the sign key keeps the panel's own two-stroke mark */
+const SIGN_ICON = '<path d="M8 4v7M4.5 7.5h7M13.5 17h7" />';
+const KEY_SVG = { back: LUC.delete, sign: SIGN_ICON, div: OP_ICON['/'], times: OP_ICON['*'],
+  minus: OP_ICON['-'], plus: OP_ICON['+'], equals: LUC.equal };
 /* Windows Standard keypad: CE C ⌫ across the top, the operator closing each number row, sign 0 . = below */
-const CALC_KEYS = [['CE', '', 'fn'], ['C', '', 'fn'], ['⌫', 'back', 'fn'], ['÷', 'div', 'opk'],
+const CALC_KEYS = [['CE', '', 'opk'], ['C', '', 'opk'], ['⌫', 'back', 'opk'], ['÷', 'div', 'opk'],
   ['7'], ['8'], ['9'], ['×', 'times', 'opk'],
   ['4'], ['5'], ['6'], ['−', 'minus', 'opk'],
   ['1'], ['2'], ['3'], ['+', 'plus', 'opk'],
-  ['+/−', '', 'fn'], ['0'], ['.'], ['=', 'equals', 'op']];
+  ['+/−', 'sign'], ['0'], ['.'], ['=', 'equals', 'op']];
 $('#calcKeys').innerHTML = CALC_KEYS.map(([k, g, c]) => `<button data-k="${k}" class="${c || ''}">${g ? I(KEY_SVG[g]) : k}</button>`).join('');
 const OP_OF = { '÷': '/', '×': '*', '−': '-' };
 let cEntry = '0', cAcc = null, cOp = null, cFresh = false, cRepeat = null, cErr = '', cLineL = '', cLineOp = null, cLineR = '';
@@ -2680,12 +2726,10 @@ ncRender();
 /* ---- general settings ---- */
 const tog = (el, key, after) => { el.classList.toggle('on', !!S[key]); el.onclick = () => { S[key] = !S[key]; el.classList.toggle('on', S[key]); save(); after && after(); }; };
 if (OS !== 'windows') {
-  S.paste = false; $('#pasteRow').style.display = 'none';          // auto-paste needs OS permissions: copy instead
   $('#eyedrop').style.display = 'none';
   $('#startLbl').textContent = 'Open at login';
 }
 tog($('#tStartup'), 'startup');
-tog($('#tPaste'), 'paste');
 tog($('#tMagnify'), 'magnify');
 tog($('#tUpdates'), 'updates');
 
@@ -2724,7 +2768,7 @@ $('#verNow').textContent = 'v' + (init.version || '1.0.0');
 let updateUrl = null;
 function checkUpdates(manual) { $('#updLine').textContent = 'Checking…'; send('checkUpdate', { manual }); S.lastCheck = Date.now(); save(); }
 $('#aboutRow').onclick = () => checkUpdates(true);
-$('#updBtn').onclick = () => { $('#updBtn').textContent = 'Downloading…'; send('installUpdate'); };
+$('#updBtn').onclick = () => { $('#updBtn span').textContent = 'Downloading…'; send('installUpdate'); };
 app.updateInfo = info => {
   const line = $('#updLine');
   if (!info.latest) { line.textContent = 'Could not reach GitHub'; if (info.manual) toast('Update check failed'); return; }

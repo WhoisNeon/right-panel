@@ -25,7 +25,7 @@ use windows_sys::Win32::{
         Shutdown::LockWorkStation,
     },
     UI::Input::KeyboardAndMouse::{
-        GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_CONTROL, VK_D, VK_ESCAPE, VK_LBUTTON, VK_LWIN, VK_SHIFT, VK_SPACE,
+        GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_CONTROL, VK_D, VK_ESCAPE, VK_LBUTTON, VK_LWIN, VK_SHIFT, VK_SPACE,
         VK_MEDIA_NEXT_TRACK, VK_MEDIA_PLAY_PAUSE, VK_MEDIA_PREV_TRACK, VK_V, VK_VOLUME_DOWN, VK_VOLUME_MUTE, VK_VOLUME_UP,
     },
     UI::WindowsAndMessaging::{
@@ -141,6 +141,14 @@ fn key(vk: u16, up: bool) -> INPUT {
     }
 }
 
+/// One Unicode character as a key press — the way to type text without touching the clipboard.
+fn uni(scan: u16, up: bool) -> INPUT {
+    INPUT {
+        r#type: INPUT_KEYBOARD,
+        Anonymous: INPUT_0 { ki: KEYBDINPUT { wVk: 0, wScan: scan, dwFlags: KEYEVENTF_UNICODE | if up { KEYEVENTF_KEYUP } else { 0 }, time: 0, dwExtraInfo: 0 } },
+    }
+}
+
 fn send_combo(combo: &[u16]) {
     let mut inputs: Vec<INPUT> = combo.iter().map(|&k| key(k, false)).collect();
     inputs.extend(combo.iter().rev().map(|&k| key(k, true)));
@@ -156,6 +164,28 @@ pub fn paste_into_previous() {
         }
         thread::sleep(Duration::from_millis(90));
         send_combo(&[VK_CONTROL, VK_V]);
+    });
+}
+
+/// Type text into the app the user was in, one Unicode character at a time — no clipboard, no Ctrl+V.
+/// Emoji outside the BMP arrive as a surrogate pair, which Windows recombines on the way in.
+pub fn type_into_previous(text: &str) {
+    let units: Vec<u16> = text.encode_utf16().collect();
+    if units.is_empty() {
+        return;
+    }
+    let prev = PREV_FG.load(Ordering::Relaxed);
+    thread::spawn(move || {
+        if prev != 0 {
+            unsafe { SetForegroundWindow(prev as HWND) };
+        }
+        thread::sleep(Duration::from_millis(90));
+        let mut inputs: Vec<INPUT> = Vec::with_capacity(units.len() * 2);
+        for u in units {
+            inputs.push(uni(u, false));
+            inputs.push(uni(u, true));
+        }
+        unsafe { SendInput(inputs.len() as u32, inputs.as_ptr(), std::mem::size_of::<INPUT>() as i32) };
     });
 }
 

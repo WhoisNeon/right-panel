@@ -754,6 +754,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         OPEN.store(false, Ordering::Relaxed);
                     }
                     "copy" => set_clip(&s("text")),
+                    "type" => sys::type_into_previous(&s("text")),
                     "paste" => {
                         set_clip(&s("text"));
                         sys::paste_into_previous();
