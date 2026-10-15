@@ -9,6 +9,19 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.11
+- **Build your own theme** — Settings → Look has a theme builder: name it, pick a background and an accent, and every other colour (raised surfaces, separators, muted labels, hover and selected states) is derived from those two. The text colour on the accent is chosen for you — black or white, whichever reads better on the colour you picked
+- **A real colour picker** — choose a colour by eye from the square or type a hex code; it is used wherever a colour is chosen, including the Colour tool, and it shows the same value as hex, rgb and hsl
+- **Every icon is a Lucide icon now** — the emoji-category tabs, the toasts, the calculator keypad, the media controls and the widget tiles moved off emoji and one-off drawings onto one consistent icon set, all drawn inline with nothing fetched at runtime
+- **Drag a tool into the More panel** — dragging a tile out of the dock and over the More button now opens its panel so you can drop the tool straight in, and the stale "drag a tile on to the dock" hint is gone from the More header
+- **The dock and More lists line up** — Settings → Widgets showed five rows in the dock and four and a half in More; both show exactly five now, and the page scrolls if your window is short
+- **Keep Awake is readable in More again** — its text used to turn black while the tile background stayed dark, so it disappeared; the tile now uses the theme's inverted surface, exactly as the dock does
+- **Search groups glide open and shut** — collapsing a category animates instead of snapping, and Neshan's icon is filled like the other engine marks
+- **Smaller, tidier controls** — the volume buttons are a little smaller than mute, the move and show/hide buttons in the Widgets rows sit closer together, and content keeps a small gap from the scrollbar
+- **Only `=` wears the accent in the calculator** — the operators (`÷ × − +`) now sit on a raised surface that sets them apart from the digits
+- **Custom dropdowns everywhere** — the engine, zone, unit and monitor pickers all use the panel's own dropdown instead of the operating system's
+- **Settings and Emoji have titles**, like every other panel, and the toggles follow the theme instead of always being the same green
+
 ### New in 1.4.10
 - **The calculator is a real Windows-Standard calculator now** — it keeps a running value instead of building a formula, so the display can only ever hold one number and no key sequence can produce something unparseable. `9-++6---` gives `15`, `2+3*4=` gives `20` (left to right, no precedence, exactly like Windows), `5..3` gives `5.3`, and `2+3=` then `=` again gives `8`
 - **The keypad matches Windows Standard** — `CE` `C` `⌫` `÷` across the top, then `7 8 9 ×`, `4 5 6 −`, `1 2 3 +`, and `+/− 0 . =` underneath, all drawn as icons. Brackets and `^` are gone: they cannot work in a pad that evaluates as you type
