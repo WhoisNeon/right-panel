@@ -100,6 +100,12 @@ pub fn left_down() -> bool {
     false
 }
 
+/// No cheap way to poll a modifier here without spawning a process every tick, so the
+/// setting is Windows-only; never report "held" or the panel could be locked shut.
+pub fn mod_held(_: u8) -> bool {
+    true
+}
+
 pub fn remember_foreground() {}
 
 pub fn clip_seq() -> u64 {

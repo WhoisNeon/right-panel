@@ -25,7 +25,7 @@ use windows_sys::Win32::{
         Shutdown::LockWorkStation,
     },
     UI::Input::KeyboardAndMouse::{
-        GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_CONTROL, VK_D, VK_ESCAPE, VK_LBUTTON, VK_LWIN,
+        GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_CONTROL, VK_D, VK_ESCAPE, VK_LBUTTON, VK_LWIN, VK_SHIFT, VK_SPACE,
         VK_MEDIA_NEXT_TRACK, VK_MEDIA_PLAY_PAUSE, VK_MEDIA_PREV_TRACK, VK_V, VK_VOLUME_DOWN, VK_VOLUME_MUTE, VK_VOLUME_UP,
     },
     UI::WindowsAndMessaging::{
@@ -108,6 +108,17 @@ pub fn cursor_pos() -> Option<(i32, i32)> {
 
 pub fn left_down() -> bool {
     unsafe { GetAsyncKeyState(VK_LBUTTON as i32) < 0 }
+}
+
+/// Is the key the user picked in Settings — 1 Ctrl, 2 Shift, 3 Space — currently held?
+pub fn mod_held(which: u8) -> bool {
+    let vk = match which {
+        1 => VK_CONTROL,
+        2 => VK_SHIFT,
+        3 => VK_SPACE,
+        _ => return true,
+    };
+    unsafe { GetAsyncKeyState(vk as i32) < 0 }
 }
 
 /// Remember the app the user was in, so paste / pin can target it.

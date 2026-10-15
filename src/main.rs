@@ -5,7 +5,7 @@
 use std::{
     fs,
     sync::{
-        atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering},
+        atomic::{AtomicBool, AtomicI32, AtomicU64, AtomicU8, Ordering},
         Mutex,
     },
     thread,
@@ -40,6 +40,8 @@ static EDGE_X: AtomicI32 = AtomicI32::new(0);
 static ON_LEFT: AtomicBool = AtomicBool::new(false);
 /// Another monitor continues past the panel's edge, so the pointer can cross it on the way over.
 static SCALE_BITS: AtomicU64 = AtomicU64::new(0x3FF0_0000_0000_0000); // 1.0
+/// Which key must be held for the panel to open at the screen edge: 0 any, 1 Ctrl, 2 Shift, 3 Space.
+static OPEN_MOD: AtomicU8 = AtomicU8::new(0);
 static EDGE_SHARED: AtomicBool = AtomicBool::new(false);
 /// Recent clipboard images, newest last. Thumbnails go to the UI; the pixels stay here.
 static IMAGES: Mutex<Vec<(u64, u32, u32, Vec<u8>)>> = Mutex::new(Vec::new());
@@ -223,7 +225,7 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
             let shared = EDGE_SHARED.load(Ordering::Relaxed);
             dwell = if shared && in_band && (0..=3).contains(&dist) { dwell + 1 } else { 0 };
             let at_edge = if shared { dwell > 25 } else { moved && (0..=1).contains(&dist) };
-            if at_edge && in_band && (!dragging || held > 30) {
+            if at_edge && in_band && (!dragging || held > 30) && sys::mod_held(OPEN_MOD.load(Ordering::Relaxed)) {
                 dwell = 0;
                 sys::remember_foreground();
                 OPEN.store(true, Ordering::Relaxed);
@@ -483,6 +485,15 @@ mod tray {
 }
 
 
+fn mod_code(v: &Value) -> u8 {
+    match v.as_str().unwrap_or("none") {
+        "ctrl" => 1,
+        "shift" => 2,
+        "space" => 3,
+        _ => 0,
+    }
+}
+
 fn main() {
     // right-click → "Add to Right Panel" launches us with --add <path>
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -525,6 +536,7 @@ fn main() {
 
     let mut settings: Value = fs::read_to_string(&settings_path).ok().and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_else(|| json!({}));
     settings["startup"] = json!(sys::startup_enabled());
+    OPEN_MOD.store(mod_code(&settings["openMod"]), Ordering::Relaxed);
     let notes_json = dir.join("notes.json");
     let notes: Value = fs::read_to_string(&notes_json)
         .ok()
@@ -751,6 +763,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     }
                     "settings" => {
                         let st = &m["settings"];
+                        OPEN_MOD.store(mod_code(&st["openMod"]), Ordering::Relaxed);
                         let want = st["startup"].as_bool().unwrap_or(false);
                         if want != sys::startup_enabled() {
                             sys::set_startup(want);

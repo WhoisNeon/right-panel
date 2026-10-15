@@ -15,7 +15,10 @@
      Segoe UI, which covers it too and would win before Arad was ever reached. */
   body { font-family: Arad, "Segoe UI Variable Text", "Segoe UI", Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
   /* panel chrome is glyphs, not text — keep the colour fonts off it so arrows and symbols keep their metrics */
-  .back, .item .acts span { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; line-height: 1; }
+  .back, .item .acts span { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  .back svg { width: 14px; height: 14px; }
+  .item .acts span svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .item.pinned .acts span[data-pin] svg { fill: currentColor; }
   button { font: inherit; color: inherit; }
   input, textarea, select { -webkit-user-select: text; user-select: text; }
   svg.i, .ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -101,7 +104,8 @@
   .emoji-grid button:hover { background: var(--soft2); transform: scale(1.22); }
 
   /* lists (clipboard, snippets, units…) */
-  .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; }
+  .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; scrollbar-width: none; }
+  .list::-webkit-scrollbar { display: none; }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -237,24 +241,24 @@
   <div class="pill" id="pill"></div>
   <div class="tools" id="tools"></div>
   <div class="tab-sep"></div>
-  <button class="tool" data-w="settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button class="tool" data-w="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </div>
 
 <div class="fly-ui" id="flyUi">
   <div class="panel" data-name="emoji">
-    <div class="head"><button class="back" title="Back">←</button><input class="field" dir="auto" id="emojiSearch" placeholder="Search emoji…"></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><input class="field" dir="auto" id="emojiSearch" placeholder="Search emoji…"></div>
     <div class="cats" id="cats"></div>
     <div class="emoji-grid scroll" id="emojiGrid"></div>
   </div>
 
   <div class="panel" data-name="clip">
-    <div class="head"><button class="back">←</button><h4>Clipboard</h4><button class="link" id="clipClear">Clear</button></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Clipboard</h4><button class="link" id="clipClear">Clear</button></div>
     <input class="field" dir="auto" id="clipSearch" placeholder="Search history…">
     <div class="list scroll" id="clipList"></div>
   </div>
 
   <div class="panel" data-name="color">
-    <div class="head"><button class="back">←</button><h4>Color</h4><button class="link" id="eyedrop">◎ Pick from screen</button></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Color</h4><button class="link" id="eyedrop">◎ Pick from screen</button></div>
     <div class="cur">
       <div class="big" id="bigSwatch"><input type="color" id="colorInput"></div>
       <div class="fmts">
@@ -270,7 +274,7 @@
   </div>
 
   <div class="panel" data-name="note">
-    <div class="head"><button class="back">←</button><h4>Notes</h4><span class="link" id="noteInfo">saved</span></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Notes</h4><span class="link" id="noteInfo">saved</span></div>
     <div class="chips" id="noteTabs"></div>
     <textarea class="field scroll" dir="auto" id="note" placeholder="Write something…"></textarea>
     <div class="row"><button class="btn" id="noteNew">New</button><button class="btn" id="noteCopy">Copy</button><button class="btn" id="noteDel">Delete</button></div>
@@ -282,13 +286,13 @@
   </div>
 
   <div class="panel" data-name="calc">
-    <div class="head"><button class="back">←</button><h4>Calculator</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Calculator</h4></div>
     <input class="field" dir="auto" id="calcIn" placeholder="e.g. (12.5 * 4) / 3 + 2^3">
-    <div class="display" id="calcOut" title="Click to copy">0</div>
+    <div class="display" id="calcOut" aria-label="Click to copy">0</div>
   </div>
 
   <div class="panel" data-name="timer">
-    <div class="head"><button class="back">←</button><h4>Timer</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Timer</h4></div>
     <div class="timer" id="timerOut">05:00</div>
     <div class="row" id="timerPresets"></div>
     <div class="row"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn" id="timerSet">Set</button></div>
@@ -296,61 +300,61 @@
   </div>
 
   <div class="panel" data-name="stopwatch">
-    <div class="head"><button class="back">←</button><h4>Stopwatch</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Stopwatch</h4></div>
     <div class="timer" id="swOut">00:00.00</div>
     <div class="row"><button class="btn primary" id="swStart">Start</button><button class="btn" id="swLap">Reset</button></div>
     <div class="list scroll" id="swLaps" style="max-height:150px"></div>
   </div>
 
   <div class="panel" data-name="text">
-    <div class="head"><button class="back">←</button><h4>Text tools · clipboard</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Text tools · clipboard</h4></div>
     <div class="grid3" id="textTools"></div>
   </div>
 
   <div class="panel" data-name="pass">
-    <div class="head"><button class="back">←</button><h4>Password</h4></div>
-    <div class="pw" id="pwOut" title="Click to copy"></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Password</h4></div>
+    <div class="pw" id="pwOut" aria-label="Click to copy"></div>
     <div class="set"><span>Length <b id="pwLenV">16</b></span></div>
     <input type="range" min="6" max="48" value="16" id="pwLen">
     <div class="row"><button class="btn" id="pwGen">Regenerate</button><button class="btn primary" id="pwCopy">Copy</button></div>
   </div>
 
   <div class="panel" data-name="unit">
-    <div class="head"><button class="back">←</button><h4>Units</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Units</h4></div>
     <input class="field" dir="auto" id="unitIn" placeholder="e.g. 12 in, 5 km, 70 kg, 30 c">
     <div id="unitOut" class="list"></div>
   </div>
 
   <div class="panel" data-name="media">
-    <div class="head"><button class="back">←</button><h4>Media &amp; volume</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Media &amp; volume</h4></div>
     <div class="mrow"><button class="mb spring" data-key="prev"><svg viewBox="0 0 24 24"><path d="M19 5L9 12l10 7zM5 5v14"/></svg></button><button class="mb big spring" data-key="play"><svg viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z"/></svg></button><button class="mb spring" data-key="next"><svg viewBox="0 0 24 24"><path d="M5 5l10 7-10 7zM19 5v14"/></svg></button></div>
     <div class="mrow"><button class="mb spring" data-key="voldown"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 12h4"/></svg></button><button class="mb spring" data-key="mute"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/></svg></button><button class="mb spring" data-key="volup"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 12h4M19 10v4"/></svg></button></div>
   </div>
 
   <div class="panel" data-name="gen">
-    <div class="head"><button class="back">←</button><h4>Generate &amp; paste</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Generate &amp; paste</h4></div>
     <div class="list" id="genList"></div>
   </div>
 
   <div class="panel" data-name="folders">
-    <div class="head"><button class="back">←</button><h4>Folders</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Folders</h4></div>
     <div class="grid3" id="folderGrid"></div>
   </div>
 
   <div class="panel" data-name="snippets">
-    <div class="head"><button class="back">←</button><h4>Snippets</h4><span class="hint">click to paste</span></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Snippets</h4><span class="hint">click to paste</span></div>
     <input class="field" dir="auto" id="snipIn" placeholder="Type a snippet and press Enter…">
     <div class="list scroll" id="snipList"></div>
   </div>
 
   <div class="panel" data-name="search">
-    <div class="head"><button class="back">←</button><h4>Web search</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>Web search</h4></div>
     <input class="field" dir="auto" id="searchIn" placeholder="Search or type a URL, then Enter">
     <div class="chips" id="engines"></div>
   </div>
 
   <div class="panel" data-name="clock">
-    <div class="head"><button class="back">←</button><h4>World clock</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><h4>World clock</h4></div>
     <div class="list scroll" id="zones"></div>
     <select class="field" id="zoneAdd"></select>
   </div>
@@ -370,6 +374,7 @@
       <div class="set"><span id="startLbl">Start with Windows</span><button class="toggle" id="tStartup"></button></div>
       <div class="set" id="pasteRow"><span>Paste on click</span><button class="toggle" id="tPaste"></button></div>
       <div class="set"><span>Magnify icons on hover</span><button class="toggle" id="tMagnify"></button></div>
+      <div class="set" id="openModRow"><span>Open panel<small class="hint" style="display:block">Hold this key while moving to the screen edge</small></span><select class="field" id="openModSel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
       <div class="set"><span>Animation speed</span><select class="field" id="speedSel" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
       <div class="set"><span>Panel edge</span><select class="field" id="edgeSel" style="width:auto"><option value="right">Right</option><option value="left">Left</option></select></div>
       <div class="set" id="monRow"><span>Monitor</span><select class="field" id="monSel" style="width:auto"></select></div>
@@ -391,7 +396,7 @@ const send = (t, o = {}) => window.ipc.postMessage(JSON.stringify({ t, ...o }));
 const init = window.__init || {};
 const OS = init.platform || 'windows';   // windows | macos | linux
 const S = Object.assign({ theme: 'midnight', accent: '#000000', startup: false, paste: true, magnify: true, recentEmoji: [], recentColors: [],
-  edge: 'right', monitor: 0, speed: 1, updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] }, init.settings || {});
+  edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] }, init.settings || {});
 const save = () => send('settings', { settings: S });
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -616,7 +621,7 @@ requestAnimationFrame(frame);
 const panels = $$('.panel');
 function toolHTML(id) {
   const w = info(id); if (!w) return '';
-  return `<button class="tool ${w.kind === 'app' ? 'app' : ''} ${id === 'awake' && awake ? 'on' : ''}" data-w="${id}" title="${esc(w.name)}">${w.icon}</button>`;
+  return `<button class="tool ${w.kind === 'app' ? 'app' : ''} ${id === 'awake' && awake ? 'on' : ''}" data-w="${id}" aria-label="${esc(w.name)}">${w.icon}</button>`;
 }
 function tileHTML(id) {
   const w = info(id); if (!w) return '';
@@ -774,11 +779,11 @@ function moveWidget(id, list, idx, withHidden = false) {
 /* ================= settings: widget manager ================= */
 function rowHTML(id, zone) {
   const w = info(id), off = S.hidden.includes(id);
-  const moveBtn = w.dockOnly ? '' : `<button class="wb" data-to="${zone === 'dock' ? 'more' : 'dock'}" title="${zone === 'dock' ? 'Move into More' : 'Move to dock'}">${zone === 'dock' ? '↘ More' : '↗ Dock'}</button>`;
+  const moveBtn = w.dockOnly ? '' : `<button class="wb" data-to="${zone === 'dock' ? 'more' : 'dock'}" aria-label="${zone === 'dock' ? 'Move into More' : 'Move to dock'}">${zone === 'dock' ? '↘ More' : '↗ Dock'}</button>`;
   return `<div class="wrow ${off ? 'off' : ''}" data-w="${id}">
     <span class="grip">⋮⋮</span><span class="wi">${w.icon}</span><span class="wn">${esc(w.name)}</span>${moveBtn}
-    <button class="wb" data-eye title="${off ? 'Show' : 'Hide'}">${off ? '○' : '●'}</button>
-    ${w.kind === 'app' ? '<button class="wb" data-rm title="Remove app">✕</button>' : ''}</div>`;
+    <button class="wb" data-eye aria-label="${off ? 'Show' : 'Hide'}">${off ? '○' : '●'}</button>
+    ${w.kind === 'app' ? '<button class="wb" data-rm aria-label="Remove app">✕</button>' : ''}</div>`;
 }
 function renderWidgets() {
   $('#wDock').innerHTML = S.dock.map(id => rowHTML(id, 'dock')).join('');
@@ -1692,8 +1697,8 @@ function renderClips() {
   const list = [...pinned, ...rest].filter(c => c.img ? !q : c.text.toLowerCase().includes(q));
   window._clipView = list;
   $('#clipList').innerHTML = list.length ? list.map((c, i) => c.img
-    ? `<button class="item shot spring ${c.pin ? 'pinned' : ''}" data-i="${i}"><img src="${c.img.thumb}" alt=""><small>Image · ${c.img.w}×${c.img.h} · ${c.pin ? 'pinned' : ago(c.t)}</small><span class="acts"><span data-pin title="${c.pin ? 'Unpin' : 'Pin'}">${c.pin ? '★' : '☆'}</span><span data-x title="Remove">×</span></span></button>`
-    : `<button class="item spring ${c.pin ? 'pinned' : ''}" data-i="${i}">${esc(c.text.replace(/\s+/g, ' ').slice(0, 120))}<small>${c.pin ? 'pinned' : ago(c.t)} · ${c.text.length} chars</small><span class="acts"><span data-pin title="${c.pin ? 'Unpin' : 'Pin'}">${c.pin ? '★' : '☆'}</span><span data-x title="Remove">×</span></span></button>`
+    ? `<button class="item shot spring ${c.pin ? 'pinned' : ''}" data-i="${i}"><img src="${c.img.thumb}" alt=""><small>Image · ${c.img.w}×${c.img.h} · ${c.pin ? 'pinned' : ago(c.t)}</small><span class="acts"><span data-pin aria-label="${c.pin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9-4.3-4.2 5.9-.8z"/></svg></span><span data-x aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span></button>`
+    : `<button class="item spring ${c.pin ? 'pinned' : ''}" data-i="${i}">${esc(c.text.replace(/\s+/g, ' ').slice(0, 120))}<small>${c.pin ? 'pinned' : ago(c.t)} · ${c.text.length} chars</small><span class="acts"><span data-pin aria-label="${c.pin ? 'Unpin' : 'Pin'}"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9-4.3-4.2 5.9-.8z"/></svg></span><span data-x aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span></button>`
   ).join('') : '<div class="empty">Copy something and it shows up here</div>';
 }
 $('#clipList').addEventListener('click', e => {
@@ -1770,7 +1775,6 @@ $('[data-name=media]').addEventListener('click', e => {
   if (k.dataset.key === 'play') {
     const on = k.dataset.on !== '1';
     k.dataset.on = on ? '1' : '0';
-    k.title = on ? 'Pause' : 'Play';
     k.innerHTML = `<svg viewBox="0 0 24 24">${on ? '<path d="M9 5v14M15 5v14"/>' : '<path d="M7 4l12 8-12 8z"/>'}</svg>`;
   }
 });
@@ -1832,7 +1836,7 @@ $('#folderGrid').onclick = e => { const o = e.target.closest('[data-open]'); if 
 /* ---- snippets ---- */
 function renderSnips() {
   $('#snipList').innerHTML = S.snippets.length ? S.snippets.map((t, i) =>
-    `<button class="item spring" data-i="${i}">${esc(t.replace(/\s+/g, ' ').slice(0, 100))}<span class="acts"><span data-x title="Delete">×</span></span></button>`).join('')
+    `<button class="item spring" data-i="${i}">${esc(t.replace(/\s+/g, ' ').slice(0, 100))}<span class="acts"><span data-x aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></span></button>`).join('')
     : '<div class="empty">Save text you type often: addresses, replies, signatures…</div>';
 }
 $('#snipIn').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { S.snippets.unshift(e.target.value.trim()); e.target.value = ''; save(); renderSnips(); } });
@@ -1988,6 +1992,13 @@ function applyPlacement() {
 $('#edgeSel').onchange = applyPlacement;
 $('#speedSel').value = String(S.speed || 1);
 $('#speedSel').onchange = e => { S.speed = +e.target.value || 1; save(); };
+/* reading the modifier key needs OS-level APIs we only have on Windows */
+if (OS === 'windows') {
+  $('#openModSel').value = S.openMod || 'none';
+  $('#openModSel').onchange = e => { S.openMod = e.target.value; save(); };
+} else {
+  $('#openModRow').remove();
+}
 $('#monSel').onchange = applyPlacement;
 app.placed = ({ edge }) => { DIR = edge === 'left' ? -1 : 1; document.body.classList.toggle('left', DIR < 0); mx = -1; toast(`Panel moved to the ${edge}`); };
 if (S.edge === 'left') { DIR = -1; document.body.classList.add('left'); }

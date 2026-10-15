@@ -1,4 +1,4 @@
-![Right Panel](https://raw.githubusercontent.com/raminturne/right-panel/main/docs/preview-laptop.png)
+![Right Panel](https://raw.githubusercontent.com/WhoisNeon/right-panel/main/docs/preview-laptop.png)
 
 ### Downloads
 | Platform | Get it |
@@ -6,6 +6,14 @@
 | **Windows** (recommended) | **RightPanel-Setup.exe** installer · or `RightPanel-portable.exe` / `RightPanel-windows-x64.zip` |
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
+
+### New in 1.4.4
+- **Choose how the panel opens** (*Settings → General*): any edge, or only while holding **Ctrl**, **Shift** or **Space**
+- **No more hover tooltips** — labels moved off `title` so nothing pops up over a button, while screen readers still get the names
+- **Generate panel stays inside its box** — long values like lorem ipsum scroll instead of spilling out
+- **Panel icons are properly centred** — the back arrow, the ★ pin and the × remove are now real icons, drawn on the same footing as every other icon
+- **Persian and Arabic text renders in Arad**, with Latin left to your system font
+- The binary grew to ~2.3 MB: the emoji and Persian fonts now ship inside it
 
 ### New in 1.4.3
 - **Persian and Arabic text now actually renders in Arad** — it was being drawn by the Windows Arabic fallback instead

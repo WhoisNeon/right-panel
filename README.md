@@ -7,22 +7,22 @@
 **A liquid side panel that lives on the edge of your screen.**<br>
 Move your mouse to the right edge and it pours out: emoji, clipboard history, colors, notes, your apps and a dozen handy tools.
 
-[![Latest release](https://img.shields.io/github/v/release/raminturne/right-panel?style=flat-square&color=000&cacheSeconds=300)](https://github.com/raminturne/right-panel/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/raminturne/right-panel/total?style=flat-square&color=000&cacheSeconds=300)](https://github.com/raminturne/right-panel/releases)
-[![Build](https://img.shields.io/github/actions/workflow/status/raminturne/right-panel/release.yml?style=flat-square)](https://github.com/raminturne/right-panel/actions)
-![Size](https://img.shields.io/badge/size-~0.8%20MB-000?style=flat-square)
+[![Latest release](https://img.shields.io/github/v/release/WhoisNeon/right-panel?style=flat-square&color=000&cacheSeconds=300)](https://github.com/WhoisNeon/right-panel/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/WhoisNeon/right-panel/total?style=flat-square&color=000&cacheSeconds=300)](https://github.com/WhoisNeon/right-panel/releases)
+[![Build](https://img.shields.io/github/actions/workflow/status/WhoisNeon/right-panel/release.yml?style=flat-square)](https://github.com/WhoisNeon/right-panel/actions)
+![Size](https://img.shields.io/badge/size-~2.3%20MB-000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-000?style=flat-square)
 
 <br>
 
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.1-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.1-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.1-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.1-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.1-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.1-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
 <br>
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.1-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.1-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.1-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
-<a href="https://github.com/raminturne/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.1-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.1-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.1-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.1-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.1-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
 
 <br><br>
 
@@ -75,7 +75,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 | **macOS 11+** *(beta)* | `RightPanel-macos-arm64.dmg` / `-x64.dmg` | Not notarized: right-click the app → **Open** the first time |
 | **Linux** *(beta)* | `.deb` or `.tar.gz` | Needs WebKitGTK 4.1. Works on X11 and Wayland (runs through XWayland; `RIGHT_PANEL_BACKEND=wayland` opts out) |
 
-Windows uses the built-in WebView2 runtime (already on Windows 10/11), which is why the app is under 1 MB.
+Windows uses the built-in WebView2 runtime (already on Windows 10/11), which is why the app stays small — the extra weight is the two bundled fonts (Twemoji and Arad).
 
 ### Beta notes for macOS and Linux
 Core features work everywhere. A few are Windows-only for now and are hidden on other systems: *auto-paste into the previous app* (items are copied instead), *screen eyedropper*, *Pin window*, *Show desktop* and app icons. On Wayland (GNOME, KDE…) the app runs through XWayland so it can sit on the screen edge; the tray icon needs `libayatana-appindicator3-1`. Media keys on Linux use `playerctl` / `pactl`.
@@ -83,7 +83,7 @@ Core features work everywhere. A few are Windows-only for now and are hidden on 
 ## Build from source
 
 ```bash
-git clone https://github.com/raminturne/right-panel
+git clone https://github.com/WhoisNeon/right-panel
 cd right-panel
 cargo build --release
 ```
