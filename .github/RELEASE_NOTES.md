@@ -7,6 +7,16 @@
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
+### New in 1.4.8
+- **Num Convert behaves like a text tool now** — the input is a resizable area that keeps your line breaks, and the three result boxes are all exactly the same size and show every line you typed
+- **Units panel layout** — the number box gets its own full-width row, the category and unit pickers sit underneath it 50/50, and the number box loses those up/down arrows
+- **Calculator keypad is drawn, not typed** — digits stay plain text, and clear, backspace, brackets, ÷ × − + ^ = are now real icons. The result box draws its operators the same way
+- **The calculator understands chained signs** — `3--+6` gives `9`, `3*-2` gives `-6`, `2^-3` gives `0.125`
+- **Text tools take a proper text box** — resizable input that keeps line breaks, a matching result box, and the "using what you typed" line is gone
+- **Note titles have a real editor** — double-click a tab, or right-click it and choose **Edit title**, and a text box opens in its place. Editing the label in place kept losing the caret to the row being redrawn
+- **Generate panel** now lists the time in 12-hour form too, under the 24-hour one
+- **Two more search engines**: Reddit and Brave
+- **The widget on/off control is a proper eye icon** now, centred in its button
 ### New in 1.4.7
 - **Units panel rebuilt** — a number box and a category dropdown, and it lists **every** unit in that category at once. Nine groups: length, mass, volume, data sizes (bit → PB), speed, temperature, frequency, energy and pressure. `1 MB` shows `1,048,576 B`, `1,024 KB` and `8,388,608 BIT` side by side, and any row copies on click
 - **Calculator is a real calculator** — the text box is gone, replaced by a keypad: digits, `+ − × ÷`, powers, parentheses, backspace, clear and `=`. Click the result to copy it
