@@ -7,6 +7,15 @@
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
+### New in 1.4.7
+- **Units panel rebuilt** — a number box and a category dropdown, and it lists **every** unit in that category at once. Nine groups: length, mass, volume, data sizes (bit → PB), speed, temperature, frequency, energy and pressure. `1 MB` shows `1,048,576 B`, `1,024 KB` and `8,388,608 BIT` side by side, and any row copies on click
+- **Calculator is a real calculator** — the text box is gone, replaced by a keypad: digits, `+ − × ÷`, powers, parentheses, backspace, clear and `=`. Click the result to copy it
+- **Text tools get a result box** — the chosen format is shown in a box at the bottom with a copy button instead of being pasted over your clipboard, and the button you picked stays highlighted
+- **Password generator rebuilt** — switch **A–Z**, **a–z**, **0–9** and symbols on and off individually, the slider now goes up to **64** characters, and a strength bar tells you how many bits you actually got. Characters are picked without modulo bias, so no symbol is favoured
+- **Note titles are editable for real** — double-clicking a tab now actually opens the editor. Two things used to fight it: the click redrew the tab row just before the double-click landed, and a pending save could wipe the row mid-edit
+- **Settings rows tidied up** — the "+ App" / "+ Folder" buttons get a real plus icon with matching padding, and the widget drag handle is no longer heavy-handed
+- **New tool: Num Convert** — type or paste any text and it shows the same text with just the digits rewritten, in English, Farsi or Arabic. Letters, punctuation, signs and separators are left exactly as they were, and each row copies with one click, with a Clear button to start over
+- **Generate panel preview is centred** vertically instead of sitting on the top line
 ### New in 1.4.6
 - **Units panel rebuilt** — a much larger set: length (mm · cm · m · km · in · ft · yd · mi), mass (mg · g · kg · oz · lb), volume (ml · l · fl oz · gal), **data sizes (b · KB · MB · GB · TB · PB)**, speed (km/h · mph · m/s · knot), temperature (C · F · K) and frequency (BPM · Hz). Accepts `1,024 KB`, `1.5mb`, `°C` and `km/h`
 - **Text tools accept typed text** — no longer clipboard-only; an empty box still falls back to the clipboard

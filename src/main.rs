@@ -754,9 +754,15 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         // text present = the user typed into the panel; otherwise fall back to the clipboard
                         let src = m["text"].as_str().map(str::to_owned).or_else(get_clip);
                         if let Some(t) = src {
-                            set_clip(&transform(&t, &s("mode")));
-                            if m["paste"].as_bool().unwrap_or(false) {
-                                sys::paste_into_previous();
+                            let out = transform(&t, &s("mode"));
+                            if m["want"].as_str() == Some("text") {
+                                // text tools show the result in their own box instead of pasting it
+                                let _ = proxy.send_event(Ev::Script(format!("app.transformed({})", json!(out))));
+                            } else {
+                                set_clip(&out);
+                                if m["paste"].as_bool().unwrap_or(false) {
+                                    sys::paste_into_previous();
+                                }
                             }
                         }
                     }
