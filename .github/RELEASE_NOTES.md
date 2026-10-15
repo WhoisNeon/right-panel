@@ -7,10 +7,17 @@
 | **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
 | **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
 
-### New in 1.4.1
+### New in 1.4.3
+- **Persian and Arabic text now actually renders in Arad** — it was being drawn by the Windows Arabic fallback instead
+- **Panel icons line up again** — the back arrow, ★ pin and × close keep the text font's metrics instead of borrowing an emoji font's
+- **Clipboard rows stay put on hover** — they no longer slide sideways or disappear under their neighbours
+- **Generate panel fits** — the long lorem-ipsum values truncate instead of pushing past the panel edge
+
+### New in 1.4.2
 - **Emoji:** the panel no longer closes when you pick an emoji — browse and pick several in a row
 - **Emoji:** country flags fit the grid properly, and the category row no longer overflows the picker
-- **Media:** the play button now flips to a pause icon when you press it
+- **Media:** the play button flips to a pause icon when you press it
+- **Generate:** UUIDs work again — the browser API they used is unavailable inside the panel, so they are built from the random-number source instead
 - Fixed settings silently resetting on every launch
 
 ### New in 1.4.0

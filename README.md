@@ -53,7 +53,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 | ☀️ **Keep awake · Screen off · Lock · Pin window on top** | One-click system helpers |
 
 **Also**
-- **Persian & Arabic**: type in any search box or note and the caret flips to match — the [Arad](https://github.com/MDarvishi5124/Arad) typeface covers Persian and Arabic text throughout the panel
+- **Persian & Arabic**: type in any search box or note and the caret flips to match — Persian and Arabic text throughout the panel is set in the [Arad](https://github.com/MDarvishi5124/Arad) typeface, with Latin left to your system font
 - **Emoji search works in Persian too** — keywords come from [CLDR](https://cldr.unicode.org/), so `خنده` finds 😂, `آتش` finds 🔥 and `ایران` finds 🇮🇷
 - **Drag a file or folder onto the panel** to pin it, or right-click it → *Add to Right Panel* (Windows; on Windows 11 under *Show more options*)
 - **Left or right edge**, and pick which monitor it lives on (*Settings → General*)

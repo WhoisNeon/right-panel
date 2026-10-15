@@ -10,7 +10,12 @@
   }
   * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
   html, body { height: 100%; margin: 0; background: transparent; overflow: hidden; }
-  body { font-family: "Segoe UI Variable Text", "Segoe UI", Arad, Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  /* Arad leads but is scoped to Arabic script by unicode-range, so Persian/Arabic comes from Arad
+     and everything else falls through to Segoe UI. Reversing the order would hand Arabic to
+     Segoe UI, which covers it too and would win before Arad was ever reached. */
+  body { font-family: Arad, "Segoe UI Variable Text", "Segoe UI", Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  /* panel chrome is glyphs, not text — keep the colour fonts off it so arrows and symbols keep their metrics */
+  .back, .item .acts span { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; line-height: 1; }
   button { font: inherit; color: inherit; }
   input, textarea, select { -webkit-user-select: text; user-select: text; }
   svg.i, .ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -97,8 +102,8 @@
 
   /* lists (clipboard, snippets, units…) */
   .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; }
-  .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; }
-  .item:hover { background: var(--soft2); transform: translateX(-4px); }
+  .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
+  .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
   .item .acts { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
   .item:hover .acts, .item.pinned .acts { opacity: 1; }
@@ -107,7 +112,7 @@
   .item.pinned { box-shadow: inset 3px 0 0 var(--inv); }
   .item.plain { padding-right: 12px; }
   .gen { display: flex; justify-content: space-between; gap: 8px; }
-  .gen span { color: var(--muted); font-size: 11px; font-family: Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+  .gen span { color: var(--muted); font-size: 11px; font-family: Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; min-width: 0; }
 
   /* color */
   .cur { display: flex; gap: 10px; align-items: stretch; }
