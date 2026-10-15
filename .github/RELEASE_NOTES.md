@@ -3,9 +3,24 @@
 ### Downloads
 | Platform | Get it |
 |---|---|
-| **Windows** (recommended) | **RightPanel-Setup.exe** installer · or `RightPanel-portable.exe` / `RightPanel-windows-x64.zip` |
-| **macOS** *(beta)* | `RightPanel-macos-arm64.dmg` (Apple Silicon) · `RightPanel-macos-x64.dmg` (Intel). Right-click → Open the first time |
-| **Linux** *(beta)* | `RightPanel-linux-amd64.deb` · `RightPanel-linux-x64.tar.gz` (X11 + WebKitGTK 4.1) |
+| **Windows** (recommended) | **[RightPanel-Setup.exe](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe)** installer · or [RightPanel-portable.exe](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe) / [RightPanel-windows-x64.zip](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip) |
+| **macOS** *(beta)* | [RightPanel-macos-arm64.dmg](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg) (Apple Silicon) · [RightPanel-macos-x64.dmg](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg) (Intel). Right-click → Open the first time |
+| **Linux** *(beta)* | [RightPanel-linux-amd64.deb](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb) · [RightPanel-linux-x64.tar.gz](https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz) (X11 + WebKitGTK 4.1) |
+
+*Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
+
+### New in 1.4.10
+- **The calculator is a real Windows-Standard calculator now** — it keeps a running value instead of building a formula, so the display can only ever hold one number and no key sequence can produce something unparseable. `9-++6---` gives `15`, `2+3*4=` gives `20` (left to right, no precedence, exactly like Windows), `5..3` gives `5.3`, and `2+3=` then `=` again gives `8`
+- **The keypad matches Windows Standard** — `CE` `C` `⌫` `÷` across the top, then `7 8 9 ×`, `4 5 6 −`, `1 2 3 +`, and `+/− 0 . =` underneath, all drawn as icons. Brackets and `^` are gone: they cannot work in a pad that evaluates as you type
+- **You can see what you're working on** — a small line above the digits shows the pending sum (`9 −`), and the finished one after `=` (`2 + 3 = 4`)
+- **Divide by zero says so** — `Cannot divide by zero`, or `Result is undefined` for `0 ÷ 0`, and the pad locks itself until you press `C` or `CE`
+- **Typing still works** — `Enter` or `=` evaluates, `Backspace` deletes, `Delete` is `CE`, `c` is `C`, `F9` flips the sign, and `Escape` still closes the panel
+- **The search tool was rebuilt** — engines sit in collapsible groups you can fold away, and every button carries its real brand mark (Simple Icons), drawn inline with nothing fetched at runtime
+- **Three more engines, and Bing is gone** — Startpage joined Search; Spotify and SoundCloud joined Media; npm, PyPI and Hugging Face joined Dev; Mojeek joined News; and **Neshan** joined Maps (`neshan.org/maps/search/…`) with its own icon
+- **The direction button is a search button now** — the magnifying glass beside the box runs the search, and the box still works out for itself which way to read
+- **Dock tooltips are everywhere** — every dock tool, and the Settings gear below the divider, shows the styled name bubble instead of the browser's own
+- **The dock no longer jumps** — the scrollbar's width is reserved ahead of time, so the icons stay centred and stay under your cursor when the list starts to scroll
+- **The download table links its files** — every release's notes now point straight at the installers
 
 ### New in 1.4.9
 - **Search got organised** — engines are grouped (Search, Community, Media, Learn, News, Maps, Dev), each button carries its own drawn logo, and three more joined: Bing, Google Images and Stack Overflow
