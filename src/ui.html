@@ -1049,7 +1049,7 @@ function setPanel(name, fromMore = false) {
   if (name === 'search') setTimeout(() => $('#searchIn').focus(), 60);
   if (name === 'snippets') setTimeout(() => $('#snipIn').focus(), 60);
   if (name === 'gen') renderGen();
-  if (name === 'mon') { send('metersStart'); hist.cpu.length = hist.ram.length = hist.gpu.length = hist.net.length = 0; drawMeters(); }
+  if (name === 'mon') { send('metersStart'); METERS.forEach(m => hist[m.k].length = 0); drawMeters(); }
   else send('metersStop');
   if (name === 'qr') setTimeout(() => $('#qrIn').focus(), 60);
   if (name === 'cal') setTimeout(() => $('#calIn').focus(), 60);
