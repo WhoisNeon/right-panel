@@ -840,8 +840,10 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     "key" => sys::press(&s("name")),
                     "screenoff" => sys::screen_off(),
                     "pinwin" => {
-                        let msg = sys::toggle_topmost();
-                        let _ = webview.evaluate_script(&format!("app.toast({})", json!(msg)));
+                        // the tool is a toggle, so the panel asks for a state; the native side answers
+                        // with the state it actually reached and the panel shows that, not what was hoped for
+                        let (on, msg) = sys::set_topmost(m["on"].as_bool().unwrap_or(false));
+                        let _ = webview.evaluate_script(&format!("app.pinned({},{})", on, json!(msg)));
                     }
                     "awake" => sys::keep_awake(m["on"].as_bool().unwrap_or(false)),
                     "refreshIcon" => {

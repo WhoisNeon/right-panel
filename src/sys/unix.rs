@@ -153,8 +153,8 @@ pub fn press(name: &str) {
 }
 
 /* ---------------- system actions ---------------- */
-pub fn toggle_topmost() -> String {
-    "Pin window is only available on Windows".into()
+pub fn set_topmost(_on: bool) -> (bool, String) {
+    (false, "Pin window is only available on Windows".into())
 }
 
 pub fn screen_off() {

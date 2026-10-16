@@ -125,7 +125,11 @@
   .cats button { flex: 1 0 auto; min-width: 26px; border: 0; background: none; height: 30px; border-radius: 9px; cursor: pointer; opacity: .5; display: grid; place-items: center; }
   .cats button svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .cats button.on, .cats button:hover { opacity: 1; background: var(--soft); }
-  .emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; height: 220px; align-content: start; }
+  /* the hover scale (1.22 on a 36px cell) grows ~4px past the cell on every side, which both armed a
+     horizontal scrollbar and sliced the outer columns against the box edge. padding absorbs the
+     overflow, overflow-x:hidden is the belt-and-braces, and 6 rows of 36px + 5 gaps + that padding
+     is the height, so six rows show with no scrollbar at all. */
+  .emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; height: 236px; align-content: start; padding: 5px; overflow-x: hidden; }
   .emoji-grid button { border: 0; background: none; font-size: 22px; height: 36px; border-radius: 10px; cursor: pointer; min-width: 0; }
   .emoji-grid.flags button { font-size: 17px; }
   .emoji-grid button:hover { background: var(--soft2); transform: scale(1.22); }
@@ -209,7 +213,7 @@
   #timerOut { outline: 0; }
   #timerOut:focus-visible { outline: 2px solid var(--inv); outline-offset: 6px; border-radius: 14px; }
   input[type=range] { width: 100%; accent-color: var(--inv); }
-  .pw { font-family: Consolas, monospace; font-size: 14px; word-break: break-all; background: var(--soft); border-radius: 12px; padding: 10px 12px; cursor: pointer; -webkit-user-select: text; }
+  .pw { font-family: Consolas, monospace; font-size: 14px; word-break: break-all; background: var(--soft); border-radius: 12px; padding: 10px 12px; cursor: pointer; user-select: text; -webkit-user-select: text; }
   .meter { height: 4px; border-radius: 99px; background: var(--soft2); overflow: hidden; }
   .ncout { display: grid; gap: 6px; align-content: start; }
   .ncout .set > span:last-child { display: flex; gap: 6px; flex: 1; }
@@ -533,7 +537,8 @@
   <div class="panel" data-name="clock">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4></div>
     <div class="list scroll" id="zones"></div>
-    <select class="field" id="zoneAdd" aria-label="Add a city" data-center></select>
+    <input class="field" dir="auto" id="zoneQ" aria-label="Search time zones" placeholder="Add…">
+    <div class="list scroll" id="zoneList"></div>
   </div>
 
   <div class="panel" data-name="settings">
@@ -696,7 +701,7 @@ const W = {
   search: { name: 'Search', icon: I(LUC['search']), kind: 'panel' },
   clock: { name: 'World clock', icon: I(LUC['globe']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
-  pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => send('pinwin') },
+  pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
   desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['monitor']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
   screenoff: { name: 'Screen off', icon: I(LUC['monitor-off']), kind: 'action', run: () => { app.close(); send('screenoff'); } },
   lock: { name: 'Lock PC', icon: I(LUC['lock']), kind: 'action', run: () => { app.close(); send('lock'); } },
@@ -746,6 +751,7 @@ const THEMES = {
   espresso: ['Espresso', '#2a1c14', 'dark', '#f1c79a'], neon: ['Neon', '#050505', 'dark', '#39ff88'], sunset: ['Sunset', '#1d0f24', 'dark', '#ff9d5c'],
   snow: ['Snow', '#f5f5f7', 'light'], sand: ['Sand', '#efe4d2', 'light', '#6b4a2b'], sky: ['Sky', '#e2efff', 'light', '#1557b0'],
   rose: ['Rose', '#fde6ee', 'light', '#b0194a'], mint: ['Mint', '#e1f7ec', 'light', '#0e7a4b'], lilac: ['Lilac', '#eee8ff', 'light', '#5b33c9'],
+  linen: ['Linen', '#f7f2e9', 'light', '#8a6a3a'],
 };
 /* The two colors a theme has are the background and the accent; ink, muted text, hairlines and the
    text that sits on the accent are all derived. "Black or white?" is decided by luminance, not by
@@ -921,12 +927,13 @@ function frame(now) {
     fy.t = flyTop + flyH / 2;
   }
   const Y = fy.step(dt);
-  const stY = 1 - clamp(gv * .025, -.1, .1);
+  const stX = 1 + clamp(gv * .04, -.15, .15), stY = 1 - clamp(gv * .025, -.1, .1);
   flyUi.style.visibility = gs > .02 ? 'visible' : 'hidden';
   flyUi.style.opacity = clamp(gs * 1.6);
-  // the panel is pinned to the screen edge, so it must never scale or slide sideways: its width is
-  // final from the first frame and only the height pours. Any X motion here drags every row with it
-  flyUi.style.transform = `translateY(${Y - flyH / 2}px) scaleY(${Math.max(.1, (.25 + .75 * gs) * stY)})`;
+  // slide + squeeze: the panel comes out of the edge (translateX, signed for the left edge) while it
+  // stretches to full width about its inner edge; stX/stY are the velocity stretch, the .25 keeps the
+  // first frame from collapsing to nothing
+  flyUi.style.transform = `translate(${(1 - gs) * 40 * DIR}px, ${Y - flyH / 2}px) scale(${Math.min(1, Math.max(.05, gs * stX))}, ${Math.max(.1, (.25 + .75 * gs) * stY)})`;
   flyUi.style.borderRadius = `${22 + (1 - clamp(gs)) * 60}px`;
 
   requestAnimationFrame(frame);
@@ -935,13 +942,15 @@ requestAnimationFrame(frame);
 
 /* ================= dock + More rendering ================= */
 const panels = $$('.panel');
+/* the two actions that stay on get their lit state on the button, so a toggle never has to be guessed at */
+const onState = id => id === 'awake' ? awake : id === 'pinwin' ? pinned : false;
 function toolHTML(id) {
   const w = info(id); if (!w) return '';
-  return `<button class="tool ${w.kind === 'app' ? 'app' : ''} ${id === 'awake' && awake ? 'on' : ''}" data-w="${id}" aria-label="${esc(w.name)}">${w.icon}</button>`;
+  return `<button class="tool ${w.kind === 'app' ? 'app' : ''} ${onState(id) ? 'on' : ''}" data-w="${id}" aria-label="${esc(w.name)}">${w.icon}</button>`;
 }
 function tileHTML(id) {
   const w = info(id); if (!w) return '';
-  return `<button class="tile ${id === 'awake' && awake ? 'on' : ''}" data-w="${id}"><b>${w.icon}</b>${esc(w.name)}</button>`;
+  return `<button class="tile ${onState(id) ? 'on' : ''}" data-w="${id}"><b>${w.icon}</b>${esc(w.name)}</button>`;
 }
 function renderTools() {
   const keep = new Map($$('#tools .tool').map(el => [el.dataset.w, el]));
@@ -979,7 +988,6 @@ function setPanel(name, fromMore = false) {
   if (name === 'numconv') setTimeout(() => $('#ncIn').focus(), 60);
   if (name === 'search') setTimeout(() => $('#searchIn').focus(), 60);
   if (name === 'snippets') setTimeout(() => $('#snipIn').focus(), 60);
-  if (name === 'pass') genPw();
   if (name === 'gen') renderGen();
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
@@ -2324,12 +2332,20 @@ $('[data-name=media]').addEventListener('click', e => {
   }
 });
 
-/* ---- keep awake ---- */
-let awake = false;
+/* ---- keep awake / pin window: both are toggles, and both show their state on the button ---- */
+let awake = false, pinned = false;
 function toggleAwake() {
   awake = !awake; send('awake', { on: awake }); toast(awake ? 'PC stays awake' : 'Sleep allowed again', awake ? 'sun' : 'moon');
   $$('[data-w=awake]').forEach(el => el.classList.toggle('on', awake));
 }
+function togglePin() {
+  send('pinwin', { on: !pinned });   // the state is set when the native side answers, not before
+}
+app.pinned = (on, msg) => {
+  pinned = on;
+  $$('[data-w=pinwin]').forEach(el => el.classList.toggle('on', on));
+  toast(msg, on ? 'pin' : '');   // the table has no "pin-off"; the dot on the button carries the state
+};
 
 /* ---- stopwatch ---- */
 let swStart = 0, swAcc = 0, swRaf = null, laps = [];
@@ -2491,8 +2507,11 @@ renderEngines();
 
 
 /* ---- world clock ---- */
-const ZONES = ['UTC', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Istanbul', 'Europe/Moscow', 'Asia/Tehran', 'Asia/Dubai', 'Asia/Karachi', 'Asia/Kolkata', 'Asia/Bangkok',
-  'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul', 'Australia/Sydney', 'Pacific/Auckland', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Toronto', 'America/Sao_Paulo', 'America/Mexico_City', 'Africa/Cairo', 'Africa/Lagos'];
+/* every IANA zone the engine knows, in "Area/City" form. Intl has had supportedValuesOf since Chrome 99,
+   which is older than the WebView2 floor, but the fixed list keeps older engines usable rather than
+   handing them an empty menu. */
+const ALL_ZONES = (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [])
+  .concat(['UTC']).filter((z, i, a) => a.indexOf(z) === i).sort();
 const city = z => z.split('/').pop().replace(/_/g, ' ');
 function zoneParts(z) {
   const now = new Date();
@@ -2504,11 +2523,21 @@ function zoneParts(z) {
 function renderZones() {
   $('#zones').innerHTML = S.zones.map((z, i) => { const p = zoneParts(z);
     return `<div class="zone"><span class="zt">${p.t}</span><span class="zn">${city(z)}<small>${p.sub}</small></span><button class="x" data-i="${i}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`; }).join('')
-    || '<div class="empty">Add a city below</div>';
-  $('#zoneAdd').innerHTML = '<option value="" data-icon="plus">Add a city…</option>' + ZONES.filter(z => !S.zones.includes(z)).map(z => `<option value="${z}">${city(z)}</option>`).join('');
+    || '<div class="empty">Add a time zone below</div>';
 }
-$('#zones').onclick = e => { const i = e.target.closest('.x')?.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); } };
-$('#zoneAdd').onchange = e => { if (e.target.value) { S.zones.push(e.target.value); save(); renderZones(); } };
+/* the picker matches on the whole id, so "asia/teh", "tehran" and "teh" all find Asia/Tehran */
+function renderZoneList() {
+  const q = fold($('#zoneQ').value).replace(/[\s_]+/g, '');
+  const hits = (q ? ALL_ZONES.filter(z => fold(z).replace(/[\s_]+/g, '').includes(q)) : ALL_ZONES)
+    .filter(z => !S.zones.includes(z)).slice(0, q ? 60 : 24);
+  $('#zoneList').innerHTML = hits.length
+    ? hits.map(z => `<button class="item plain" data-z="${z}">${esc(city(z))}<small>${esc(z)}</small></button>`).join('')
+    : `<div class="empty">${q ? 'No matching time zone' : 'Every zone is already shown'}</div>`;
+}
+$('#zones').onclick = e => { const i = e.target.closest('.x')?.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); renderZoneList(); } };
+$('#zoneList').onclick = e => { const z = e.target.closest('[data-z]')?.dataset.z; if (z) { S.zones.push(z); save(); $('#zoneQ').value = ''; renderZones(); renderZoneList(); } };
+$('#zoneQ').addEventListener('input', renderZoneList);
+renderZoneList();
 setInterval(() => { if (panel === 'clock') renderZones(); }, 15000);
 
 /* ---- calculator ---- */
@@ -2627,10 +2656,14 @@ function drawT() {
 $('#timerPresets').innerHTML = [[5, '5m'], [10, '10m'], [15, '15m'], [30, '30m'], [60, '1hr']].map(([m, l]) => `<button class="btn" data-m="${m}">${l}</button>`).join('');
 $('#timerPresets').onclick = e => { const m = e.target.dataset.m; if (m) { clearInterval(tRun); tRun = null; tTotal = tLeft = m * 60; drawT(); } };
 const tOut = $('#timerOut');
+// hovering picks the unit, so scrolling needs no click first
+tOut.onpointermove = e => { const i = e.target.dataset.u; if (i !== undefined && +i !== tPick) { tPick = +i; tBuf = ''; drawT(); } };
 tOut.onclick = e => { const i = e.target.dataset.u; if (i === undefined) return; tPick = +i; tBuf = ''; drawT(); tOut.focus(); };
-tOut.onwheel = e => { e.preventDefault(); tSet(tPick, tParts()[tPick] - Math.sign(e.deltaY)); };
+// the numbers roll over: down from 00 lands on the max, up from the max lands on 00
+const tRoll = (i, d) => tSet(i, (tParts()[i] + d + T_MAX[i] + 1) % (T_MAX[i] + 1));
+tOut.onwheel = e => { e.preventDefault(); tRoll(tPick, -Math.sign(e.deltaY)); };
 tOut.onkeydown = e => {
-  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') tSet(tPick, tParts()[tPick] + (e.key === 'ArrowUp' ? 1 : -1));
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') tRoll(tPick, e.key === 'ArrowUp' ? 1 : -1);
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { tPick = (tPick + (e.key === 'ArrowRight' ? 1 : 2)) % 3; tBuf = ''; drawT(); }
   else if (/^[0-9]$/.test(e.key)) { const at = performance.now(); tBuf = (at - tBufAt > 1200 ? '' : tBuf) + e.key; tBufAt = at; tSet(tPick, +tBuf); }
   else return;
@@ -2716,9 +2749,12 @@ function genPw() {
   bar.style.background = ['#ff453a', '#ff9f0a', '#ffd60a', '#5ac8fa', '#34c759'][s.level];
   $('#pwScore').textContent = `${s.label} · ${s.total} bits of entropy`;
 }
+/* the password only ever changes on purpose: Regenerate, a set toggle, or the length slider.
+   Opening the panel must not roll a new one. */
 $('#pwLen').oninput = genPw; $('#pwGen').onclick = genPw;
 $('#pwSets').onclick = e => { const b = e.target.closest('[data-set]'); if (b) { b.classList.toggle('on'); genPw(); } };
 $('#pwCopy').onclick = $('#pwOut').onclick = () => copy($('#pwOut').textContent, 'Password copied');
+genPw();
 
 /* ---- units ---- */
 const UCAT = [
@@ -2868,7 +2904,7 @@ $$('select').forEach(sel => {
   const label = () => {
     const o = sel.selectedOptions[0], ic = o?.dataset.icon;
     btn.classList.toggle('ic', !!ic);
-    btn.innerHTML = ic ? I(LUC[ic]) + `<span>${esc(o.textContent)}</span>` : esc(o.textContent || '');
+    btn.innerHTML = ic ? I(LUC[ic]) + `<span>${esc(o?.textContent || '')}</span>` : esc(o?.textContent || '');
   };
   btn.onclick = e => {
     e.stopPropagation();

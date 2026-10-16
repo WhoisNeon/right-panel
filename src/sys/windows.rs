@@ -29,8 +29,8 @@ use windows_sys::Win32::{
         VK_MEDIA_NEXT_TRACK, VK_MEDIA_PLAY_PAUSE, VK_MEDIA_PREV_TRACK, VK_V, VK_VOLUME_DOWN, VK_VOLUME_MUTE, VK_VOLUME_UP,
     },
     UI::WindowsAndMessaging::{
-        GetCursorPos, GetForegroundWindow, GetWindowLongPtrW, GetWindowTextW, PostMessageW, SetForegroundWindow, SetWindowPos, GWL_EXSTYLE, HWND_NOTOPMOST,
-        HWND_TOPMOST, MB_ICONASTERISK, SC_MONITORPOWER, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_SYSCOMMAND, WS_EX_TOPMOST,
+        GetCursorPos, GetForegroundWindow, GetWindowTextW, PostMessageW, SetForegroundWindow, SetWindowPos, HWND_NOTOPMOST,
+        HWND_TOPMOST, MB_ICONASTERISK, SC_MONITORPOWER, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_SYSCOMMAND,
     },
 };
 
@@ -40,6 +40,8 @@ const RUN_NAME: &str = "RightPanel";
 
 static PREV_FG: AtomicIsize = AtomicIsize::new(0);
 static SELF_HWND: AtomicIsize = AtomicIsize::new(0);
+/// the window the user last pinned, so unpinning hits the same one even after they switch away
+static PINNED_HWND: AtomicIsize = AtomicIsize::new(0);
 
 fn wide(s: &str) -> Vec<u16> {
     s.encode_utf16().chain(Some(0)).collect()
@@ -205,20 +207,33 @@ pub fn press(name: &str) {
 }
 
 /* ---------------- system actions ---------------- */
-/// Toggle "always on top" for the window the user was in before opening the panel.
-pub fn toggle_topmost() -> String {
-    let hwnd = PREV_FG.load(Ordering::Relaxed) as HWND;
-    if hwnd.is_null() {
-        return "No window to pin".into();
-    }
+fn win_title(hwnd: HWND) -> String {
     unsafe {
         let mut buf = [0u16; 120];
         let n = GetWindowTextW(hwnd, buf.as_mut_ptr(), buf.len() as i32).max(0) as usize;
         let title = String::from_utf16_lossy(&buf[..n]);
-        let title = if title.chars().count() > 28 { format!("{}…", title.chars().take(28).collect::<String>()) } else { title };
-        let on_top = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32 & WS_EX_TOPMOST != 0;
-        SetWindowPos(hwnd, if on_top { HWND_NOTOPMOST } else { HWND_TOPMOST }, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        if on_top { format!("Unpinned {title}") } else { format!("📌 {title} stays on top") }
+        if title.chars().count() > 28 { format!("{}…", title.chars().take(28).collect::<String>()) } else { title }
+    }
+}
+
+/// Set "always on top" on the window the user was in before opening the panel.
+///
+/// Promoting that window also promoted it above the panel, which hid the panel itself — so the panel
+/// is raised again straight after. The pinned hwnd is remembered, because the foreground window changes
+/// as soon as the user goes back to what they were doing, and unpinning has to hit the same window.
+pub fn set_topmost(on: bool) -> (bool, String) {
+    let hwnd = if on { PREV_FG.load(Ordering::Relaxed) as HWND } else { PINNED_HWND.swap(0, Ordering::Relaxed) as HWND };
+    if hwnd.is_null() {
+        return (false, if on { "No window to pin".into() } else { "Nothing is pinned".into() });
+    }
+    unsafe {
+        let title = win_title(hwnd);
+        SetWindowPos(hwnd, if on { HWND_TOPMOST } else { HWND_NOTOPMOST }, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        if on { PINNED_HWND.store(hwnd as isize, Ordering::Relaxed); }
+        // keep the panel above the window it just pinned
+        let self_hwnd = SELF_HWND.load(Ordering::Relaxed) as HWND;
+        if !self_hwnd.is_null() { SetWindowPos(self_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE); }
+        if on { (true, format!("{title} stays on top")) } else { (false, format!("Unpinned {title}")) }
     }
 }
 

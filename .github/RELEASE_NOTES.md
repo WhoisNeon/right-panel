@@ -9,6 +9,17 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.15
+- **The panel slides and squeezes open again** — this is the 1.4.13 animation, back on purpose: the panel comes out of the screen edge and stretches open about its inner edge. (1.4.14 changed it to "only the height pours")
+- **A new light theme, Linen** — the last of the presets, a warm off-white with a brown accent. Every other colour in it is derived, the same as the rest
+- **Every time zone is in the clock now** — the picker was a fixed list of 25. It is now all 418 zones the engine knows, as `Asia/Tehran`, with a search box: type `tehran`, `asia/teh` or just `teh`. The zones you already added stay out of the list
+- **The password stops moving on its own** — opening the panel used to roll a brand new one, so the one you had copied was quietly gone. It now changes only when you press Regenerate, flip a character set, or move the length slider
+- **The timer picks the unit you point at** — hover the hours, minutes or seconds and it is the one the wheel and the arrow keys will change, no click needed. The numbers roll over too: scrolling down from `00` lands on `99` / `59`, and scrolling up from the top wraps back to `00`
+- **The emoji grid stops showing a scrollbar** — hovering the last column armed a horizontal scrollbar, and the first column was sliced against the panel edge. The grid now pads itself so the hover scale has room, and six rows fit with no scrollbar at all
+- **Pinning a window no longer hides the panel** — pinning raised the window above the panel and buried it. The panel raises itself again right after, and it remembers which window you pinned so unpinning hits the same one
+- **Pin window is a toggle with a light** — it behaves like Keep awake now: the dot on the button tells you whether a window is pinned, instead of you having to guess
+- **Smaller fixes** — the world-clock add button reads "Add", and an empty dropdown no longer throws when there is nothing to show
+
 ### New in 1.4.14
 - **The timer is its own input now** — the hours / minutes / seconds boxes are gone. Click a unit on the display and scroll the wheel, press ↑ / ↓, or just type digits; it always reads `00:05:00`, no matter how short the timer is
 - **Nothing moves sideways when the panel opens** — it used to slide in from the screen edge while it stretched wider, which dragged every row about 160px to the left and sprang it back. The panel is at full width from the first frame now, and only pours open downwards
