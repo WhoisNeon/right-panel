@@ -9,6 +9,14 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.16
+- **The calendar picker waits to be asked for** — the world clock used to show its whole search box and zone list the moment it opened, which was most of the panel. There is now an **+ Add** button in the header and the picker only appears when you press it. The box says what it wants: "City or Area/City, e.g. Asia/Tehran"
+- **The world clock has seconds, and a 12/24h switch** — every zone shows `HH:MM:SS`, and the new **24h** button in the header flips the lot to 12-hour with AM/PM. Your choice is remembered
+- **Snippets understand placeholders** — write `{{date}}`, `{{jalali_date}}`, `{{time}}` or `{{clipboard}}` in a snippet and it is filled in when you copy it, so the saved snippet stays the template you typed. The four names sit under the box as buttons — press one to drop it in
+- **Generate grew a Jalali date** — the Iranian date (`1405-07-24`) sits right under the Gregorian one, and UUID moved down to the bottom of the list where the other random things live
+- **Tighter rows** — Settings rows have an 8px gap between their label and their control, and the header buttons are down to a 4px gap
+- **The Jalali date is right to the day** — it is the published 33-year-cycle arithmetic rather than an approximation, and it holds up over an 80-year, day-by-day round trip (29,220 dates, no repeats and no skips)
+
 ### New in 1.4.15
 - **The panel slides and squeezes open again** — this is the 1.4.13 animation, back on purpose: the panel comes out of the screen edge and stretches open about its inner edge. (1.4.14 changed it to "only the height pours")
 - **A new light theme, Linen** — the last of the presets, a warm off-white with a brown accent. Every other colour in it is derived, the same as the rest

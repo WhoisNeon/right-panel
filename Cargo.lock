@@ -1857,7 +1857,7 @@ dependencies = [
 
 [[package]]
 name = "right-panel"
-version = "1.4.15"
+version = "1.4.16"
 dependencies = [
  "arboard",
  "gtk",

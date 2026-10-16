@@ -84,7 +84,7 @@
   .back { display: none; border: 0; background: var(--soft); color: var(--ink); width: 24px; height: 22px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; flex: none; }
   .back:hover { background: var(--soft2); }
   .fly-ui.sub .back { display: inline-grid; place-items: center; }
-  .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+  .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 8px; display: inline-flex; gap: 4px; }
   /* a flex-centred icon lines up with the line box, but the text's ink sits below the box centre
      (the box keeps room for descenders), so nudge the glyph down onto the caps */
   .link svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transform: translateY(1.5px); }
@@ -223,7 +223,7 @@
   .meter i { display: block; height: 100%; width: 0; background: var(--muted); transition: width .15s, background .15s; }
   #pwSets { gap: 5px; }
   .zone { display: flex; align-items: center; gap: 10px; background: var(--soft); border-radius: 12px; padding: 8px 10px 8px 12px; }
-  .zone .zt { font-size: 22px; font-weight: 300; font-variant-numeric: tabular-nums; min-width: 64px; }
+  .zone .zt { font-size: 20px; font-weight: 300; font-variant-numeric: tabular-nums; min-width: 96px; }
   .zone .zn { flex: 1; font-size: 13px; line-height: 1.2; }
   .zone .zn small { display: block; color: var(--muted); font-size: 10px; }
   .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
@@ -264,7 +264,7 @@
   .chip.engine svg.brand { fill: currentColor; stroke: none; }
 
   /* settings */
-  .set { display: flex; align-items: center; justify-content: space-between; font-size: 13px; padding: 4px 2px; }
+  .set { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; padding: 4px 2px; }
   .set > span { min-width: 0; }
   .set > select { flex: none; }
   .set > .pick { flex: none; }
@@ -525,6 +525,7 @@
   <div class="panel" data-name="snippets">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4><button class="link" id="snipClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button></div>
     <input class="field" dir="auto" id="snipIn" aria-label="New snippet" placeholder="Type a snippet and press Enter…">
+    <div class="chips" id="snipPh"><button class="chip" data-ph="date">{{date}}</button><button class="chip" data-ph="jalali_date">{{jalali_date}}</button><button class="chip" data-ph="time">{{time}}</button><button class="chip" data-ph="clipboard">{{clipboard}}</button></div>
     <div class="list scroll" id="snipList"></div>
   </div>
 
@@ -535,10 +536,12 @@
   </div>
 
   <div class="panel" data-name="clock">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4><button class="link" id="zoneFmt">24h</button><button class="link" id="zoneAdd"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>Add</button></div>
     <div class="list scroll" id="zones"></div>
-    <input class="field" dir="auto" id="zoneQ" aria-label="Search time zones" placeholder="Add…">
-    <div class="list scroll" id="zoneList"></div>
+    <div id="zonePick" hidden>
+      <input class="field" dir="auto" id="zoneQ" aria-label="Search time zones" placeholder="City or Area/City, e.g. Asia/Tehran">
+      <div class="list scroll" id="zoneList"></div>
+    </div>
   </div>
 
   <div class="panel" data-name="settings">
@@ -601,7 +604,7 @@ const send = (t, o = {}) => window.ipc.postMessage(JSON.stringify({ t, ...o }));
 const init = window.__init || {};
 const OS = init.platform || 'windows';   // windows | macos | linux
 const S = Object.assign({ theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
-  edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] }, init.settings || {});
+  edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] }, init.settings || {});
 const save = () => send('settings', { settings: S });
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -2370,9 +2373,64 @@ const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do e
 const uuid4 = () => ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
   (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 const pad = n => String(n).padStart(2, '0');
+
+/* ---- Jalali (Solar Hijri) calendar ----
+   The 33-year-cycle arithmetic the Iranian calendar committee published, i.e. the same conversion
+   jalaali-js uses: a Jalali year starts on the day whose Tehran midnight is nearest the equinox, so
+   the leap day creeps one day earlier roughly every four years and then jumps back at each cycle
+   break. The break years are the only data, and they run to 3177 — fine for a lifetime. */
+const JAL_BREAKS = [-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178];
+const jdiv = (a, b) => Math.trunc(a / b), jmod = (a, b) => a - jdiv(a, b) * b;   // truncates, never floors: `gm - 8` goes negative below July
+function jalCal(jy) {                       // which Gregorian year jy sits in, the Gregorian day number of Farvardin 1, and its leap flag
+  let leapJ = -14, jp = JAL_BREAKS[0], jump = 0;
+  for (let i = 1; i < JAL_BREAKS.length; i++) {
+    const jm = JAL_BREAKS[i];
+    jump = jm - jp;
+    if (jy < jm) break;
+    leapJ += jdiv(jump, 33) * 8 + jdiv(jmod(jump, 33), 4);
+    jp = jm;
+  }
+  const gy = jy + 621, n = jy - jp;
+  leapJ += jdiv(n, 33) * 8 + jdiv(jmod(n, 33) + 3, 4);
+  if (jmod(jump, 33) === 4 && jump - n === 4) leapJ++;
+  const leapG = jdiv(gy, 4) - jdiv((jdiv(gy, 100) + 1) * 3, 4) - 150;
+  let leap = jmod(jmod(n + 1, 33) - 1, 4);
+  if (leap === -1) leap = 4;
+  return { gy, march: 20 + leapJ - leapG, leap };
+}
+const gDay = (gy, gm, gd) => {              // Gregorian -> day number (JDN)
+  const d = jdiv((gy + jdiv(gm - 8, 6) + 100100) * 1461, 4) + jdiv(153 * jmod(gm + 9, 12) + 2, 5) + gd - 34840408;
+  return d - jdiv(jdiv(gy + 100100 + jdiv(gm - 8, 6), 100) * 3, 4) + 752;
+};
+function gFromDay(jdn) {                    // day number -> Gregorian
+  let j = 4 * jdn + 139361631;
+  j += jdiv(jdiv(4 * jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
+  const i = jdiv(jmod(j, 1461), 4) * 5 + 308;
+  return { y: jdiv(j, 1461) - 100100 + jdiv(8 - (jmod(jdiv(i, 153), 12) + 1), 6), m: jmod(jdiv(i, 153), 12) + 1, d: jdiv(jmod(i, 153), 5) + 1 };
+}
+function toJalali(y, m, d) {                // Gregorian -> Jalali
+  let jy = y - 621, r = jalCal(jy);
+  let k = gDay(y, m, d) - gDay(r.gy, 3, r.march);
+  if (k >= 0) {
+    if (k <= 185) return { y: jy, m: 1 + jdiv(k, 31), d: jmod(k, 31) + 1 };
+    k -= 186;
+  } else {
+    jy--; k += 179;
+    if (r.leap === 1) k++;
+  }
+  return { y: jy, m: 7 + jdiv(k, 30), d: jmod(k, 30) + 1 };
+}
+function toGregorian(jy, jm, jd) {          // Jalali -> Gregorian
+  const r = jalCal(jy);
+  return gFromDay(gDay(r.gy, 3, r.march) + (jm - 1) * 31 - jdiv(jm, 7) * (jm - 7) + jd - 1);
+}
+const jalaliLeap = jy => jalCal(jy).leap === 0;            // the 12th month is 30 days, or 31 in a leap year
+const jalaliMonthLen = (jy, jm) => jm <= 6 ? 31 : jm <= 11 ? 30 : jalaliLeap(jy) ? 30 : 29;
+const jalaliToday = () => { const d = new Date(); return toJalali(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+const jalaliText = j => `${j.y}-${pad(j.m)}-${pad(j.d)}`;
 const GEN = {
-  'UUID': () => (crypto.randomUUID || uuid4)(),
   'Date': () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; },
+  'Jalali date': () => jalaliText(jalaliToday()),
   'Time': () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; },
   'Time (12h)': () => { const d = new Date(); return `${d.getHours() % 12 || 12}:${pad(d.getMinutes())} ${d.getHours() < 12 ? 'AM' : 'PM'}`; },
   'ISO timestamp': () => new Date().toISOString(),
@@ -2383,6 +2441,7 @@ const GEN = {
   'Lorem paragraph': () => LOREM,
   'Password': () => pwPick(PW_SETS.upper + PW_SETS.lower + PW_SETS.digit + PW_SETS.symbol, 16),
   'Token': () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''),   // 128 bits of hex
+  'UUID': () => (crypto.randomUUID || uuid4)(),
 };
 function renderGen() { $('#genList').innerHTML = Object.entries(GEN).map(([n, f]) => { let v; try { v = esc(f()); } catch { v = 'not available here'; } return `<button class="item plain spring gen" data-g="${n}">${n}<span>${v}</span></button>`; }).join(''); }
 $('#genList').onclick = e => { const g = e.target.closest('[data-g]')?.dataset.g; if (!g) return; let v; try { v = GEN[g](); } catch { return toast('That one is not available here'); } deliver(v); };
@@ -2406,6 +2465,14 @@ $('#folderAdd').onclick = () => send('addApp', { folder: true });
 renderFolders();
 
 /* ---- snippets ---- */
+/* placeholders are filled in at copy time, so the saved snippet stays the template it was typed as */
+const SNIP_PH = {
+  date: () => GEN.Date(),
+  jalali_date: () => GEN['Jalali date'](),
+  time: () => GEN.Time(),
+  clipboard: () => lastClip,
+};
+const expandSnip = s => s.replace(/\{\{(\w+)\}\}/g, (m, k) => k in SNIP_PH ? SNIP_PH[k]() : m);
 function renderSnips() {
   $('#snipList').innerHTML = S.snippets.length ? S.snippets.map((t, i) =>
     `<button class="item spring" data-i="${i}">${esc(t.replace(/\s+/g, ' ').slice(0, 100))}<span class="acts"><span data-x aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></span></button>`).join('')
@@ -2413,9 +2480,13 @@ function renderSnips() {
 }
 $('#snipIn').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { S.snippets.unshift(e.target.value.trim()); e.target.value = ''; save(); renderSnips(); } });
 $('#snipClear').onclick = () => { S.snippets = []; save(); renderSnips(); };
+/* the chips drop their placeholder into the box, so the names are discoverable without a tooltip */
+$('#snipPh').onclick = e => { const p = e.target.closest('[data-ph]')?.dataset.ph; if (!p) return;
+  const i = $('#snipIn'), at = i.value.length;
+  i.value = i.value.slice(0, at) + `{{${p}}}` + i.value.slice(at); i.focus(); };
 $('#snipList').onclick = e => {
   const b = e.target.closest('.item'); if (!b) return; const i = +b.dataset.i;
-  if (e.target.closest('[data-x]')) { S.snippets.splice(i, 1); save(); renderSnips(); } else deliver(S.snippets[i]);
+  if (e.target.closest('[data-x]')) { S.snippets.splice(i, 1); save(); renderSnips(); } else deliver(expandSnip(S.snippets[i]));
 };
 renderSnips();
 
@@ -2513,9 +2584,13 @@ renderEngines();
 const ALL_ZONES = (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [])
   .concat(['UTC']).filter((z, i, a) => a.indexOf(z) === i).sort();
 const city = z => z.split('/').pop().replace(/_/g, ' ');
+/* 24h uses h23 so midnight is 00:00 and not 24:00; 12h needs a locale that writes AM/PM in caps */
+const zoneClock = z => S.hour24
+  ? new Intl.DateTimeFormat('en-GB', { timeZone: z, hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())
+  : new Intl.DateTimeFormat('en-US', { timeZone: z, hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
 function zoneParts(z) {
   const now = new Date();
-  const t = new Intl.DateTimeFormat('en-GB', { timeZone: z, hour: '2-digit', minute: '2-digit' }).format(now);
+  const t = zoneClock(z);
   const d = (tz => new Date(now.toLocaleString('en-US', { timeZone: tz })))(z), l = new Date(now.toLocaleString('en-US'));
   const diffH = Math.round((d - l) / 36e5 * 2) / 2, day = d.getDate() - l.getDate();
   return { t, sub: `${day === 0 ? 'Today' : day > 0 || day < -20 ? 'Tomorrow' : 'Yesterday'}, ${diffH === 0 ? 'same time' : (diffH > 0 ? '+' : '') + diffH + 'h'}` };
@@ -2537,8 +2612,11 @@ function renderZoneList() {
 $('#zones').onclick = e => { const i = e.target.closest('.x')?.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); renderZoneList(); } };
 $('#zoneList').onclick = e => { const z = e.target.closest('[data-z]')?.dataset.z; if (z) { S.zones.push(z); save(); $('#zoneQ').value = ''; renderZones(); renderZoneList(); } };
 $('#zoneQ').addEventListener('input', renderZoneList);
-renderZoneList();
-setInterval(() => { if (panel === 'clock') renderZones(); }, 15000);
+/* the picker only exists once you ask for it: an always-open 418-zone list was most of the panel */
+$('#zoneAdd').onclick = () => { const p = $('#zonePick'); p.hidden = !p.hidden; if (!p.hidden) { $('#zoneQ').value = ''; renderZoneList(); $('#zoneQ').focus(); } };
+$('#zoneFmt').onclick = () => { S.hour24 = !S.hour24; save(); $('#zoneFmt').textContent = S.hour24 ? '24h' : '12h'; renderZones(); };
+$('#zoneFmt').textContent = S.hour24 ? '24h' : '12h';
+setInterval(() => { if (panel === 'clock') renderZones(); }, 1000);
 
 /* ---- calculator ---- */
 /* Windows Calculator (Standard) is a state machine, not an expression: the display holds one number and
