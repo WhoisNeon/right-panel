@@ -48,6 +48,9 @@ static IMAGES: Mutex<Vec<(u64, u32, u32, Vec<u8>)>> = Mutex::new(Vec::new());
 /// Pinned images are also kept on disk, so they come back after a restart.
 static PINNED: Mutex<Vec<(u64, u32, u32, Vec<u8>)>> = Mutex::new(Vec::new());
 static LAST_IMAGE: AtomicU64 = AtomicU64::new(0);
+/// The system monitor only samples while its panel is open: PDH queries cost real work.
+static METERS_ON: AtomicBool = AtomicBool::new(false);
+static METERS: Mutex<Option<sys::Meters>> = Mutex::new(None);
 
 enum Ev {
     Script(String),
@@ -299,6 +302,22 @@ fn spawn_inbox_watch(proxy: EventLoopProxy<Ev>) {
             }
         }
         thread::sleep(Duration::from_millis(700));
+    });
+}
+
+/// Samples the system meters once a second, but only while the monitor panel is open.
+fn spawn_meters(proxy: EventLoopProxy<Ev>) {
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_millis(1000));
+        if !METERS_ON.load(Ordering::Relaxed) {
+            continue;
+        }
+        let reading = METERS.lock().ok().and_then(|mut g| g.as_mut().map(|m| m.sample()));
+        if let Some(v) = reading {
+            if proxy.send_event(Ev::Script(format!("app.meters({})", v))).is_err() {
+                return;
+            }
+        }
     });
 }
 
@@ -703,6 +722,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
 
     spawn_clip_watch(proxy.clone());
     spawn_inbox_watch(proxy.clone());
+    spawn_meters(proxy.clone());
     restore_pins(proxy.clone());
     place(&window, &all_screens, screen_idx, on_left);
     spawn_edge_watch(proxy.clone());
@@ -839,6 +859,37 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     "launch" | "open" => sys::launch(&s(if m["t"] == "open" { "target" } else { "path" })),
                     "key" => sys::press(&s("name")),
                     "screenoff" => sys::screen_off(),
+                    "metersStart" => {
+                        if METERS.lock().ok().and_then(|mut g| g.take()).is_none() {
+                            if let Some(mm) = sys::Meters::open() {
+                                if let Ok(mut g) = METERS.lock() {
+                                    *g = Some(mm);
+                                }
+                            }
+                        }
+                        METERS_ON.store(true, Ordering::Relaxed);
+                    }
+                    "metersStop" => {
+                        METERS_ON.store(false, Ordering::Relaxed);
+                        let _ = METERS.lock().ok().and_then(|mut g| g.take());
+                    }
+                    "qr" => {
+                        let want = s("text");
+                        let call = match util::qr(&want) {
+                            Some((w, bits)) => format!("app.qr{}", json!({ "w": w, "bits": bits, "err": false })),
+                            None => format!("app.qr{}", json!({ "w": 0, "bits": [], "err": true })),
+                        };
+                        let _ = webview.evaluate_script(&call);
+                    }
+                    "copyQR" => {
+                        // Rust already holds the matrix, so it builds the bitmap and puts it on the
+                        // clipboard itself — no image data crosses the bridge
+                        let ok = match util::qr(&s("text")) {
+                            Some((w, bits)) => { let (bw, bh, px) = util::qr_bitmap(w, &bits, 8, 4); sys::set_clip_image(bw, bh, &px) }
+                            None => false,
+                        };
+                        let _ = webview.evaluate_script(&format!("app.qrCopied({})", ok));
+                    }
                     "pinwin" => {
                         // the tool is a toggle, so the panel asks for a state; the native side answers
                         // with the state it actually reached and the panel shows that, not what was hoped for

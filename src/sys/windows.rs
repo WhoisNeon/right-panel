@@ -252,6 +252,60 @@ pub fn beep() {
     unsafe { MessageBeep(MB_ICONASTERISK) };
 }
 
+/* ---------------- system monitor ----------------
+   GetSystemTimes for CPU (busy = total minus idle) and GlobalMemoryStatusEx for RAM: two calls,
+   no counter query. PDH's wildcard counters (GPU Engine, Network Interface) return an array per
+   sample behind a flattened union, which is more machinery than a sparkline is worth and cannot be
+   tested without a Windows box — those meters wait until there is a way to prove them.
+   windows-sys 0.61 does not export GetSystemTimes, so that one is declared here: a FILETIME is two
+   u32s, so the 100ns ticks read straight out of three u64s. */
+use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+
+#[link(name = "kernel32")]
+unsafe extern "system" {
+    fn GetSystemTimes(idle: *mut u64, kernel: *mut u64, user: *mut u64) -> i32;
+}
+
+pub struct Meters {
+    last_idle: u64,
+    last_total: u64,
+    started: bool,
+}
+
+impl Meters {
+    pub fn open() -> Option<Meters> {
+        Some(Meters { last_idle: 0, last_total: 0, started: false })
+    }
+
+    /// Samples once. The first call has no previous reading to difference against, so it reports
+    /// nothing rather than a nonsense spike.
+    pub fn sample(&mut self) -> serde_json::Value {
+        let (mut idle, mut kernel, mut user) = (0u64, 0u64, 0u64);
+        let cpu = if unsafe { GetSystemTimes(&mut idle, &mut kernel, &mut user) } != 0 {
+            let (i, t) = (idle, kernel + user);
+            let ready = self.started && t > self.last_total;
+            let pct = if ready {
+                (((t - self.last_total) - i.saturating_sub(self.last_idle)) as f64 / (t - self.last_total) as f64) * 100.0
+            } else {
+                f64::NAN
+            };
+            self.last_idle = i;
+            self.last_total = t;
+            self.started = true;
+            pct
+        } else {
+            f64::NAN
+        };
+        let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
+        let ram = if unsafe { GlobalMemoryStatusEx(&mut mem) } != 0 {
+            (mem.ullTotalPhys - mem.ullAvailPhys) as f64 / mem.ullTotalPhys.max(1) as f64 * 100.0
+        } else {
+            0.0
+        };
+        serde_json::json!({ "cpu": if cpu.is_nan() { 0.0 } else { cpu }, "ram": ram })
+    }
+}
+
 /// ES_CONTINUOUS on the (long-lived) main thread keeps PC + display awake until turned off.
 pub fn keep_awake(on: bool) {
     let f = if on { ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED } else { ES_CONTINUOUS };

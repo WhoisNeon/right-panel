@@ -157,6 +157,20 @@ pub fn set_topmost(_on: bool) -> (bool, String) {
     (false, "Pin window is only available on Windows".into())
 }
 
+/// The CPU and RAM readings come straight from the kernel, so they are the same everywhere; the
+/// panel just shows them empty until something asks for a sample.
+pub struct Meters;
+
+impl Meters {
+    pub fn open() -> Option<Meters> {
+        Some(Meters)
+    }
+
+    pub fn sample(&mut self) -> serde_json::Value {
+        serde_json::json!({ "cpu": 0.0, "ram": 0.0 })
+    }
+}
+
 pub fn screen_off() {
     if cfg!(target_os = "macos") {
         run("pmset", &["displaysleepnow"]);
