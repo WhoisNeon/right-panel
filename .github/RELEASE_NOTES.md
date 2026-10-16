@@ -9,6 +9,19 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.14
+- **The timer is its own input now** — the hours / minutes / seconds boxes are gone. Click a unit on the display and scroll the wheel, press ↑ / ↓, or just type digits; it always reads `00:05:00`, no matter how short the timer is
+- **Nothing moves sideways when the panel opens** — it used to slide in from the screen edge while it stretched wider, which dragged every row about 160px to the left and sprang it back. The panel is at full width from the first frame now, and only pours open downwards
+- **Settings keeps its top** — switching Widgets / Theme / General used to jump the whole panel up and down the screen. The top edge now stays where it was and only the bottom edge moves; if a page is taller than the room under it, the page scrolls inside instead of shoving the panel up
+- **The Units dropdowns take the click** — the list looked right, but clicks passed straight through it to the row underneath, so picking a unit did nothing. Both pickers now catch it and close
+- **The zone ✕ works every time** — clicking it usually hit the empty space around the glyph and did nothing
+- **The add buttons match** — "+ App", "+ Add" (Folders, Theme) and the Clear buttons drew their icons at 12px with a wide gap; they are 16px now, the same size as the "Add a city…" plus, and sit centred on their labels. "Add a city…" is centred too, with its plus level with the text instead of riding above it
+- **Two more text tools** — *Snake case* (Hello World-Test → hello_world_test) and *Sort lines* (case-insensitive, one line each)
+- **Snippets can be cleared** — a Clear (bin) button in the Snippets header, like the clipboard's. It clears straight away with no confirmation, the same as the clipboard does
+- **The keepers hold more** — the recent-emoji row keeps 42 (was 28), pinned clips keep 50 (was 30), and the clipboard no longer throws anything away after 50 clips
+- **Translate picks the direction for you** — English text targets Farsi, anything else targets English
+- **Smaller fixes** — content keeps 2px from the scrollbar instead of 4px, and the timer's screen-reader label reads out the current time
+
 ### New in 1.4.13
 - **Settings → General explains itself** — every option now has a one-line hint under its name ("Which screen edge the tab sits on", "How fast the panel and its menus move"), the options are grouped under *Panel* and *System*, and "Open panel" is now "Hold to open"
 - **The hold key is in the tray menu too** — right-click the tray icon → *Hold key to open* offers the same No key / Ctrl / Shift / Space, and it stays in step with the one in Settings whichever you use

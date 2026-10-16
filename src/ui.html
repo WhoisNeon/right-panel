@@ -29,7 +29,9 @@
   .item.pinned .acts span[data-pin] svg { fill: currentColor; }
   button { font: inherit; color: inherit; }
   input, textarea, select { -webkit-user-select: text; user-select: text; }
-  svg.i, .ic svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  svg.i, .ic svg { stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  svg.i { width: 20px; height: 20px; }
+  .ic svg { width: 16px; height: 16px; vertical-align: -4px; }   /* on the baseline it rides 4px above the caps */
 
   /* ---------- the tab: shape from edge-widget.html, moved by springs ---------- */
   .tab-ui {
@@ -68,8 +70,10 @@
     position: fixed; right: calc(var(--w) + 12px); top: 0; width: 300px; visibility: hidden;
     background: var(--liquid); border-radius: 22px; transform-origin: right center;
     box-shadow: 0 30px 60px -20px rgba(0,0,0,.5); will-change: transform, opacity, border-radius;
+    /* never taller than the screen, so a fixed top always fits: the panel scrolls inside instead */
+    display: flex; flex-direction: column; max-height: calc(100vh - 20px);
   }
-  .panel { display: none; flex-direction: column; gap: 10px; padding: 16px; }
+  .panel { display: none; flex-direction: column; gap: 10px; padding: 16px; min-height: 0; }
   .panel.on { display: flex; }
   .panel.on > * { animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
   .panel.on > :nth-child(2) { animation-delay: .03s; } .panel.on > :nth-child(3) { animation-delay: .06s; }
@@ -80,10 +84,10 @@
   .back { display: none; border: 0; background: var(--soft); color: var(--ink); width: 24px; height: 22px; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; flex: none; }
   .back:hover { background: var(--soft2); }
   .fly-ui.sub .back { display: inline-grid; place-items: center; }
-  .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
+  .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
   /* a flex-centred icon lines up with the line box, but the text's ink sits below the box centre
      (the box keeps room for descenders), so nudge the glyph down onto the caps */
-  .link svg { width: 12px; height: 12px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; transform: translateY(1.5px); }
+  .link svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transform: translateY(1.5px); }
   .addpair { display: inline-flex; gap: 2px; }
   .link:hover { color: var(--ink); background: var(--soft); }
   .field { width: 100%; border: 0; outline: 0; border-radius: 12px; background: var(--soft); color: var(--ink); padding: 9px 12px; font: inherit; font-size: 13px; text-align: start; }
@@ -96,7 +100,7 @@
   select.field option { background: #222; color: #fff; }
   .scroll { overflow-y: auto; }
   /* small gap between the content and its scrollbar; textareas keep their own padding */
-  .scroll:not(textarea) { padding-right: 4px; }
+  .scroll:not(textarea) { padding-right: 2px; }
   .spring { transition: transform .35s var(--pop), background .2s; }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 12px; font-size: 13px; cursor: pointer; }
   .btn svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -105,6 +109,9 @@
   .btn.iconbtn { flex: none; display: grid; place-items: center; padding: 9px 11px; }
   .btn.iconbtn svg { width: 16px; height: 16px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .row { display: flex; gap: 6px; }
+  /* the entrance animation leaves a stacking context on the panel's children, which would trap an
+     open dropdown under whatever follows the row (the converted units, for one) */
+  .panel > .row { position: relative; z-index: 1; }
   .row > * { flex: 1; }
   .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 10px 0; }
   .chips { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -197,6 +204,10 @@
   .display i svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .keys button.on { background: var(--soft2); box-shadow: inset 0 0 0 1px var(--line); }
   .timer { font-size: 44px; font-weight: 300; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .timer span { padding: 0 3px; border-radius: 10px; cursor: pointer; }
+  .timer span.on { background: var(--soft); }
+  #timerOut { outline: 0; }
+  #timerOut:focus-visible { outline: 2px solid var(--inv); outline-offset: 6px; border-radius: 14px; }
   input[type=range] { width: 100%; accent-color: var(--inv); }
   .pw { font-family: Consolas, monospace; font-size: 14px; word-break: break-all; background: var(--soft); border-radius: 12px; padding: 10px 12px; cursor: pointer; -webkit-user-select: text; }
   .meter { height: 4px; border-radius: 99px; background: var(--soft2); overflow: hidden; }
@@ -266,6 +277,7 @@
   .tabs #tpill { position: absolute; left: 0; top: 3px; bottom: 3px; width: 0; border-radius: 8px; background: var(--inv); z-index: 0; transition: transform .32s var(--pop), width .32s var(--pop); }
   .pick { position: relative; }
   .pick > .field { cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+  .pick > .field.center { text-align: center; }
   /* the rows this list covers are --soft themselves, so a --soft list still read as see-through and
      its true extent stayed invisible. Use the same inverted surface as the context menus. */
   .pick .opts { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto;
@@ -440,9 +452,8 @@
 
   <div class="panel" data-name="timer">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Timer</h4></div>
-    <div class="timer" id="timerOut">05:00</div>
+    <div class="timer" id="timerOut" tabindex="0" aria-label="Timer, click a unit and scroll or type to change it"></div>
     <div class="chips" id="timerPresets"></div>
-    <div class="row"><input class="field" dir="auto" id="timerHr" type="number" min="0" max="99" aria-label="Hours" placeholder="Hr"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" aria-label="Minutes" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" aria-label="Seconds" placeholder="Sec"><button class="btn iconbtn" id="timerSet" aria-label="Set the timer"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></button></div>
     <div class="row"><button class="btn primary" id="timerStart">Start</button><button class="btn" id="timerReset">Reset</button></div>
   </div>
 
@@ -508,7 +519,7 @@
   </div>
 
   <div class="panel" data-name="snippets">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4><button class="link" id="snipClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button></div>
     <input class="field" dir="auto" id="snipIn" aria-label="New snippet" placeholder="Type a snippet and press Enter…">
     <div class="list scroll" id="snipList"></div>
   </div>
@@ -522,7 +533,7 @@
   <div class="panel" data-name="clock">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4></div>
     <div class="list scroll" id="zones"></div>
-    <select class="field" id="zoneAdd" aria-label="Add a city"></select>
+    <select class="field" id="zoneAdd" aria-label="Add a city" data-center></select>
   </div>
 
   <div class="panel" data-name="settings">
@@ -786,7 +797,7 @@ const slide = new Spring(0, 320, 38);                       // critically damped
 const grow = new Spring(0, 340, 24), fy = new Spring(innerHeight / 2, 380, 30);
 const pillY = new Spring(0, 420, 26), pillS = new Spring(0, 380, 22);
 
-let isOpen = false, panel = null, sub = false, anchorY = innerHeight / 2, mx = -1, outT, openedAt = -1e9, closedAt = -1e9, sticky = false, hoverY = null;
+let isOpen = false, panel = null, sub = false, anchorY = innerHeight / 2, mx = -1, outT, openedAt = -1e9, closedAt = -1e9, sticky = false, hoverY = null, flyTop = null;
 
 const app = window.app = {
   open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); },
@@ -900,14 +911,22 @@ function frame(now) {
   grow.t = panel ? 1 : 0;
   const g = grow.step(dt), gv = grow.vel, gs = Math.max(0, g);
   const flyH = flyUi.offsetHeight;
-  if (panel) fy.t = clamp(anchorY, flyH / 2 + 10, innerHeight - flyH / 2 - 10);
+  if (panel) {
+    // the top is what the eye tracks: a height change (a Settings tab) may only move the bottom edge, so the
+    // panel is capped to the room below its top and scrolls inside rather than pushing the top up the screen
+    if (flyTop === null) {
+      flyTop = clamp(fy.v - flyH / 2, 10, Math.max(10, innerHeight - flyH - 10));
+      flyUi.style.maxHeight = Math.max(80, innerHeight - flyTop - 10) + 'px';
+    }
+    fy.t = flyTop + flyH / 2;
+  }
   const Y = fy.step(dt);
-  const stX = 1 + clamp(gv * .04, -.15, .15), stY = 1 - clamp(gv * .025, -.1, .1);
+  const stY = 1 - clamp(gv * .025, -.1, .1);
   flyUi.style.visibility = gs > .02 ? 'visible' : 'hidden';
   flyUi.style.opacity = clamp(gs * 1.6);
-  // the X scale must not overshoot its final width: the panel is anchored to the screen edge, so a
-  // wider-than-final panel shoves every row left and then back again
-  flyUi.style.transform = `translate(${(1 - gs) * 40 * DIR}px, ${Y - flyH / 2}px) scale(${Math.min(1, Math.max(.05, gs * stX))}, ${Math.max(.1, (.25 + .75 * gs) * stY)})`;
+  // the panel is pinned to the screen edge, so it must never scale or slide sideways: its width is
+  // final from the first frame and only the height pours. Any X motion here drags every row with it
+  flyUi.style.transform = `translateY(${Y - flyH / 2}px) scaleY(${Math.max(.1, (.25 + .75 * gs) * stY)})`;
   flyUi.style.borderRadius = `${22 + (1 - clamp(gs)) * 60}px`;
 
   requestAnimationFrame(frame);
@@ -946,6 +965,7 @@ function markActive() {
   $$('#tabUi .tool').forEach(t => t.classList.toggle('active', !!act && t.dataset.w === act));
 }
 function setPanel(name, fromMore = false) {
+  if (name !== panel) { flyTop = null; flyUi.style.maxHeight = ''; }   // a new panel re-anchors; a tab switch inside one does not
   if (name && !panel) { fy.v = anchorY; fy.vel = 0; grow.v = 0; grow.vel = 0; }
   else if (name && panel && name !== panel) grow.vel -= 3;       // little squish when switching
   panel = name; sub = !!name && fromMore;
@@ -2025,7 +2045,7 @@ $('#emojiSearch').addEventListener('keydown', e => { if (e.key === 'Enter') grid
 grid.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const em = b.textContent;
-  S.recentEmoji = [em, ...S.recentEmoji.filter(x => x !== em)].slice(0, 28); save();
+  S.recentEmoji = [em, ...S.recentEmoji.filter(x => x !== em)].slice(0, 42); save();
   if (OS === 'windows') send('type', { text: em });   // typed straight into the app you came from; the text landing is feedback enough
   else copy(em);                                                          // typing into another app needs OS permissions there
 });
@@ -2038,13 +2058,13 @@ function ago(t) { const s = (Date.now() - t) / 1000; return s < 60 ? 'just now' 
 function addClip(text) {
   if (!text || !text.trim()) return;
   lastClip = text;
-  clips = [{ text, t: Date.now() }, ...clips.filter(c => c.text !== text)].slice(0, 50);
+  clips = [{ text, t: Date.now() }, ...clips.filter(c => c.text !== text)];
   renderClips();
 }
 // a copied image arrives as a thumbnail; the full pixels stay on the native side
 app.clipImage = img => {
   const row = { img, t: Date.now(), pin: !!img.pinned };
-  clips = [row, ...clips.filter(c => c.img?.id !== img.id)].slice(0, 50);
+  clips = [row, ...clips.filter(c => c.img?.id !== img.id)];
   renderClips();
 };
 function renderClips() {
@@ -2067,7 +2087,7 @@ $('#clipList').addEventListener('click', e => {
     if (e.target.closest('[data-x]')) { if (c.pin) send('pinImage', { id: c.img.id, on: false }); clips = clips.filter(x => x.img?.id !== c.img.id); renderClips(); return; }
     send('clipImage', { id: c.img.id }); app.close(); return;
   }
-  if (e.target.closest('[data-pin]')) { S.pins = c.pin ? S.pins.filter(x => x !== c.text) : [c.text, ...S.pins].slice(0, 30); save(); renderClips(); return; }
+  if (e.target.closest('[data-pin]')) { S.pins = c.pin ? S.pins.filter(x => x !== c.text) : [c.text, ...S.pins].slice(0, 50); save(); renderClips(); return; }
   if (e.target.closest('[data-x]')) { if (c.pin) { S.pins = S.pins.filter(x => x !== c.text); save(); } clips = clips.filter(x => x.text !== c.text); renderClips(); return; }
   send('paste', { text: c.text }); app.close();   // the clipboard tool pastes — it is the one list where that is the point
 });
@@ -2376,6 +2396,7 @@ function renderSnips() {
     : '<div class="empty">Save text you type often: addresses, replies, signatures…</div>';
 }
 $('#snipIn').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { S.snippets.unshift(e.target.value.trim()); e.target.value = ''; save(); renderSnips(); } });
+$('#snipClear').onclick = () => { S.snippets = []; save(); renderSnips(); };
 $('#snipList').onclick = e => {
   const b = e.target.closest('.item'); if (!b) return; const i = +b.dataset.i;
   if (e.target.closest('[data-x]')) { S.snippets.splice(i, 1); save(); renderSnips(); } else deliver(S.snippets[i]);
@@ -2420,8 +2441,9 @@ const ENGINES = {
   SoundCloud:   { c: 'Media',     u: 'https://soundcloud.com/search?q=%s',                  i: IB(SI.soundcloud) },
   Images:       { c: 'Media',     u: 'https://www.google.com/search?tbm=isch&q=%s',         i: I(LUC.image) },
   Wikipedia:    { c: 'Learn',     u: 'https://en.wikipedia.org/w/index.php?search=%s',      i: IB(SI.wikipedia) },
-  /* Translate picks its own target: Farsi for anything not already in Persian script, English for the rest */
-  Translate:    { c: 'Learn',     u: q => `https://translate.google.com/?sl=auto&tl=${/[\u0600-\u06FF]/.test(q) ? 'en' : 'fa'}&text=${encodeURIComponent(q)}`, i: IB(SI.googletranslate) },
+  /* Translate picks its own target: English input (plain ASCII) wants Farsi, anything in another
+     script already wants English */
+  Translate:    { c: 'Learn',     u: q => `https://translate.google.com/?sl=auto&tl=${/^[\x00-\x7F]*$/.test(q) ? 'fa' : 'en'}&text=${encodeURIComponent(q)}`, i: IB(SI.googletranslate) },
   News:         { c: 'News',      u: 'https://news.google.com/search?q=%s',                 i: IB(SI.googlenews) },
   Mojeek:       { c: 'News',      u: 'https://www.mojeek.com/search?q=%s',                   i: IB(SI.mojeek) },
   Maps:         { c: 'Maps',      u: 'https://www.google.com/maps/search/%s',               i: IB(SI.googlemaps) },
@@ -2485,7 +2507,7 @@ function renderZones() {
     || '<div class="empty">Add a city below</div>';
   $('#zoneAdd').innerHTML = '<option value="" data-icon="plus">Add a city…</option>' + ZONES.filter(z => !S.zones.includes(z)).map(z => `<option value="${z}">${city(z)}</option>`).join('');
 }
-$('#zones').onclick = e => { const i = e.target.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); } };
+$('#zones').onclick = e => { const i = e.target.closest('.x')?.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); } };
 $('#zoneAdd').onchange = e => { if (e.target.value) { S.zones.push(e.target.value); save(); renderZones(); } };
 setInterval(() => { if (panel === 'clock') renderZones(); }, 15000);
 
@@ -2585,20 +2607,35 @@ addEventListener('keydown', e => {
 calcDraw();
 
 /* ---- timer ---- */
-let tTotal = 300, tLeft = 300, tRun = null;
-const fmtT = s => (s >= 3600 ? `${s / 3600 | 0}:` + String((s / 60 | 0) % 60).padStart(2, '0') : String(s / 60 | 0).padStart(2, '0')) + `:${String(s % 60).padStart(2, '0')}`;
+let tTotal = 300, tLeft = 300, tRun = null, tPick = 1, tBuf = '', tBufAt = 0;
+const TIMER_MAX = 99 * 3600 + 59 * 60 + 59;
+const T_MAX = [99, 59, 59];
+/* the display is the input: click a unit, then scroll it, use the arrows, or type digits */
+const tParts = () => [tLeft / 3600 | 0, (tLeft / 60 | 0) % 60, tLeft % 60];
+function tSet(i, v) {
+  const p = tParts(); p[i] = Math.max(0, Math.min(T_MAX[i], v));
+  tTotal = tLeft = Math.min(p[0] * 3600 + p[1] * 60 + p[2], TIMER_MAX);
+  drawT();
+}
+function drawT() {
+  const [h, m, s] = tParts();
+  $('#timerOut').innerHTML = [h, m, s].map((v, i) => `<span data-u="${i}" class="${i === tPick ? 'on' : ''}">${String(v).padStart(2, '0')}</span>`).join(':');
+  // the label carries the time, since the segments themselves would only read out as bare digits
+  $('#timerOut').setAttribute('aria-label', `Timer ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}, click a unit and scroll or type to change it`);
+  $('#timerStart').textContent = tRun ? 'Pause' : 'Start';
+}
 $('#timerPresets').innerHTML = [[5, '5m'], [10, '10m'], [15, '15m'], [30, '30m'], [60, '1hr']].map(([m, l]) => `<button class="btn" data-m="${m}">${l}</button>`).join('');
 $('#timerPresets').onclick = e => { const m = e.target.dataset.m; if (m) { clearInterval(tRun); tRun = null; tTotal = tLeft = m * 60; drawT(); } };
-const TIMER_MAX = 99 * 3600 + 59 * 60 + 59;
-function setTimer() {
-  const num = id => Math.max(0, Math.floor(+$(id).value || 0));
-  const sec = num('#timerHr') * 3600 + num('#timerMin') * 60 + num('#timerSec');
-  if (!sec) return toast('Enter hours, minutes or seconds');
-  clearInterval(tRun); tRun = null; tTotal = tLeft = Math.min(sec, TIMER_MAX); drawT();
-}
-$('#timerSet').onclick = setTimer;
-['#timerHr', '#timerMin', '#timerSec'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') setTimer(); }));
-function drawT() { $('#timerOut').textContent = fmtT(tLeft); $('#timerStart').textContent = tRun ? 'Pause' : 'Start'; }
+const tOut = $('#timerOut');
+tOut.onclick = e => { const i = e.target.dataset.u; if (i === undefined) return; tPick = +i; tBuf = ''; drawT(); tOut.focus(); };
+tOut.onwheel = e => { e.preventDefault(); tSet(tPick, tParts()[tPick] - Math.sign(e.deltaY)); };
+tOut.onkeydown = e => {
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') tSet(tPick, tParts()[tPick] + (e.key === 'ArrowUp' ? 1 : -1));
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { tPick = (tPick + (e.key === 'ArrowRight' ? 1 : 2)) % 3; tBuf = ''; drawT(); }
+  else if (/^[0-9]$/.test(e.key)) { const at = performance.now(); tBuf = (at - tBufAt > 1200 ? '' : tBuf) + e.key; tBufAt = at; tSet(tPick, +tBuf); }
+  else return;
+  e.preventDefault();
+};
 $('#timerStart').onclick = () => {
   if (tRun) { clearInterval(tRun); tRun = null; }
   else {
@@ -2615,13 +2652,16 @@ $('#timerReset').onclick = () => { clearInterval(tRun); tRun = null; tLeft = tTo
 drawT();
 
 /* ---- text tools: transform the clipboard, paste back ---- */
-const TT = { UPPER: 'upper', lower: 'lower', 'Title Case': 'title', 'Sentence': 'sentence', 'Trim spaces': 'trim', 'One line': 'oneline', 'Reverse': 'reverse', 'Slug': 'slug',
-  'Base64 enc': 'js:b64e', 'Base64 dec': 'js:b64d', 'URL encode': 'js:urle', 'URL decode': 'js:urld', 'Count': 'js:count' };
+const TT = { UPPER: 'upper', lower: 'lower', 'Title Case': 'title', 'Sentence': 'sentence', 'Trim spaces': 'trim', 'One line': 'oneline', 'Reverse': 'reverse', 'Slug': 'slug', 'Snake case': 'js:snake',
+  'Base64 enc': 'js:b64e', 'Base64 dec': 'js:b64d', 'URL encode': 'js:urle', 'URL decode': 'js:urld', 'Count': 'js:count', 'Sort lines': 'js:sort' };
 const JS_TT = {
   b64e: t => btoa(unescape(encodeURIComponent(t))), b64d: t => decodeURIComponent(escape(atob(t.trim()))),
   urle: t => encodeURIComponent(t), urld: t => decodeURIComponent(t),
+  snake: t => t.trim().replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase(),
+  sort: t => t.split('\n').sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).join('\n'),
 };
-$('#textTools').innerHTML = Object.entries(TT).map(([n, m]) => `<button class="spring" data-m="${m}"><b>${m.startsWith('js:') ? (m === 'js:count' ? '#' : '⇄') : 'Aa'}</b>${n}</button>`).join('');
+const TT_MARK = { 'js:count': '#', 'js:snake': 'Aa', 'js:sort': '⇅' };
+$('#textTools').innerHTML = Object.entries(TT).map(([n, m]) => `<button class="spring" data-m="${m}"><b>${TT_MARK[m] || (m.startsWith('js:') ? '⇄' : 'Aa')}</b>${n}</button>`).join('');
 /* typed text wins; empty box falls back to the clipboard, which is where the old behaviour started */
 const ttInput = $('#ttIn');
 const ttText = () => { const typed = ttInput.value; return typed.trim() ? typed : lastClip; };
@@ -2822,6 +2862,7 @@ $$('select').forEach(sel => {
   const box = document.createElement('div'), btn = document.createElement('button'), list = document.createElement('div');
   box.className = 'pick'; btn.className = 'field'; btn.type = 'button'; list.className = 'opts';
   const aria = sel.getAttribute('aria-label'); if (aria) btn.setAttribute('aria-label', aria);
+  if (sel.hasAttribute('data-center')) btn.classList.add('center');
   if (sel.style.width) box.style.width = sel.style.width; else box.style.width = '100%', btn.style.maxWidth = 'none', btn.style.width = '100%';
   sel.before(box); box.append(btn, list, sel); sel.style.display = 'none';
   const label = () => {
