@@ -262,7 +262,7 @@ pub fn beep() {
 use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
 
 #[link(name = "kernel32")]
-extern "system" {
+unsafe extern "system" {
     fn GetSystemTimes(idle: *mut u64, kernel: *mut u64, user: *mut u64) -> i32;
 }
 
