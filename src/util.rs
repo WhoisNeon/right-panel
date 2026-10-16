@@ -114,7 +114,7 @@ pub fn qr_bitmap(w: usize, bits: &[bool], scale: u32, quiet: u32) -> (u32, u32, 
             let dark = mx >= quiet && my >= quiet && mx - quiet < w as u32 && my - quiet < w as u32
                 && bits[((my - quiet) as usize) * w + (mx - quiet) as usize];
             if dark {
-                let at = (y * side + x) * 4;
+                let at = (y * side + x) as usize * 4;
                 px[at..at + 4].copy_from_slice(&[0, 0, 0, 255]);
             }
         }

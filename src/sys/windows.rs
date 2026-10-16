@@ -253,12 +253,18 @@ pub fn beep() {
 }
 
 /* ---------------- system monitor ----------------
-   GetSystemTimes for CPU (the busy part is total minus idle) and GlobalMemoryStatusEx for RAM.
-   Both are two-call Win32 and need no counter query, which is why they are here rather than PDH:
-   PDH's wildcard counters (GPU Engine, Network Interface) hand back an array per sample and the
-   value struct is a flattened union in windows-sys, which is more machinery than two sparklines
-   are worth. Those two meters arrive when there is a way to test them, not before. */
-use windows_sys::Win32::System::SystemInformation::{GetSystemTimes, GlobalMemoryStatusEx, FILETIME, MEMORYSTATUSEX};
+   GetSystemTimes for CPU (busy = total minus idle) and GlobalMemoryStatusEx for RAM: two calls,
+   no counter query. PDH's wildcard counters (GPU Engine, Network Interface) return an array per
+   sample behind a flattened union, which is more machinery than a sparkline is worth and cannot be
+   tested without a Windows box — those meters wait until there is a way to prove them.
+   windows-sys 0.61 does not export GetSystemTimes, so that one is declared here: a FILETIME is two
+   u32s, so the 100ns ticks read straight out of three u64s. */
+use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+
+#[link(name = "kernel32")]
+extern "system" {
+    fn GetSystemTimes(idle: *mut u64, kernel: *mut u64, user: *mut u64) -> i32;
+}
 
 pub struct Meters {
     last_idle: u64,
@@ -266,22 +272,20 @@ pub struct Meters {
     started: bool,
 }
 
-const FT: fn(*const FILETIME) -> u64 = |ft| ((ft.dwHighDateTime as u64) << 32) | ft.dwLowDateTime as u64;
-
 impl Meters {
     pub fn open() -> Option<Meters> {
         Some(Meters { last_idle: 0, last_total: 0, started: false })
     }
 
     /// Samples once. The first call has no previous reading to difference against, so it reports
-    /// nothing rather than a nonsense spike, exactly like the network meter used to.
+    /// nothing rather than a nonsense spike.
     pub fn sample(&mut self) -> serde_json::Value {
-        let (mut idle, mut kernel, mut user) = (FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 }, FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 }, FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 });
+        let (mut idle, mut kernel, mut user) = (0u64, 0u64, 0u64);
         let cpu = if unsafe { GetSystemTimes(&mut idle, &mut kernel, &mut user) } != 0 {
-            let (i, t) = (FT(&idle), FT(&kernel) + FT(&user));
+            let (i, t) = (idle, kernel + user);
             let ready = self.started && t > self.last_total;
             let pct = if ready {
-                (((t - self.last_total) - (i.saturating_sub(self.last_idle))) as f64 / (t - self.last_total) as f64) * 100.0
+                (((t - self.last_total) - i.saturating_sub(self.last_idle)) as f64 / (t - self.last_total) as f64) * 100.0
             } else {
                 f64::NAN
             };
