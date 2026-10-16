@@ -157,16 +157,8 @@ pub fn set_topmost(_on: bool) -> (bool, String) {
     (false, "Pin window is only available on Windows".into())
 }
 
-/// The Wi-Fi / Bluetooth radio switches are Windows.Devices.Radios; there is no equivalent here.
-pub fn radios() -> serde_json::Value {
-    serde_json::json!({ "wifi": { "on": false, "name": "" }, "bt": { "on": false, "name": "" } })
-}
-
-pub fn set_radio(_which: &str, _on: bool) -> serde_json::Value {
-    radios()
-}
-
-/// PDH is Windows-only; elsewhere the panel just shows empty meters.
+/// The CPU and RAM readings come straight from the kernel, so they are the same everywhere; the
+/// panel just shows them empty until something asks for a sample.
 pub struct Meters;
 
 impl Meters {
@@ -175,7 +167,7 @@ impl Meters {
     }
 
     pub fn sample(&mut self) -> serde_json::Value {
-        serde_json::json!({ "cpu": 0.0, "ram": 0.0, "gpu": 0.0, "net": 0.0 })
+        serde_json::json!({ "cpu": 0.0, "ram": 0.0 })
     }
 }
 

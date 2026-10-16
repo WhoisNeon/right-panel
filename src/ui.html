@@ -573,7 +573,7 @@
   <div class="panel" data-name="mon">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>System monitor</h4></div>
     <div class="meters" id="meters"></div>
-    <div class="hint">Sampled once a second, only while this panel is open</div>
+    <div class="hint">CPU and RAM, sampled once a second while this panel is open</div>
   </div>
 
   <div class="panel" data-name="cal">
@@ -762,8 +762,6 @@ const W = {
   mon: { os: ['windows'], name: 'System monitor', icon: I(LUC['activity']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
-  wifi: { os: ['windows'], name: 'Wi-Fi', icon: I(LUC['wifi']), kind: 'action', run: () => send('radio', { which: 'wifi', on: !radioWifi }) },
-  bt: { os: ['windows'], name: 'Bluetooth', icon: I(LUC['bluetooth']), kind: 'action', run: () => send('radio', { which: 'bt', on: !radioBt }) },
   desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['monitor']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
   screenoff: { name: 'Screen off', icon: I(LUC['monitor-off']), kind: 'action', run: () => { app.close(); send('screenoff'); } },
   lock: { name: 'Lock PC', icon: I(LUC['lock']), kind: 'action', run: () => { app.close(); send('lock'); } },
@@ -772,7 +770,7 @@ const W = {
   winset: { name: OS === 'windows' ? 'Win Settings' : 'Settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
 };
 const DEF_DOCK = ['emoji', 'clip', 'color', 'shot', 'note', 'more'];
-const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'wifi', 'bt', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
+const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
 
 /* the folders the panel starts with; the user can add, remove and reorder from the Folders tool */
 const HOME = init.home || '~';
@@ -1005,8 +1003,7 @@ requestAnimationFrame(frame);
 /* ================= dock + More rendering ================= */
 const panels = $$('.panel');
 /* the actions that stay on get their lit state on the button, so a toggle never has to be guessed at */
-let radioWifi = false, radioBt = false;
-const onState = id => id === 'awake' ? awake : id === 'pinwin' ? pinned : id === 'wifi' ? radioWifi : id === 'bt' ? radioBt : false;
+const onState = id => id === 'awake' ? awake : id === 'pinwin' ? pinned : false;
 function toolHTML(id) {
   const w = info(id); if (!w) return '';
   return `<button class="tool ${w.kind === 'app' ? 'app' : ''} ${onState(id) ? 'on' : ''}" data-w="${id}" aria-label="${esc(w.name)}">${w.icon}</button>`;
@@ -2414,14 +2411,6 @@ app.pinned = (on, msg) => {
   toast(msg, on ? 'pin' : '');   // the table has no "pin-off"; the dot on the button carries the state
 };
 
-/* ---- wifi / bluetooth: the state always comes back from the native side, never assumed ---- */
-app.radios = ({ wifi, bt }) => {
-  radioWifi = !!wifi?.on; radioBt = !!bt?.on;
-  $$('[data-w=wifi]').forEach(el => el.classList.toggle('on', radioWifi));
-  $$('[data-w=bt]').forEach(el => el.classList.toggle('on', radioBt));
-};
-send('radios');
-
 /* ---- stopwatch ---- */
 let swStart = 0, swAcc = 0, swRaf = null, laps = [];
 const fmtSw = ms => `${String(ms / 60000 | 0).padStart(2, '0')}:${String((ms / 1000 | 0) % 60).padStart(2, '0')}.${String((ms / 10 | 0) % 100).padStart(2, '0')}`;
@@ -2669,15 +2658,13 @@ send('qr', { text: '' });
 const METERS = [
   { k: 'cpu', n: 'CPU', u: '%', max: 100 },
   { k: 'ram', n: 'RAM', u: '%', max: 100 },
-  { k: 'gpu', n: 'GPU', u: '%', max: 100 },
-  { k: 'net', n: 'Network', u: 'KB/s', max: null },
 ];
 const hist = {};                        // a short ring per counter, drawn as a sparkline
 METERS.forEach(m => hist[m.k] = []);
 function drawMeters() {
   $('#meters').innerHTML = METERS.map(m => {
     const h = hist[m.k], v = h.length ? h[h.length - 1] : 0;
-    const cap = m.max || Math.max(1, ...h) * 1.1;
+    const cap = m.max || Math.max(1, ...h) * 1.1;   // a meter with no ceiling scales to its own peak
     const n = 60, step = 100 / (n - 1), pts = h.slice(-n);
     let d = '';
     pts.forEach((val, i) => {

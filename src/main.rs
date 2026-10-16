@@ -859,13 +859,6 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     "launch" | "open" => sys::launch(&s(if m["t"] == "open" { "target" } else { "path" })),
                     "key" => sys::press(&s("name")),
                     "screenoff" => sys::screen_off(),
-                    "radios" => {
-                        let _ = webview.evaluate_script(&format!("app.radios({})", sys::radios()));
-                    }
-                    "radio" => {
-                        let out = sys::set_radio(&s("which"), m["on"].as_bool().unwrap_or(false));
-                        let _ = webview.evaluate_script(&format!("app.radios({})", out));
-                    }
                     "metersStart" => {
                         if METERS.lock().ok().and_then(|mut g| g.take()).is_none() {
                             if let Some(mm) = sys::Meters::open() {
