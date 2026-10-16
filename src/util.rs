@@ -110,7 +110,7 @@ pub fn qr_bitmap(w: usize, bits: &[bool], scale: u32, quiet: u32) -> (u32, u32, 
     let mut px = vec![0xFFu8; (side * side * 4) as usize];
     for y in 0..side {
         for x in 0..side {
-            let mx = x / scale, my = y / scale;
+            let (mx, my) = (x / scale, y / scale);
             let dark = mx >= quiet && my >= quiet && mx - quiet < w as u32 && my - quiet < w as u32
                 && bits[((my - quiet) as usize) * w + (mx - quiet) as usize];
             if dark {

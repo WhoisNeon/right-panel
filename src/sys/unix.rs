@@ -179,11 +179,6 @@ impl Meters {
     }
 }
 
-/// Writing an image to the clipboard is the Windows DIB path here.
-pub fn set_clip_image(_w: u32, _h: u32, _rgba: &[u8]) -> bool {
-    false
-}
-
 pub fn screen_off() {
     if cfg!(target_os = "macos") {
         run("pmset", &["displaysleepnow"]);

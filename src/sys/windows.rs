@@ -404,53 +404,6 @@ impl Drop for Meters {
 use windows_sys::Win32::System::SystemInformation::GlobalMemoryStatusEx;
 use windows_sys::Win32::System::SystemInformation::MEMORYSTATUSEX;
 
-/// Puts an RGBA bitmap on the clipboard as a DIB, which is what every Windows app pastes.
-pub fn set_clip_image(w: u32, h: u32, rgba: &[u8]) -> bool {
-    let stride = ((w as usize * 3) + 3) & !3;
-    let mut body = vec![0u8; 40 + stride * h as usize];
-    unsafe {
-        let head = body.as_mut_ptr() as *mut BITMAPINFOHEADER;
-        (*head).biSize = 40;
-        (*head).biWidth = w as i32;
-        (*head).biHeight = -(h as i32);   // negative = top-down rows, no flip needed
-        (*head).biPlanes = 1;
-        (*head).biBitCount = 24;
-        (*head).biCompression = 0;
-        (*head).biSizeImage = (stride * h as usize) as u32;
-    }
-    for y in 0..h as usize {
-        for x in 0..w as usize {
-            let s = (y * w as usize + x) * 4;
-            let d = 40 + y * stride + x * 3;
-            body[d] = rgba[s + 2];       // DIB is BGR
-            body[d + 1] = rgba[s + 1];
-            body[d + 2] = rgba[s];
-        }
-    }
-    unsafe {
-        if OpenClipboard(std::ptr::null_mut()) == 0 {
-            return false;
-        }
-        EmptyClipboard();
-        let size = body.len();
-        let hmem = GlobalAlloc(GMEM_MOVEABLE, size);
-        if hmem.is_null() {
-            CloseClipboard();
-            return false;
-        }
-        let dst = GlobalLock(hmem);
-        if dst.is_null() {
-            CloseClipboard();
-            return false;
-        }
-        std::ptr::copy_nonoverlapping(body.as_ptr(), dst as *mut u8, size);
-        GlobalUnlock(hmem);
-        let ok = SetClipboardData(CF_DIB as u32, hmem as HANDLE) != 0;
-        CloseClipboard();
-        ok != 0
-    }
-}
-
 /// ES_CONTINUOUS on the (long-lived) main thread keeps PC + display awake until turned off.
 pub fn keep_awake(on: bool) {
     let f = if on { ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED } else { ES_CONTINUOUS };
