@@ -296,7 +296,7 @@ impl Meters {
         } else {
             f64::NAN
         };
-        let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..std::mem::zeroed() };
+        let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
         let ram = if unsafe { GlobalMemoryStatusEx(&mut mem) } != 0 {
             (mem.ullTotalPhys - mem.ullAvailPhys) as f64 / mem.ullTotalPhys.max(1) as f64 * 100.0
         } else {
