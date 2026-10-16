@@ -15,6 +15,7 @@ arboard = { version = "3.6.1", default-features = false }
 serde_json = "1.0.151"
 tao = "0.37.0"
 wry = "0.57.0"
+qrcode = { version = "0.14.1", default-features = false }
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 tray-icon = { version = "0.25.1", default-features = false }
@@ -24,7 +25,10 @@ tray-icon = { version = "0.25.1", default-features = false, features = ["libappi
 gtk = "0.18"
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_DataExchange", "Win32_Graphics_Gdi", "Win32_System_Threading", "Win32_System_SystemInformation", "Win32_Storage_FileSystem", "Win32_System_Registry", "Win32_System_Shutdown", "Win32_System_Diagnostics_Debug", "Win32_UI_Shell", "Win32_UI_Controls_Dialogs", "Win32_UI_Controls", "Win32_System_Com", "Win32_System_Power", "Win32_Security", "Win32_System_Memory", "Win32_System_Ole", "Win32_UI_Shell_Common"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_DataExchange", "Win32_Graphics_Gdi", "Win32_System_Threading", "Win32_System_SystemInformation", "Win32_Storage_FileSystem", "Win32_System_Registry", "Win32_System_Shutdown", "Win32_System_Diagnostics_Debug", "Win32_UI_Shell", "Win32_UI_Controls_Dialogs", "Win32_UI_Controls", "Win32_System_Com", "Win32_System_Power", "Win32_Security", "Win32_System_Memory", "Win32_System_Ole", "Win32_UI_Shell_Common", "Win32_System_Performance", "Win32_System_Clipboard", "Win32_Globalization", "Win32_Networking_WinSock"] }
+# WinRT, only for the Wi-Fi / Bluetooth radios: turning a radio on or off is Windows.Devices.Radios,
+# and there is no Win32 route to it. default-features = false keeps it to the two namespaces used.
+windows = { version = "0.58", default-features = false, features = ["Windows_Devices_Radios", "Windows_Foundation"] }
 
 [target.'cfg(not(windows))'.dependencies]
 mouse_position = "0.1.4"

@@ -157,6 +157,33 @@ pub fn set_topmost(_on: bool) -> (bool, String) {
     (false, "Pin window is only available on Windows".into())
 }
 
+/// The Wi-Fi / Bluetooth radio switches are Windows.Devices.Radios; there is no equivalent here.
+pub fn radios() -> serde_json::Value {
+    serde_json::json!({ "wifi": { "on": false, "name": "" }, "bt": { "on": false, "name": "" } })
+}
+
+pub fn set_radio(_which: &str, _on: bool) -> serde_json::Value {
+    radios()
+}
+
+/// PDH is Windows-only; elsewhere the panel just shows empty meters.
+pub struct Meters;
+
+impl Meters {
+    pub fn open() -> Option<Meters> {
+        Some(Meters)
+    }
+
+    pub fn sample(&mut self) -> serde_json::Value {
+        serde_json::json!({ "cpu": 0.0, "ram": 0.0, "gpu": 0.0, "net": 0.0 })
+    }
+}
+
+/// Writing an image to the clipboard is the Windows DIB path here.
+pub fn set_clip_image(_w: u32, _h: u32, _rgba: &[u8]) -> bool {
+    false
+}
+
 pub fn screen_off() {
     if cfg!(target_os = "macos") {
         run("pmset", &["displaysleepnow"]);

@@ -96,6 +96,32 @@ pub fn hash(bytes: &[u8]) -> u64 {
     h ^ bytes.len() as u64
 }
 
+/// Encodes text as a QR matrix: the module count and one bool per module, dark = true. The panel
+/// draws it as inline SVG, so no image decoding is needed anywhere.
+pub fn qr(text: &str) -> Option<(usize, Vec<bool>)> {
+    let code = qrcode::QrCode::new(text.as_bytes()).ok()?;
+    let w = code.width();
+    Some((w, code.to_colors().into_iter().map(|c| c == qrcode::Color::Dark).collect()))
+}
+
+/// Turns a QR matrix into a black-and-white RGBA bitmap, scaled so each module is `scale` pixels.
+pub fn qr_bitmap(w: usize, bits: &[bool], scale: u32, quiet: u32) -> (u32, u32, Vec<u8>) {
+    let side = (w as u32 + quiet * 2) * scale;
+    let mut px = vec![0xFFu8; (side * side * 4) as usize];
+    for y in 0..side {
+        for x in 0..side {
+            let mx = x / scale, my = y / scale;
+            let dark = mx >= quiet && my >= quiet && mx - quiet < w as u32 && my - quiet < w as u32
+                && bits[((my - quiet) as usize) * w + (mx - quiet) as usize];
+            if dark {
+                let at = (y * side + x) * 4;
+                px[at..at + 4].copy_from_slice(&[0, 0, 0, 255]);
+            }
+        }
+    }
+    (side, side, px)
+}
+
 /// Nearest-neighbour downscale so the UI can show a small preview.
 pub fn thumbnail(w: u32, h: u32, rgba: &[u8], max: u32) -> (u32, u32, Vec<u8>) {
     if w <= max && h <= max {

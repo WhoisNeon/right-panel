@@ -252,6 +252,205 @@ pub fn beep() {
     unsafe { MessageBeep(MB_ICONASTERISK) };
 }
 
+/* ---------------- wifi / bluetooth radios ----------------
+   Turning a radio on or off is Windows.Devices.Radios and nothing else — the Win32 WLAN API can
+   read and connect but has no radio switch — so this is the one place the app uses WinRT. */
+use windows::Devices::Radios::{Radio, RadioKind, RadioState};
+
+fn radio_of(kind: RadioKind) -> Option<Radio> {
+    Radio::get_radios().ok()?.into_iter().find(|r| r.kind().map(|k| k == kind).unwrap_or(false))
+}
+
+fn radio_read(kind: RadioKind) -> (bool, String) {
+    let Some(r) = radio_of(kind) else { return (false, String::new()) };
+    let on = r.state().map(|s| s == RadioState::On).unwrap_or(false);
+    (on, r.name().unwrap_or_default())
+}
+
+/// Both radios as the panel shows them: whether they are on, and what Windows calls them.
+pub fn radios() -> serde_json::Value {
+    let _mta = windows::core::initialize_mta();
+    let (wifi, wifi_name) = radio_read(RadioKind::WiFi);
+    let (bt, bt_name) = radio_read(RadioKind::Bluetooth);
+    serde_json::json!({ "wifi": { "on": wifi, "name": wifi_name }, "bt": { "on": bt, "name": bt_name } })
+}
+
+/// Switches a radio, then re-reads both so the panel shows what actually happened — turning a
+/// radio off can fail (no radio fitted, airplane mode, policy), and a toggle that lies is worse
+/// than one that reports nothing.
+pub fn set_radio(which: &str, on: bool) -> serde_json::Value {
+    let _mta = windows::core::initialize_mta();
+    let want = match which {
+        "wifi" => RadioKind::WiFi,
+        "bt" => RadioKind::Bluetooth,
+        _ => return radios(),
+    };
+    if let Some(r) = radio_of(want) {
+        let to = if on { RadioState::On } else { RadioState::Off };
+        let _ = r.set_state_async(to).and_then(|op| op.get());
+    }
+    radios()
+}
+
+/* ---------------- system monitor ----------------
+   PDH for CPU, GPU and network; GlobalMemoryStatusEx for RAM, which is one call and exact.
+   Wildcard counters ("GPU Engine(*)") come back as an array, so the value is the sum of them. */
+use windows_sys::Win32::System::Performance::{
+    PdhAddEnglishCounterW, PdhCloseQuery, PdhCollectQueryData, PdhGetFormattedCounterArray, PdhGetFormattedCounterArraySizeW,
+    PdhGetFormattedCounterValue, PdhOpenQueryW, PDH_FMT_DOUBLE, PDH_FMT_COUNTERVALUE, PDH_FMT_COUNTERVALUE_F64,
+};
+
+pub struct Meters {
+    query: isize,
+    cpu: isize,
+    gpu: isize,
+    net: isize,
+    last_net: f64,
+}
+
+impl Meters {
+    pub fn open() -> Option<Meters> {
+        unsafe {
+            let mut query: isize = 0;
+            if PdhOpenQueryW(std::ptr::null(), 0, &mut query) != 0 {
+                return None;
+            }
+            let add = |path: &[u16]| -> isize {
+                let mut h: isize = 0;
+                let ok = PdhAddEnglishCounterW(query, path.as_ptr(), 0, &mut h);
+                if ok != 0 { -1 } else { h }
+            };
+            let w = |s: &str| -> Vec<u16> { s.encode_utf16().chain(Some(0)).collect() };
+            let m = Meters {
+                query,
+                cpu: add(&w(r"\Processor(_Total)\% Processor Time")),
+                gpu: add(&w(r"\GPU Engine(*)\Utilization Percentage")),
+                net: add(&w(r"\Network Interface(*)\Bytes Total/sec")),
+                last_net: 0.0,
+            };
+            Some(m)
+        }
+    }
+
+    fn one(h: isize) -> f64 {
+        if h < 0 {
+            return 0.0;
+        }
+        unsafe {
+            let mut v: PDH_FMT_COUNTERVALUE = std::mem::zeroed();
+            if PdhGetFormattedCounterValue(h, PDH_FMT_DOUBLE, std::ptr::null_mut(), &mut v) != 0 {
+                return 0.0;
+            }
+            match v.Anonymous.ValueType {
+                x if x == PDH_FMT_COUNTERVALUE_F64.0 => v.Anonymous.TranslateValue.f64Value,
+                _ => v.Anonymous.TranslateValue.longValue as f64,
+            }
+        }
+    }
+
+    /// Wildcard counters return one value per instance; the caller wants the total.
+    fn many(h: isize) -> f64 {
+        if h < 0 {
+            return 0.0;
+        }
+        unsafe {
+            let (mut size, mut count) = (0u32, 0u32);
+            if PdhGetFormattedCounterArraySizeW(h, PDH_FMT_DOUBLE, &mut size, &mut count) != 0 {
+                return 0.0;
+            }
+            let mut buf = vec![std::mem::zeroed::<PDH_FMT_COUNTERVALUE>(); (size / std::mem::size_of::<PDH_FMT_COUNTERVALUE>() as u32).max(1) as usize];
+            let mut got: u32 = 0;
+            if PdhGetFormattedCounterArray(h, PDF_DOUBLE, buf.as_mut_ptr(), &mut buf.len().cast(), &mut got) != 0 {
+                return 0.0;
+            }
+            buf.iter().take(got as usize).fold(0.0, |acc, v| {
+                if v.Anonymous.ValueType == PDH_FMT_COUNTERVALUE_F64.0 {
+                    acc + v.Anonymous.TranslateValue.f64Value
+                } else {
+                    acc + v.Anonymous.TranslateValue.longValue as f64
+                }
+            })
+        }
+    }
+
+    /// Samples every counter once. The first network reading has no previous one to difference
+    /// against, so it reports nothing rather than a nonsense spike.
+    pub fn sample(&mut self) -> serde_json::Value {
+        unsafe { PdhCollectQueryData(self.query) };
+        let net = Self::many(self.net);
+        let net_delta = if self.last_net > 0.0 { (net - self.last_net).max(0.0) } else { f64::NAN };
+        self.last_net = net;
+        let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..std::mem::zeroed() };
+        let ram = if unsafe { GlobalMemoryStatusEx(&mut mem) } != 0 {
+            (mem.ullTotalPhys - mem.ullAvailPhys) as f64 / mem.ullTotalPhys.max(1) as f64 * 100.0
+        } else {
+            0.0
+        };
+        serde_json::json!({
+            "cpu": Self::one(self.cpu),
+            "ram": ram,
+            "gpu": Self::many(self.gpu),
+            "net": if net_delta.is_nan() { 0.0 } else { net_delta },
+        })
+    }
+}
+
+impl Drop for Meters {
+    fn drop(&mut self) {
+        unsafe { PdhCloseQuery(self.query) };
+    }
+}
+
+use windows_sys::Win32::System::SystemInformation::GlobalMemoryStatusEx;
+use windows_sys::Win32::System::SystemInformation::MEMORYSTATUSEX;
+
+/// Puts an RGBA bitmap on the clipboard as a DIB, which is what every Windows app pastes.
+pub fn set_clip_image(w: u32, h: u32, rgba: &[u8]) -> bool {
+    let stride = ((w as usize * 3) + 3) & !3;
+    let mut body = vec![0u8; 40 + stride * h as usize];
+    unsafe {
+        let head = body.as_mut_ptr() as *mut BITMAPINFOHEADER;
+        (*head).biSize = 40;
+        (*head).biWidth = w as i32;
+        (*head).biHeight = -(h as i32);   // negative = top-down rows, no flip needed
+        (*head).biPlanes = 1;
+        (*head).biBitCount = 24;
+        (*head).biCompression = 0;
+        (*head).biSizeImage = (stride * h as usize) as u32;
+    }
+    for y in 0..h as usize {
+        for x in 0..w as usize {
+            let s = (y * w as usize + x) * 4;
+            let d = 40 + y * stride + x * 3;
+            body[d] = rgba[s + 2];       // DIB is BGR
+            body[d + 1] = rgba[s + 1];
+            body[d + 2] = rgba[s];
+        }
+    }
+    unsafe {
+        if OpenClipboard(std::ptr::null_mut()) == 0 {
+            return false;
+        }
+        EmptyClipboard();
+        let size = body.len();
+        let hmem = GlobalAlloc(GMEM_MOVEABLE, size);
+        if hmem.is_null() {
+            CloseClipboard();
+            return false;
+        }
+        let dst = GlobalLock(hmem);
+        if dst.is_null() {
+            CloseClipboard();
+            return false;
+        }
+        std::ptr::copy_nonoverlapping(body.as_ptr(), dst as *mut u8, size);
+        GlobalUnlock(hmem);
+        let ok = SetClipboardData(CF_DIB as u32, hmem as HANDLE) != 0;
+        CloseClipboard();
+        ok != 0
+    }
+}
+
 /// ES_CONTINUOUS on the (long-lived) main thread keeps PC + display awake until turned off.
 pub fn keep_awake(on: bool) {
     let f = if on { ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED } else { ES_CONTINUOUS };

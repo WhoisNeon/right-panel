@@ -253,6 +253,34 @@
   .engbody { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .28s ease, opacity .28s ease; }
   .engsec.shut .engbody { grid-template-rows: 0fr; opacity: 0; }
   .engbody > .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; overflow: hidden; min-height: 0; }
+  /* system monitor: one sparkline per counter, drawn as an inline SVG path */
+  .meters { display: grid; gap: 8px; }
+  .meter-row { background: var(--soft); border-radius: 12px; padding: 8px 10px; }
+  .meter-row .set { padding: 0; font-size: 12px; }
+  .meter-row .set b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .spark { display: block; width: 100%; height: 26px; margin-top: 4px; overflow: visible; }
+  .spark path { fill: none; stroke: var(--inv); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+  .spark .fill { fill: var(--soft2); stroke: none; }
+  /* qr */
+  .qrbox { display: grid; place-items: center; background: #fff; border-radius: 14px; padding: 12px; min-height: 180px; }
+  .qrbox svg { width: 100%; height: auto; max-height: 240px; display: block; }
+  .qrbox .empt { color: #666; font-size: 12px; text-align: center; }
+  /* calendar: a month grid with both calendars on every cell, so a date never needs converting by hand */
+  .calnav { display: flex; align-items: center; gap: 6px; }
+  .calnav h5 { flex: 1; margin: 0; text-align: center; font-size: 13px; font-weight: 600; }
+  .caldow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .caldow span { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; padding: 2px 0; }
+  .calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .calday { border: 0; background: none; color: var(--ink); border-radius: 10px; padding: 4px 0 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; font: inherit; }
+  .calday b { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .calday small { font-size: 9px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .calday:hover { background: var(--soft2); }
+  .calday.today b { color: var(--inv); }
+  .calday.on { background: var(--inv); color: var(--inv-ink); }
+  .calday.on small { color: var(--inv-ink); opacity: .75; }
+  .calout { display: flex; gap: 8px; }
+  .calout div { flex: 1; background: var(--soft); border-radius: 12px; padding: 8px 10px; font-size: 12px; }
+  .calout small { display: block; color: var(--muted); font-size: 10px; }
   .engh { display: flex; align-items: center; gap: 3px; margin: 0; padding: 0; border: 0; background: none; cursor: pointer;
     color: var(--muted); font-family: inherit; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; }
   .engh:hover { color: var(--ink); }
@@ -535,6 +563,28 @@
     <div id="engines"></div>
   </div>
 
+  <div class="panel" data-name="qr">
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>QR code</h4><button class="link" id="qrClip"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy PNG</button></div>
+    <input class="field" dir="auto" id="qrIn" aria-label="Text to encode" placeholder="Text, a link, a Wi-Fi password…">
+    <div class="qrbox" id="qrBox"></div>
+    <div class="hint" id="qrSize">—</div>
+  </div>
+
+  <div class="panel" data-name="mon">
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>System monitor</h4></div>
+    <div class="meters" id="meters"></div>
+    <div class="hint">Sampled once a second, only while this panel is open</div>
+  </div>
+
+  <div class="panel" data-name="cal">
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Calendar</h4><button class="link" id="calToday">Today</button></div>
+    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
+    <div class="caldow" id="calDow"></div>
+    <div class="calgrid" id="calGrid"></div>
+    <div class="calout"><div><small id="calGLab">Jalali</small><span id="calGOut">—</span></div><div><small>Gregorian</small><span id="calJOut">—</span></div></div>
+    <input class="field" dir="auto" id="calIn" aria-label="Convert a date" placeholder="Type a date — 2026-10-16 or 1405-07-24">
+  </div>
+
   <div class="panel" data-name="clock">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4><button class="link" id="zoneFmt">24h</button><button class="link" id="zoneAdd"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>Add</button></div>
     <div class="list scroll" id="zones"></div>
@@ -677,6 +727,10 @@ const LUC = {
   divide: "<circle cx=\"12\" cy=\"6\" r=\"1\" /> <line x1=\"5\" x2=\"19\" y1=\"12\" y2=\"12\" /> <circle cx=\"12\" cy=\"18\" r=\"1\" />",
   delete: "<path d=\"M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z\" /> <path d=\"m12 9 6 6\" /> <path d=\"m18 9-6 6\" />",
   moon: "<path d=\"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401\"/>",
+  wifi: "<path d=\"M12 20h.01\" /> <path d=\"M2 8.82a15 15 0 0 1 20 0\" /> <path d=\"M5 12.859a10 10 0 0 1 14 0\" /> <path d=\"M8.5 16.429a5 5 0 0 1 7 0\" />",
+  bluetooth: "<path d=\"m7 7 10 10-5 5V2l5 5L7 17\" />",
+  calendar: "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" />",
+  'qr-code': "<rect width=\"5\" height=\"5\" x=\"3\" y=\"3\" rx=\"1\" /> <rect width=\"5\" height=\"5\" x=\"16\" y=\"3\" rx=\"1\" /> <rect width=\"5\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\" /> <path d=\"M21 16h-3a2 2 0 0 0-2 2v3\" /> <path d=\"M21 21v.01\" /> <path d=\"M12 7v3a2 2 0 0 1-2 2H7\" /> <path d=\"M3 12h.01\" /> <path d=\"M12 3h.01\" /> <path d=\"M12 16v.01\" /> <path d=\"M16 12h1\" /> <path d=\"M21 12v.01\" /> <path d=\"M12 21v-1\" />",
 };
 let DIR = 1;   // 1 = panel on the right edge, -1 = on the left
 const atEdge = x => DIR > 0 ? x >= innerWidth - 6 : x <= 6;
@@ -703,8 +757,13 @@ const W = {
   snippets: { name: 'Snippets', icon: I(LUC['code']), kind: 'panel' },
   search: { name: 'Search', icon: I(LUC['search']), kind: 'panel' },
   clock: { name: 'World clock', icon: I(LUC['globe']), kind: 'panel' },
+  cal: { name: 'Calendar', icon: I(LUC['calendar']), kind: 'panel' },
+  qr: { name: 'QR code', icon: I(LUC['qr-code']), kind: 'panel' },
+  mon: { os: ['windows'], name: 'System monitor', icon: I(LUC['activity']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
+  wifi: { os: ['windows'], name: 'Wi-Fi', icon: I(LUC['wifi']), kind: 'action', run: () => send('radio', { which: 'wifi', on: !radioWifi }) },
+  bt: { os: ['windows'], name: 'Bluetooth', icon: I(LUC['bluetooth']), kind: 'action', run: () => send('radio', { which: 'bt', on: !radioBt }) },
   desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['monitor']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
   screenoff: { name: 'Screen off', icon: I(LUC['monitor-off']), kind: 'action', run: () => { app.close(); send('screenoff'); } },
   lock: { name: 'Lock PC', icon: I(LUC['lock']), kind: 'action', run: () => { app.close(); send('lock'); } },
@@ -713,7 +772,7 @@ const W = {
   winset: { name: OS === 'windows' ? 'Win Settings' : 'Settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
 };
 const DEF_DOCK = ['emoji', 'clip', 'color', 'shot', 'note', 'more'];
-const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'clock', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
+const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'wifi', 'bt', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
 
 /* the folders the panel starts with; the user can add, remove and reorder from the Folders tool */
 const HOME = init.home || '~';
@@ -945,8 +1004,9 @@ requestAnimationFrame(frame);
 
 /* ================= dock + More rendering ================= */
 const panels = $$('.panel');
-/* the two actions that stay on get their lit state on the button, so a toggle never has to be guessed at */
-const onState = id => id === 'awake' ? awake : id === 'pinwin' ? pinned : false;
+/* the actions that stay on get their lit state on the button, so a toggle never has to be guessed at */
+let radioWifi = false, radioBt = false;
+const onState = id => id === 'awake' ? awake : id === 'pinwin' ? pinned : id === 'wifi' ? radioWifi : id === 'bt' ? radioBt : false;
 function toolHTML(id) {
   const w = info(id); if (!w) return '';
   return `<button class="tool ${w.kind === 'app' ? 'app' : ''} ${onState(id) ? 'on' : ''}" data-w="${id}" aria-label="${esc(w.name)}">${w.icon}</button>`;
@@ -992,6 +1052,10 @@ function setPanel(name, fromMore = false) {
   if (name === 'search') setTimeout(() => $('#searchIn').focus(), 60);
   if (name === 'snippets') setTimeout(() => $('#snipIn').focus(), 60);
   if (name === 'gen') renderGen();
+  if (name === 'mon') { send('metersStart'); hist.cpu.length = hist.ram.length = hist.gpu.length = hist.net.length = 0; drawMeters(); }
+  else send('metersStop');
+  if (name === 'qr') setTimeout(() => $('#qrIn').focus(), 60);
+  if (name === 'cal') setTimeout(() => $('#calIn').focus(), 60);
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
   if (name === 'settings') { renderWidgets(); moveTpill(); }   // the pill can only be measured once the panel is visible
@@ -2350,6 +2414,14 @@ app.pinned = (on, msg) => {
   toast(msg, on ? 'pin' : '');   // the table has no "pin-off"; the dot on the button carries the state
 };
 
+/* ---- wifi / bluetooth: the state always comes back from the native side, never assumed ---- */
+app.radios = ({ wifi, bt }) => {
+  radioWifi = !!wifi?.on; radioBt = !!bt?.on;
+  $$('[data-w=wifi]').forEach(el => el.classList.toggle('on', radioWifi));
+  $$('[data-w=bt]').forEach(el => el.classList.toggle('on', radioBt));
+};
+send('radios');
+
 /* ---- stopwatch ---- */
 let swStart = 0, swAcc = 0, swRaf = null, laps = [];
 const fmtSw = ms => `${String(ms / 60000 | 0).padStart(2, '0')}:${String((ms / 1000 | 0) % 60).padStart(2, '0')}.${String((ms / 10 | 0) % 100).padStart(2, '0')}`;
@@ -2576,6 +2648,119 @@ searchIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDe
 $('#searchGo').onclick = doSearch;
 renderEngines();
 
+
+/* ---- QR: the matrix comes from Rust, the panel only draws it ---- */
+let qrText = '';
+app.qr = ({ w, bits, err }) => {
+  const box = $('#qrBox');
+  if (err || !w) { box.innerHTML = '<div class="empt">Too long for a QR code</div>'; $('#qrSize').textContent = '—'; return; }
+  // one path for the whole matrix: every dark module in one move keeps the SVG small
+  let d = '';
+  for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) if (bits[y * w + x]) d += `M${x} ${y}h1v1h-1z`;
+  box.innerHTML = `<svg viewBox="-1 -1 ${w + 2} ${w + 2}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect x="-1" y="-1" width="${w + 2}" height="${w + 2}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  $('#qrSize').textContent = `${w}×${w} modules · version ${((w - 17) / 4) | 0}`;
+};
+$('#qrIn').addEventListener('input', e => { qrText = e.target.value; send('qr', { text: qrText }); });
+$('#qrClip').onclick = () => { if (!qrText) return toast('Type something first'); send('copyQR', { text: qrText }); };
+app.qrCopied = ok => toast(ok ? 'QR code copied as an image' : 'Could not put the image on the clipboard');
+send('qr', { text: '' });
+
+/* ---- system monitor ---- */
+const METERS = [
+  { k: 'cpu', n: 'CPU', u: '%', max: 100 },
+  { k: 'ram', n: 'RAM', u: '%', max: 100 },
+  { k: 'gpu', n: 'GPU', u: '%', max: 100 },
+  { k: 'net', n: 'Network', u: 'KB/s', max: null },
+];
+const hist = {};                        // a short ring per counter, drawn as a sparkline
+METERS.forEach(m => hist[m.k] = []);
+function drawMeters() {
+  $('#meters').innerHTML = METERS.map(m => {
+    const h = hist[m.k], v = h.length ? h[h.length - 1] : 0;
+    const cap = m.max || Math.max(1, ...h) * 1.1;
+    const n = 60, step = 100 / (n - 1), pts = h.slice(-n);
+    let d = '';
+    pts.forEach((val, i) => {
+      const x = i * step, y = 26 - Math.min(1, val / cap) * 24 - 1;
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+    });
+    const area = d ? d + `L${((pts.length - 1) * step).toFixed(1)} 26L0 26Z` : '';
+    const label = m.k === 'net' ? (v >= 1024 ? (v / 1024).toFixed(1) + ' MB/s' : v.toFixed(0) + ' KB/s') : v.toFixed(0) + '%';
+    return `<div class="meter-row"><div class="set"><span>${m.n}</span><b>${label}</b></div>` +
+      `<svg class="spark" viewBox="0 0 100 26" preserveAspectRatio="none"><path class="fill" d="${area}"/><path d="${d}"/></svg></div>`;
+  }).join('');
+}
+app.meters = v => {
+  for (const m of METERS) {
+    const val = +v[m.k] || 0;
+    hist[m.k].push(val);
+    if (hist[m.k].length > 120) hist[m.k].shift();
+  }
+  drawMeters();
+};
+drawMeters();
+
+/* ---- calendar ----
+   Both calendars on one grid: the big number is the Jalali day, the small one the Gregorian, and
+   the week starts on Saturday (Shanbeh), which is how the Iranian week actually runs. */
+const JMONTHS = ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'];
+const GMONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const JDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];   // Shanbeh to Yekshanbeh
+let calCur = null, calSel = null;
+function drawCal() {
+  const t = calCur || (calCur = jalaliToday());
+  $('#calDow').innerHTML = JDAYS.map(d => `<span>${d}</span>`).join('');
+  const g = toGregorian(t.y, t.m, 1);
+  // how many Jalali days the grid needs before and after, to land on a Saturday
+  const firstDow = (g.d - 1 + 6) % 7;                 // 1 = Saturday
+  const len = jalaliMonthLen(t.y, t.m);
+  const today = jalaliToday();
+  let cells = '';
+  for (let i = 0; i < 42; i++) {
+    const off = i - firstDow, jd = off + 1;
+    if (jd < 1 || jd > len) { cells += '<span></span>'; continue; }
+    const gd = toGregorian(t.y, t.m, jd);
+    const isToday = jd === today.d && t.m === today.m && t.y === today.y;
+    const isSel = calSel && calSel.y === t.y && calSel.m === t.m && calSel.d === jd;
+    cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${jd}</b><small>${gd.d}</small></button>`;
+  }
+  $('#calGrid').innerHTML = cells;
+  $('#calTitle').textContent = `${JMONTHS[t.m - 1]} ${t.y}`;
+}
+function calShow(j) {
+  calSel = j;
+  $('#calGOut').textContent = jalaliText(j);
+  const g = toGregorian(j.y, j.m, j.d);
+  $('#calJOut').textContent = `${g.y}-${pad(g.m)}-${pad(g.d)}`;
+  drawCal();
+}
+/* typing a date converts it either way. The two calendars do not overlap in practice — the Jalali
+   year is ~1405 where the Gregorian one is ~2026 — so 1700 is a safe place to tell them apart. */
+function calParse(text) {
+  const m = String(text).trim().match(/^(\d{3,4})\s*[-\/.]\s*(\d{1,2})\s*[-\/.]\s*(\d{1,2})$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (mo < 1 || mo > 12 || d < 1) return null;
+  if (y > 1700) return d <= daysInGregorianMonth(y, mo) ? { j: toJalali(y, mo, d), g: { y, m: mo, d } } : null;
+  if (d > jalaliMonthLen(y, mo)) return null;
+  return { j: { y, m: mo, d }, g: toGregorian(y, mo, d) };
+}
+const daysInGregorianMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+$('#calGrid').onclick = e => {
+  const b = e.target.closest('[data-d]'); if (!b) return;
+  calShow({ y: calCur.y, m: calCur.m, d: +b.dataset.d });
+};
+$('#calPrev').onclick = () => { const t = calCur; calCur = t.m > 1 ? { y: t.y, m: t.m - 1, d: 1 } : { y: t.y - 1, m: 12, d: 1 }; drawCal(); };
+$('#calNext').onclick = () => { const t = calCur; calCur = t.m < 12 ? { y: t.y, m: t.m + 1, d: 1 } : { y: t.y + 1, m: 1, d: 1 }; drawCal(); };
+$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); $('#calIn').value = ''; };
+$('#calIn').addEventListener('input', e => {
+  const p = calParse(e.target.value);
+  if (!p) return;
+  calCur = p.j;
+  calShow(p.j);
+});
+$('#calGLab').textContent = 'Jalali';
+calShow(jalaliToday());
 
 /* ---- world clock ---- */
 /* every IANA zone the engine knows, in "Area/City" form. Intl has had supportedValuesOf since Chrome 99,
