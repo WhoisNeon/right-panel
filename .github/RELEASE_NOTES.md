@@ -9,6 +9,11 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.17
+- **A calendar, in both calendars at once** — a month grid where every day carries its Jalali number big and its Gregorian number small, so you never have to convert anything in your head. It opens on the Iranian week (Saturday first), has Today and month arrows, and marks today. Below it a box takes either calendar's date — `2026-10-16` or `1405-07-24`, with `/` or `-` — and shows you the other one, in both directions
+- **A QR code generator** — type text, a link, a Wi-Fi password, and it is drawn as a sharp inline SVG with the quiet zone already in. *Copy PNG* puts it on the clipboard as an image you can paste straight into a document or a message
+- **A system monitor** — CPU and RAM as live sparklines, sampled once a second and only while the panel is open, so it costs nothing when you are not looking
+
 ### New in 1.4.16
 - **The calendar picker waits to be asked for** — the world clock used to show its whole search box and zone list the moment it opened, which was most of the panel. There is now an **+ Add** button in the header and the picker only appears when you press it. The box says what it wants: "City or Area/City, e.g. Asia/Tehran"
 - **The world clock has seconds, and a 12/24h switch** — every zone shows `HH:MM:SS`, and the new **24h** button in the header flips the lot to 12-hour with AM/PM. Your choice is remembered
