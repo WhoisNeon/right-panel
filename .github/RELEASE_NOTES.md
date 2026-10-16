@@ -9,6 +9,17 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.13
+- **Settings → General explains itself** — every option now has a one-line hint under its name ("Which screen edge the tab sits on", "How fast the panel and its menus move"), the options are grouped under *Panel* and *System*, and "Open panel" is now "Hold to open"
+- **The hold key is in the tray menu too** — right-click the tray icon → *Hold key to open* offers the same No key / Ctrl / Shift / Space, and it stays in step with the one in Settings whichever you use
+- **Settings slides between tabs** — the Widgets / Theme / General background is a single pill that glides across instead of snapping
+- **Nothing jumps when the panel opens** — the Settings rows used to shove about 30px left and spring back as the panel grew; the open animation no longer overshoots sideways
+- **The Units dropdowns are readable** — the list was filled with exactly the same colour as the rows underneath, so it looked see-through and its extent was invisible; it now uses the panel's floating-menu surface
+- **Translate knows which way you're going** — searching with Translate targets Farsi when you type English, and English when you type Farsi
+- **Password and Token generators** — Generate has a 16-character password (all four character sets) and a 128-bit hex token
+- **The clipboard tool pastes** — clicking a clip pastes it into the app you came from and closes the panel, instead of only copying it
+- **Smaller fixes** — the "+ App" button's icon and label sit on the same line, the colour picker closes with the panel, the emoji tool no longer flashes a "Typed" toast, "Add a city…" carries a proper plus icon, the timer keeps just 5m / 10m / 15m / 30m / 1hr centred on one row, and the important controls carry aria-labels for screen readers
+
 ### New in 1.4.12
 - **Right-click a tool** — in the dock or in More, right-click any tool for *Move to dock / Move into More* and *Disable tool*; Settings → Widgets switches it back on. Dragging a tool onto the More icon also moves it to More
 - **Copy, never paste** — everything you click lands on the clipboard: snippets, Generate, the text tools, the notes. The "Paste on click" setting is gone. Clicking an emoji types it straight into the app you came from, with no clipboard round-trip

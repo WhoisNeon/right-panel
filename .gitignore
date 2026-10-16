@@ -2,8 +2,3 @@
 /dist
 /pkg
 node_modules/
-
-# local scaffolding, not part of the app
-/test-ui.html
-/*.ps1
-/assets/preview-emoji.html

@@ -445,25 +445,36 @@ mod tray {
     use super::{util, Ev};
     use tao::event_loop::EventLoopProxy;
     use tray_icon::{
-        menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem},
+        menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu},
         Icon, MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent,
     };
 
     pub struct Tray {
         _icon: TrayIcon,
         startup: CheckMenuItem,
+        openmod: Vec<CheckMenuItem>,
     }
 
+    /* the same four choices the panel's Settings page offers, in the same order */
+    const MODS: [(&str, &str); 4] = [("none", "No key"), ("ctrl", "Ctrl"), ("shift", "Shift"), ("space", "Space")];
+
     impl Tray {
-        pub fn new(proxy: &EventLoopProxy<Ev>, startup_on: bool) -> Option<Tray> {
+        pub fn new(proxy: &EventLoopProxy<Ev>, startup_on: bool, open_mod: u8) -> Option<Tray> {
             let login = if cfg!(windows) { "Start with Windows" } else { "Open at login" };
             let startup = CheckMenuItem::with_id("startup", login, true, startup_on, None);
+            let openmod: Vec<CheckMenuItem> = MODS.iter().enumerate()
+                .map(|(i, (id, label))| CheckMenuItem::with_id(format!("openmod-{id}"), *label, true, i as u8 == open_mod, None))
+                .collect();
+            /* reading the modifier key needs OS APIs we only have on Windows */
+            let sub = Submenu::new("Hold key to open", cfg!(windows));
+            for m in &openmod { let _ = sub.append(m); }
             let menu = Menu::new();
             let _ = menu.append_items(&[
                 &MenuItem::with_id("open", "Open Right Panel", true, None),
                 &MenuItem::with_id("settings", "Widgets && settings…", true, None),
                 &MenuItem::with_id("addapp", "Add app…", true, None),
                 &PredefinedMenuItem::separator(),
+                &sub,
                 &startup,
                 &PredefinedMenuItem::separator(),
                 &MenuItem::with_id("quit", "Quit Right Panel", true, None),
@@ -485,11 +496,15 @@ mod tray {
                     let _ = tp.send_event(Ev::Show(""));
                 }
             }));
-            Some(Tray { _icon: icon, startup })
+            Some(Tray { _icon: icon, startup, openmod })
         }
 
         pub fn set_startup(&self, on: bool) {
             self.startup.set_checked(on);
+        }
+
+        pub fn set_open_mod(&self, code: u8) {
+            for (i, m) in self.openmod.iter().enumerate() { m.set_checked(i as u8 == code); }
         }
     }
 }
@@ -698,7 +713,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
         match event {
             // macOS needs the tray created once the app is running
             Event::NewEvents(StartCause::Init) => {
-                tray = tray::Tray::new(&proxy, sys::startup_enabled());
+                tray = tray::Tray::new(&proxy, sys::startup_enabled(), OPEN_MOD.load(Ordering::Relaxed));
                 if !OPEN.load(Ordering::Relaxed) {
                     set_passthrough(&window, true);
                 }
@@ -733,6 +748,13 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         t.set_startup(on);
                     }
                     let _ = webview.evaluate_script(&format!("app.syncStartup({on})"));
+                }
+                other if other.starts_with("openmod-") => {
+                    let v = &other["openmod-".len()..];
+                    let code = mod_code(&Value::String(v.to_string()));
+                    OPEN_MOD.store(code, Ordering::Relaxed);
+                    if let Some(t) = &tray { t.set_open_mod(code); }
+                    let _ = webview.evaluate_script(&format!("app.syncOpenMod('{v}')"));
                 }
                 "quit" => *flow = ControlFlow::Exit,
                 _ => {}
@@ -787,6 +809,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         }
                         if let Some(t) = &tray {
                             t.set_startup(want);
+                            t.set_open_mod(mod_code(&st["openMod"]));   // the tray's ticks follow the panel's choice
                         }
                         let _ = fs::write(&settings_path, st.to_string());
                     }

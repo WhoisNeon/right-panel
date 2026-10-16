@@ -22,7 +22,7 @@
      and everything else falls through to Segoe UI. Reversing the order would hand Arabic to
      Segoe UI, which covers it too and would win before Arad was ever reached. */
   body { font-family: Arad, "Segoe UI Variable Text", "Segoe UI", Twemoji, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
-  /* panel chrome is glyphs, not text — keep the colour fonts off it so arrows and symbols keep their metrics */
+  /* panel chrome is glyphs, not text — keep the color fonts off it so arrows and symbols keep their metrics */
   .back, .item .acts span { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
   .back svg { width: 15px; height: 15px; display: block; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .item .acts span svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -81,7 +81,9 @@
   .back:hover { background: var(--soft2); }
   .fly-ui.sub .back { display: inline-grid; place-items: center; }
   .link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
-  .link svg { width: 12px; height: 12px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  /* a flex-centred icon lines up with the line box, but the text's ink sits below the box centre
+     (the box keeps room for descenders), so nudge the glyph down onto the caps */
+  .link svg { width: 12px; height: 12px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; transform: translateY(1.5px); }
   .addpair { display: inline-flex; gap: 2px; }
   .link:hover { color: var(--ink); background: var(--soft); }
   .field { width: 100%; border: 0; outline: 0; border-radius: 12px; background: var(--soft); color: var(--ink); padding: 9px 12px; font: inherit; font-size: 13px; text-align: start; }
@@ -106,6 +108,7 @@
   .row > * { flex: 1; }
   .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 10px 0; }
   .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  #timerPresets { justify-content: center; }
   .chip { border: 0; background: var(--soft); border-radius: 99px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
   .chip:hover { background: var(--soft2); }
   .chip.on { background: var(--inv); color: var(--inv-ink); }
@@ -168,6 +171,7 @@
   .tile.on, .tile.on:hover { background: var(--inv); color: var(--inv-ink); }
   .ph-tile { border-radius: 14px; border: 2px dashed var(--muted); min-height: 66px; animation: phIn .25s var(--pop); }
   .hint { font-size: 11px; color: var(--muted); text-align: center; }
+  .set .hint { display: block; text-align: left; }
 
   .mrow { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 4px 0; }
   .mb { width: 52px; height: 52px; border: 0; border-radius: 50%; background: var(--soft); display: grid; place-items: center; cursor: pointer; }
@@ -255,21 +259,23 @@
   .toggle.on::after { transform: translate(16px, 0); }
   .wacts { display: flex; gap: 0; flex: none; }
   .wacts .wb { padding: 0 4px; }
-  .tabs { display: flex; background: var(--soft); border-radius: 11px; padding: 3px; gap: 2px; }
-  .tabs button { flex: 1; border: 0; background: none; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--muted); transition: background .25s, color .25s; }
-  .tabs button.on { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
+  .tabs { position: relative; display: flex; background: var(--soft); border-radius: 11px; padding: 3px; gap: 2px; }
+  .tabs button { position: relative; z-index: 1; flex: 1; border: 0; background: none; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: var(--muted); transition: color .25s; }
+  .tabs button.on { color: var(--inv-ink); font-weight: 600; }
+  /* the active tab is a pill that slides between the tabs instead of a background that jumps */
+  .tabs #tpill { position: absolute; left: 0; top: 3px; bottom: 3px; width: 0; border-radius: 8px; background: var(--inv); z-index: 0; transition: transform .32s var(--pop), width .32s var(--pop); }
   .pick { position: relative; }
   .pick > .field { cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
-  /* --liquid is the panel's own colour, so a list filled with it looked see-through and the rows
-     it covered stayed readable — and clickable — through it. Lift it with --soft instead. */
+  /* the rows this list covers are --soft themselves, so a --soft list still read as see-through and
+     its true extent stayed invisible. Use the same inverted surface as the context menus. */
   .pick .opts { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto;
-    background-color: var(--liquid); background-image: linear-gradient(var(--soft), var(--soft)); border-radius: 12px; padding: 4px;
+    background: var(--inv); color: var(--inv-ink); border-radius: 12px; padding: 4px;
     box-shadow: 0 0 0 1px var(--line), 0 10px 30px -10px rgba(0,0,0,.5); transform-origin: top right;
     opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-4px) scale(.97);
     transition: opacity .16s, transform .2s var(--pop), visibility 0s .2s; }
   .pick.open .opts { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
   .pick .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-  .pick .opts button:hover, .pick .opts button.on { background: var(--soft2); }
+  .pick .opts button:hover, .pick .opts button.on { background: var(--inv-ink); color: var(--inv); }
   .spage { display: none; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .spage.on { display: flex; animation: rise .4s cubic-bezier(.2,.8,.2,1) both; }
   /* switching tabs slides the new page in from the side you moved toward */
@@ -299,7 +305,7 @@
   .ctxmenu { position: fixed; z-index: 60; min-width: 148px; background: var(--inv); color: var(--inv-ink); border-radius: 12px; padding: 4px; box-shadow: 0 14px 34px -10px rgba(0,0,0,.5); }
   .ctxmenu[hidden] { display: none; }
   .ctxmenu button { display: flex; align-items: center; gap: 9px; width: 100%; border: 0; background: none; color: inherit; font: inherit; font-size: 12px; text-align: start; padding: 8px 11px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
-  /* invert on hover: --soft over --inv is nearly invisible, and --ink is the background colour
+  /* invert on hover: --soft over --inv is nearly invisible, and --ink is the background color
      on every light-on-dark theme, which made the label vanish */
   .ctxmenu button:hover { background: var(--inv-ink); color: var(--inv); }
   .ctxmenu button.danger:hover { background: #ff453a; color: #fff; }
@@ -309,7 +315,7 @@
   .ph-row { height: 34px; border-radius: 11px; border: 2px dashed var(--muted); flex: none; }
   /* the 4px top/bottom padding is the room the selected swatch's 4px ring needs; without it
      the ring is sliced off by the scrolling .spage above */
-  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 4px 0; }
+  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px 0; }
   .theme { border: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); padding: 0; }
   .theme i { width: 46px; height: 46px; border-radius: 15px; position: relative; display: block; box-shadow: inset 0 0 0 1px rgba(128,128,128,.35); transition: transform .35s var(--pop), border-radius .35s var(--spring); }
   .theme i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px; border-radius: 50%; background: var(--dot); }
@@ -317,7 +323,7 @@
   .theme.on { color: var(--ink); }
   .theme.on i { box-shadow: 0 0 0 2px var(--liquid), 0 0 0 4px var(--inv); }
 
-  /* custom colour picker — the panel draws its own, so no native colour dialog leaks in */
+  /* custom color picker — the panel draws its own, so no native color dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
     box-shadow: 0 0 0 1px var(--line), 0 18px 40px -12px rgba(0,0,0,.6);
     opacity: 0; visibility: hidden; pointer-events: none; transform: scale(.96) translateY(4px);
@@ -386,21 +392,21 @@
 <div class="fly-ui" id="flyUi">
   <div class="panel" data-name="emoji">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Emoji</h4></div>
-    <input class="field" dir="auto" id="emojiSearch" placeholder="Search emoji…">
+    <input class="field" dir="auto" id="emojiSearch" aria-label="Search emoji" placeholder="Search emoji…">
     <div class="cats" id="cats"></div>
     <div class="emoji-grid scroll" id="emojiGrid"></div>
   </div>
 
   <div class="panel" data-name="clip">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Clipboard</h4><button class="link" id="clipClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button></div>
-    <input class="field" dir="auto" id="clipSearch" placeholder="Search history…">
+    <input class="field" dir="auto" id="clipSearch" aria-label="Search clipboard history" placeholder="Search history…">
     <div class="list scroll" id="clipList"></div>
   </div>
 
   <div class="panel" data-name="color">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Color</h4><button class="link" id="eyedrop"><svg viewBox="0 0 24 24"><path d="m12 9-8.414 8.414A2 2 0 0 0 3 18.828v1.344a2 2 0 0 1-.586 1.414A2 2 0 0 1 3.828 21h1.344a2 2 0 0 0 1.414-.586L15 12"/> <path d="m18 9 .4.4a1 1 0 1 1-3 3l-3.8-3.8a1 1 0 1 1 3-3l.4.4 3.4-3.4a1 1 0 1 1 3 3z"/> <path d="m2 22 .414-.414"/></svg>Pick from screen</button></div>
     <div class="cur">
-      <button class="big" id="bigSwatch" aria-label="Pick a colour"></button>
+      <button class="big" id="bigSwatch" aria-label="Pick a color"></button>
       <div class="fmts">
         <button class="fmt" data-f="hex"><span></span><i>HEX</i></button>
         <button class="fmt" data-f="rgb"><span></span><i>RGB</i></button>
@@ -416,7 +422,7 @@
   <div class="panel" data-name="note">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Notes</h4><span class="link" id="noteInfo">saved</span></div>
     <div class="chips" id="noteTabs"></div>
-    <textarea class="field scroll" dir="auto" id="note" placeholder="Write something…"></textarea>
+    <textarea class="field scroll" dir="auto" id="note" aria-label="Note" placeholder="Write something…"></textarea>
     <div class="row"><button class="btn" id="noteNew"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>New</button><button class="btn" id="noteCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button><button class="btn" id="noteDel"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Delete</button></div>
   </div>
 
@@ -436,7 +442,7 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Timer</h4></div>
     <div class="timer" id="timerOut">05:00</div>
     <div class="chips" id="timerPresets"></div>
-    <div class="row"><input class="field" dir="auto" id="timerHr" type="number" min="0" max="99" placeholder="Hr"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" placeholder="Sec"><button class="btn iconbtn" id="timerSet" aria-label="Set the timer"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></button></div>
+    <div class="row"><input class="field" dir="auto" id="timerHr" type="number" min="0" max="99" aria-label="Hours" placeholder="Hr"><input class="field" dir="auto" id="timerMin" type="number" min="0" max="999" aria-label="Minutes" placeholder="Min"><input class="field" dir="auto" id="timerSec" type="number" min="0" max="59" aria-label="Seconds" placeholder="Sec"><button class="btn iconbtn" id="timerSet" aria-label="Set the timer"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></button></div>
     <div class="row"><button class="btn primary" id="timerStart">Start</button><button class="btn" id="timerReset">Reset</button></div>
   </div>
 
@@ -449,7 +455,7 @@
 
   <div class="panel" data-name="text">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Text tools</h4></div>
-    <textarea class="field" dir="auto" id="ttIn" rows="2" placeholder="Type or paste text here…"></textarea>
+    <textarea class="field" dir="auto" id="ttIn" rows="2" aria-label="Text to transform" placeholder="Type or paste text here…"></textarea>
     <div class="grid3" id="textTools"></div>
     <div class="ttout"><textarea class="field" dir="auto" id="ttRes" readonly rows="2" placeholder="result appears here"></textarea><button class="btn primary" id="ttCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div>
   </div>
@@ -463,20 +469,20 @@
       <button class="chip on" data-set="upper">A–Z</button><button class="chip on" data-set="lower">a–z</button><button class="chip on" data-set="digit">0–9</button><button class="chip on" data-set="symbol">!@#</button>
     </div>
     <div class="set"><span>Length <b id="pwLenV">16</b></span></div>
-    <input type="range" min="4" max="64" value="16" id="pwLen">
+    <input type="range" min="4" max="64" value="16" id="pwLen" aria-label="Password length">
     <div class="row"><button class="btn" id="pwGen"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></svg>Regenerate</button><button class="btn primary" id="pwCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div>
   </div>
 
   <div class="panel" data-name="unit">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Units</h4></div>
-    <input class="field" type="number" step="any" dir="ltr" id="unitIn" placeholder="1">
-    <div class="row"><select class="field" id="unitCat"></select><select class="field" id="unitSel"></select></div>
+    <input class="field" type="number" step="any" dir="ltr" id="unitIn" aria-label="Value to convert" placeholder="1">
+    <div class="row"><select class="field" id="unitCat" aria-label="Unit category"></select><select class="field" id="unitSel" aria-label="Convert from"></select></div>
     <div id="unitOut" class="list"></div>
   </div>
 
   <div class="panel" data-name="numconv">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4></div>
-    <textarea class="field" dir="auto" id="ncIn" rows="2" placeholder="Type or paste text…"></textarea>
+    <textarea class="field" dir="auto" id="ncIn" rows="2" aria-label="Text to convert" placeholder="Type or paste text…"></textarea>
     <div class="ncout" id="ncOut">
       <div class="set"><span>English</span><span><textarea class="field" dir="auto" id="ncEn" readonly rows="2"></textarea><button class="btn" data-nc="en"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
       <div class="set"><span>Farsi</span><span><textarea class="field" dir="auto" id="ncFa" readonly rows="2"></textarea><button class="btn" data-nc="fa"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
@@ -502,26 +508,26 @@
   </div>
 
   <div class="panel" data-name="snippets">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4><span class="hint">click to copy</span></div>
-    <input class="field" dir="auto" id="snipIn" placeholder="Type a snippet and press Enter…">
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4></div>
+    <input class="field" dir="auto" id="snipIn" aria-label="New snippet" placeholder="Type a snippet and press Enter…">
     <div class="list scroll" id="snipList"></div>
   </div>
 
   <div class="panel" data-name="search">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Web search</h4></div>
-    <div class="row"><input class="field" dir="auto" id="searchIn" placeholder="Search or type a URL, then Enter"><button class="btn iconbtn" id="searchGo" aria-label="Search"><svg viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></button></div>
+    <div class="row"><input class="field" dir="auto" id="searchIn" aria-label="Search or type a URL" placeholder="Search or type a URL, then Enter"><button class="btn iconbtn" id="searchGo" aria-label="Search"><svg viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></svg></button></div>
     <div id="engines"></div>
   </div>
 
   <div class="panel" data-name="clock">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4></div>
     <div class="list scroll" id="zones"></div>
-    <select class="field" id="zoneAdd"></select>
+    <select class="field" id="zoneAdd" aria-label="Add a city"></select>
   </div>
 
   <div class="panel" data-name="settings">
     <div class="head"><h4>Settings</h4></div>
-    <div class="tabs" id="stabs"><button data-p="widgets" class="on">Widgets</button><button data-p="look">Theme</button><button data-p="general">General</button></div>
+    <div class="tabs" id="stabs"><i id="tpill"></i><button data-p="widgets" class="on">Widgets</button><button data-p="look">Theme</button><button data-p="general">General</button></div>
     <div class="spage on" data-p="widgets">
       <div class="wsec"><span>In the dock</span><span class="addpair"><button class="link" id="addApp"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>App</button></span></div>
       <div class="wlist scroll" id="wDock" data-zone="dock"></div>
@@ -533,21 +539,23 @@
       <div class="wsec"><span>Your themes</span><span class="addpair"><button class="link" id="themeAdd"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>Add</button></span></div>
       <div class="tlist" id="themeList"></div>
       <div class="tedit" id="themeEdit" hidden>
-        <input class="field" dir="auto" id="teName" placeholder="Theme name">
-        <div class="set"><span>Background</span><button class="cchip" id="teBg" aria-label="Background colour"></button></div>
-        <div class="set"><span>Accent</span><button class="cchip" id="teAccent" aria-label="Accent colour"></button></div>
+        <input class="field" dir="auto" id="teName" aria-label="Theme name" placeholder="Theme name">
+        <div class="set"><span>Background</span><button class="cchip" id="teBg" aria-label="Background color"></button></div>
+        <div class="set"><span>Accent</span><button class="cchip" id="teAccent" aria-label="Accent color"></button></div>
         <div class="row"><button class="btn" id="teCancel"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg>Cancel</button><button class="btn primary" id="teSave"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>Save</button></div>
       </div>
     </div>
     <div class="spage" data-p="general">
-      <div class="set"><span id="startLbl">Start with Windows</span><button class="toggle" id="tStartup"></button></div>
-      <div class="set"><span>Magnify icons on hover</span><button class="toggle" id="tMagnify"></button></div>
-      <div class="set" id="openModRow"><span>Open panel<small class="hint" style="display:block;text-align:left">Hold at the screen edge</small></span><select class="field" id="openModSel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
-      <div class="set"><span>Animation speed</span><select class="field" id="speedSel" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
-      <div class="set"><span>Panel edge</span><select class="field" id="edgeSel" style="width:auto"><option value="right">Right</option><option value="left">Left</option></select></div>
-      <div class="set" id="monRow"><span>Monitor</span><select class="field" id="monSel" style="width:auto"></select></div>
-      <div class="set" id="ctxRow"><span>Add to right-click menu<small class="hint" style="display:block">Files &amp; folders → “Add to Right Panel”</small></span><button class="toggle" id="tContext"></button></div>
-      <div class="set"><span>Check for updates</span><button class="toggle" id="tUpdates"></button></div>
+      <div class="wsec"><span>Panel</span></div>
+      <div class="set"><span>Panel edge<small class="hint">Which screen edge the tab sits on</small></span><select class="field" id="edgeSel" aria-label="Panel edge" style="width:auto"><option value="right">Right</option><option value="left">Left</option></select></div>
+      <div class="set" id="monRow"><span>Monitor<small class="hint">Which display the panel opens on</small></span><select class="field" id="monSel" aria-label="Monitor" style="width:auto"></select></div>
+      <div class="set" id="openModRow"><span>Hold to open<small class="hint">Hold this key at the screen edge to open the panel</small></span><select class="field" id="openModSel" aria-label="Hold to open the panel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
+      <div class="set"><span>Animation speed<small class="hint">How fast the panel and its menus move</small></span><select class="field" id="speedSel" aria-label="Animation speed" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
+      <div class="set"><span>Magnify dock icons<small class="hint">Icons grow as the pointer passes over them</small></span><button class="toggle" id="tMagnify" aria-label="Magnify dock icons"></button></div>
+      <div class="wsec"><span>System</span></div>
+      <div class="set"><span><span id="startLbl">Start with Windows</span><small class="hint">Launch Right Panel when you sign in</small></span><button class="toggle" id="tStartup" aria-label="Start with Windows"></button></div>
+      <div class="set" id="ctxRow"><span>Add to right-click menu<small class="hint">Files &amp; folders → “Add to Right Panel”</small></span><button class="toggle" id="tContext" aria-label="Add to right-click menu"></button></div>
+      <div class="set"><span>Check for updates<small class="hint">Ask GitHub once a day for a newer version</small></span><button class="toggle" id="tUpdates" aria-label="Check for updates"></button></div>
       <div class="item plain" id="aboutRow">Right Panel <b id="verNow"></b><small id="updLine">Click to check for updates</small></div>
       <button class="btn primary" id="updBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></svg><span>Download &amp; install update</span></button>
       <button class="btn" id="quitBtn"><svg viewBox="0 0 24 24"><path d="M12 2v10" /> <path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></svg>Quit Right Panel</button>
@@ -566,9 +574,9 @@
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
 <div class="cpick" id="cpick" hidden>
-  <div class="sv" id="cpSv"><i></i></div>
-  <div class="hue" id="cpHue"><i></i></div>
-  <div class="cprow"><input class="field" id="cpHex" dir="ltr" spellcheck="false" aria-label="Hex colour"><button class="btn primary" id="cpOk">Done</button></div>
+  <div class="sv" id="cpSv" aria-label="Saturation and brightness"><i></i></div>
+  <div class="hue" id="cpHue" aria-label="Hue"><i></i></div>
+  <div class="cprow"><input class="field" id="cpHex" dir="ltr" spellcheck="false" aria-label="Hex color"><button class="btn primary" id="cpOk">Done</button></div>
 </div>
 
 <script>
@@ -702,7 +710,7 @@ function normalize() {
   if (!S.dock) S.dock = (S.order && S.order.length ? S.order : [...DEF_DOCK, ...S.apps.map(a => a.id)]);
   if (!S.more) S.more = [...DEF_MORE];
   if (!Array.isArray(S.themes)) S.themes = [];
-  // the single-colour "Custom" theme of older versions becomes a proper user theme
+  // the single-color "Custom" theme of older versions becomes a proper user theme
   if (S.theme === 'custom') { const id = uid(); S.themes.push({ id, name: 'Custom', bg: S.accent || '#101014', accent: smartAccent(S.accent || '#101014') }); S.theme = 'u:' + id; }
   if (String(S.theme).startsWith('u:') && !uTheme(S.theme)) S.theme = 'midnight';
   if (!Array.isArray(S.folders) || !S.folders.length) S.folders = DEF_FOLDERS.map(([name, path], i) => ({ id: 'd' + i, name, path }));
@@ -728,7 +736,7 @@ const THEMES = {
   snow: ['Snow', '#f5f5f7', 'light'], sand: ['Sand', '#efe4d2', 'light', '#6b4a2b'], sky: ['Sky', '#e2efff', 'light', '#1557b0'],
   rose: ['Rose', '#fde6ee', 'light', '#b0194a'], mint: ['Mint', '#e1f7ec', 'light', '#0e7a4b'], lilac: ['Lilac', '#eee8ff', 'light', '#5b33c9'],
 };
-/* The two colours a theme has are the background and the accent; ink, muted text, hairlines and the
+/* The two colors a theme has are the background and the accent; ink, muted text, hairlines and the
    text that sits on the accent are all derived. "Black or white?" is decided by luminance, not by
    whether the theme was declared light or dark, so a custom accent can never come out unreadable. */
 function themeVars(bg, mode, accent) {
@@ -784,7 +792,7 @@ const app = window.app = {
   open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); },
   close() {
     if (!isOpen) return; isOpen = false; sticky = false; closedAt = performance.now(); setPanel(null); mx = -1; hoverY = null;
-    hideTip();
+    hideTip(); closePicker();          // the picker is fixed to the screen, not the panel, so it has to go with it
     document.activeElement?.blur(); send('pass', { on: true });
   },
   cursor(dist) { mx = dist; },   // distance in px from the screen edge, -1 = away
@@ -800,6 +808,7 @@ const app = window.app = {
   },
   iconFor(id, icon) { const a = S.apps.find(x => x.id === id); if (a && icon && a.icon !== icon) { a.icon = icon; save(); renderAll(); } },
   syncStartup(v) { S.startup = v; $('#tStartup').classList.toggle('on', v); save(); },
+  syncOpenMod(v) { S.openMod = v; $('#openModSel').value = v; save(); },   // the tray menu sets this too
   // a paste hands focus to the app behind the panel, so a blur on its own is not a reason to
   // close: only close when the pointer has actually left as well
   blur() { if (isOpen && !dragging && performance.now() - openedAt > 260 && !(lastPt && inside(lastPt.x, lastPt.y))) app.close(); },
@@ -896,7 +905,9 @@ function frame(now) {
   const stX = 1 + clamp(gv * .04, -.15, .15), stY = 1 - clamp(gv * .025, -.1, .1);
   flyUi.style.visibility = gs > .02 ? 'visible' : 'hidden';
   flyUi.style.opacity = clamp(gs * 1.6);
-  flyUi.style.transform = `translate(${(1 - gs) * 40 * DIR}px, ${Y - flyH / 2}px) scale(${Math.max(.05, gs * stX)}, ${Math.max(.1, (.25 + .75 * gs) * stY)})`;
+  // the X scale must not overshoot its final width: the panel is anchored to the screen edge, so a
+  // wider-than-final panel shoves every row left and then back again
+  flyUi.style.transform = `translate(${(1 - gs) * 40 * DIR}px, ${Y - flyH / 2}px) scale(${Math.min(1, Math.max(.05, gs * stX))}, ${Math.max(.1, (.25 + .75 * gs) * stY)})`;
   flyUi.style.borderRadius = `${22 + (1 - clamp(gs)) * 60}px`;
 
   requestAnimationFrame(frame);
@@ -952,7 +963,7 @@ function setPanel(name, fromMore = false) {
   if (name === 'gen') renderGen();
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
-  if (name === 'settings') renderWidgets();
+  if (name === 'settings') { renderWidgets(); moveTpill(); }   // the pill can only be measured once the panel is visible
 }
 const anchorOf = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
 const dockEl = id => $(`#tabUi .tool[data-w="${id}"]`);
@@ -1105,12 +1116,19 @@ $('.spage[data-p=widgets]').addEventListener('click', e => {
   else if ('eye' in b.dataset) { S.hidden = S.hidden.includes(id) ? S.hidden.filter(x => x !== id) : [...S.hidden, id]; save(); renderAll(); }
   else if ('rm' in b.dataset) { S.apps = S.apps.filter(x => x.id !== id); S.dock = S.dock.filter(x => x !== id); S.more = S.more.filter(x => x !== id); save(); renderAll(); }
 });
+const tpill = $('#tpill');
+function moveTpill() {
+  const b = $$('#stabs button').find(x => x.classList.contains('on')); if (!b) return;
+  tpill.style.width = b.offsetWidth + 'px';
+  tpill.style.transform = `translateX(${b.offsetLeft}px)`;   // offsetLeft is already measured from the pill's own left
+}
 $('#stabs').addEventListener('click', e => {
   const p = e.target.dataset.p; if (!p) return;
   const btns = $$('#stabs button');
   const from = btns.findIndex(b => b.classList.contains('on')), to = btns.findIndex(b => b.dataset.p === p);
   if (to < 0 || to === from) return;
   btns.forEach((b, i) => b.classList.toggle('on', i === to));
+  moveTpill();
   $$('.spage').forEach(x => { x.classList.remove('from-l', 'from-r'); x.classList.toggle('on', x.dataset.p === p); });
   const page = $(`.spage[data-p="${p}"]`);
   void page.offsetWidth;                       // let the browser see the "before" frame, or the slide is skipped
@@ -2008,7 +2026,7 @@ grid.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const em = b.textContent;
   S.recentEmoji = [em, ...S.recentEmoji.filter(x => x !== em)].slice(0, 28); save();
-  if (OS === 'windows') { send('type', { text: em }); toast('Typed'); }   // typed straight into the app you came from
+  if (OS === 'windows') send('type', { text: em });   // typed straight into the app you came from; the text landing is feedback enough
   else copy(em);                                                          // typing into another app needs OS permissions there
 });
 if (S.recentEmoji.length) emojiCat = '🕘';
@@ -2051,7 +2069,7 @@ $('#clipList').addEventListener('click', e => {
   }
   if (e.target.closest('[data-pin]')) { S.pins = c.pin ? S.pins.filter(x => x !== c.text) : [c.text, ...S.pins].slice(0, 30); save(); renderClips(); return; }
   if (e.target.closest('[data-x]')) { if (c.pin) { S.pins = S.pins.filter(x => x !== c.text); save(); } clips = clips.filter(x => x.text !== c.text); renderClips(); return; }
-  deliver(c.text);
+  send('paste', { text: c.text }); app.close();   // the clipboard tool pastes — it is the one list where that is the point
 });
 $('#clipSearch').addEventListener('input', renderClips);
 $('#clipClear').onclick = () => { clips = []; renderClips(); };
@@ -2079,7 +2097,7 @@ $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () 
 $('#eyedrop').onclick = () => { app.close(); send('pickColor'); };
 setColor(color); renderRecent();
 
-/* ---- custom colour picker: the panel draws its own, so no native dialog leaks in ---- */
+/* ---- custom color picker: the panel draws its own, so no native dialog leaks in ---- */
 const cpEl = $('#cpick'), cpSv = $('#cpSv'), cpHue = $('#cpHue'), cpHex = $('#cpHex');
 let cpH = 0, cpS = 1, cpV = 1, cpCb = null, cpDone = null;
 const hex2rgb = h => { h = String(h).trim().replace('#', ''); if (h.length === 3) h = h.replace(/./g, c => c + c);
@@ -2327,6 +2345,8 @@ const GEN = {
   'Coin flip': () => crypto.getRandomValues(new Uint8Array(1))[0] & 1 ? 'Heads' : 'Tails',
   'Lorem sentence': () => LOREM.split('. ')[0] + '.',
   'Lorem paragraph': () => LOREM,
+  'Password': () => pwPick(PW_SETS.upper + PW_SETS.lower + PW_SETS.digit + PW_SETS.symbol, 16),
+  'Token': () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''),   // 128 bits of hex
 };
 function renderGen() { $('#genList').innerHTML = Object.entries(GEN).map(([n, f]) => { let v; try { v = esc(f()); } catch { v = 'not available here'; } return `<button class="item plain spring gen" data-g="${n}">${n}<span>${v}</span></button>`; }).join(''); }
 $('#genList').onclick = e => { const g = e.target.closest('[data-g]')?.dataset.g; if (!g) return; let v; try { v = GEN[g](); } catch { return toast('That one is not available here'); } deliver(v); };
@@ -2400,7 +2420,8 @@ const ENGINES = {
   SoundCloud:   { c: 'Media',     u: 'https://soundcloud.com/search?q=%s',                  i: IB(SI.soundcloud) },
   Images:       { c: 'Media',     u: 'https://www.google.com/search?tbm=isch&q=%s',         i: I(LUC.image) },
   Wikipedia:    { c: 'Learn',     u: 'https://en.wikipedia.org/w/index.php?search=%s',      i: IB(SI.wikipedia) },
-  Translate:    { c: 'Learn',     u: 'https://translate.google.com/?sl=auto&tl=en&text=%s', i: IB(SI.googletranslate) },
+  /* Translate picks its own target: Farsi for anything not already in Persian script, English for the rest */
+  Translate:    { c: 'Learn',     u: q => `https://translate.google.com/?sl=auto&tl=${/[\u0600-\u06FF]/.test(q) ? 'en' : 'fa'}&text=${encodeURIComponent(q)}`, i: IB(SI.googletranslate) },
   News:         { c: 'News',      u: 'https://news.google.com/search?q=%s',                 i: IB(SI.googlenews) },
   Mojeek:       { c: 'News',      u: 'https://www.mojeek.com/search?q=%s',                   i: IB(SI.mojeek) },
   Maps:         { c: 'Maps',      u: 'https://www.google.com/maps/search/%s',               i: IB(SI.googlemaps) },
@@ -2439,7 +2460,7 @@ const searchIn = $('#searchIn');
 function doSearch() {
   const q = searchIn.value.trim(); if (!q) return;
   const eng = ENGINES[S.engine] || ENGINES.Google;      // an engine saved by an older version falls back
-  const url = /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q) && !q.includes(' ') ? 'https://' + q : /^https?:\/\//.test(q) ? q : eng.u.replace('%s', encodeURIComponent(q));
+  const url = /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(q) && !q.includes(' ') ? 'https://' + q : /^https?:\/\//.test(q) ? q : typeof eng.u === 'function' ? eng.u(q) : eng.u.replace('%s', encodeURIComponent(q));
   searchIn.value = ''; app.close(); send('open', { target: url });
 }
 searchIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } });
@@ -2462,7 +2483,7 @@ function renderZones() {
   $('#zones').innerHTML = S.zones.map((z, i) => { const p = zoneParts(z);
     return `<div class="zone"><span class="zt">${p.t}</span><span class="zn">${city(z)}<small>${p.sub}</small></span><button class="x" data-i="${i}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`; }).join('')
     || '<div class="empty">Add a city below</div>';
-  $('#zoneAdd').innerHTML = '<option value="">＋ Add a city…</option>' + ZONES.filter(z => !S.zones.includes(z)).map(z => `<option value="${z}">${city(z)}</option>`).join('');
+  $('#zoneAdd').innerHTML = '<option value="" data-icon="plus">Add a city…</option>' + ZONES.filter(z => !S.zones.includes(z)).map(z => `<option value="${z}">${city(z)}</option>`).join('');
 }
 $('#zones').onclick = e => { const i = e.target.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); } };
 $('#zoneAdd').onchange = e => { if (e.target.value) { S.zones.push(e.target.value); save(); renderZones(); } };
@@ -2566,7 +2587,7 @@ calcDraw();
 /* ---- timer ---- */
 let tTotal = 300, tLeft = 300, tRun = null;
 const fmtT = s => (s >= 3600 ? `${s / 3600 | 0}:` + String((s / 60 | 0) % 60).padStart(2, '0') : String(s / 60 | 0).padStart(2, '0')) + `:${String(s % 60).padStart(2, '0')}`;
-$('#timerPresets').innerHTML = [1, 5, 10, 15, 25, 45, 60].map(m => `<button class="btn" data-m="${m}">${m}m</button>`).join('');
+$('#timerPresets').innerHTML = [[5, '5m'], [10, '10m'], [15, '15m'], [30, '30m'], [60, '1hr']].map(([m, l]) => `<button class="btn" data-m="${m}">${l}</button>`).join('');
 $('#timerPresets').onclick = e => { const m = e.target.dataset.m; if (m) { clearInterval(tRun); tRun = null; tTotal = tLeft = m * 60; drawT(); } };
 const TIMER_MAX = 99 * 3600 + 59 * 60 + 59;
 function setTimer() {
@@ -2728,6 +2749,7 @@ const tog = (el, key, after) => { el.classList.toggle('on', !!S[key]); el.onclic
 if (OS !== 'windows') {
   $('#eyedrop').style.display = 'none';
   $('#startLbl').textContent = 'Open at login';
+  $('#tStartup').setAttribute('aria-label', 'Open at login');
 }
 tog($('#tStartup'), 'startup');
 tog($('#tMagnify'), 'magnify');
@@ -2799,9 +2821,14 @@ send('ready');
 $$('select').forEach(sel => {
   const box = document.createElement('div'), btn = document.createElement('button'), list = document.createElement('div');
   box.className = 'pick'; btn.className = 'field'; btn.type = 'button'; list.className = 'opts';
+  const aria = sel.getAttribute('aria-label'); if (aria) btn.setAttribute('aria-label', aria);
   if (sel.style.width) box.style.width = sel.style.width; else box.style.width = '100%', btn.style.maxWidth = 'none', btn.style.width = '100%';
   sel.before(box); box.append(btn, list, sel); sel.style.display = 'none';
-  const label = () => { btn.textContent = sel.selectedOptions[0]?.textContent || ''; };
+  const label = () => {
+    const o = sel.selectedOptions[0], ic = o?.dataset.icon;
+    btn.classList.toggle('ic', !!ic);
+    btn.innerHTML = ic ? I(LUC[ic]) + `<span>${esc(o.textContent)}</span>` : esc(o.textContent || '');
+  };
   btn.onclick = e => {
     e.stopPropagation();
     const open = !box.classList.contains('open');
