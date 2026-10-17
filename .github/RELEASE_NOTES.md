@@ -9,6 +9,10 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.20
+- **The settings folds actually close** — 1.4.19 could look shut but wasn't: closing **Panel** or **System** turned the rows invisible and left the space they took up behind, so the page kept a gap where the settings used to be. Both folds now close the way the search engine groups do
+- **The General page is a page again** — the same change had wrapped the System section, the version line and the Quit button *inside* the Panel section's box, which is why the rows sat oddly and the spacing came out wrong. Everything is back at page level
+
 ### New in 1.4.19
 - **Sections fold shut** — the snippet placeholders and the two Settings groups (**Panel**, **System**) now close like the search engine groups do, and each one remembers whether you left it open or shut
 - **The world clock got a proper Add page** — *Add* opens the picker as its own full panel with the search box in it, and the clock list behind it is just the clock: no search, no ✕. The **✕ Close** button works here now, so the picker is where your cities are added *and* removed
