@@ -9,6 +9,19 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.24
+- **The update check no longer flashes a console** — asking GitHub for the newest version started `curl` the way a windowed app does, which pops a black cmd window on Windows. It now runs with the window suppressed
+- **Dropdown lists are whole again** — the date formats and the other Settings pickers were being cut off part-way down the list, because they were drawn inside the page that scrolls. They now float above everything, flip up when there is no room below, and are capped to the space on screen. Every format in the list is reachable
+- **The QR code draws again** — two attempts to hand the whole thing over in one piece arrived short and drew a blank. The matrix is now handed over in pieces with its length announced first, and the panel draws only when it holds every character
+- **New tool: System info** — the operating system, processor, graphics, memory, computer name and uptime, read fresh each time you open it. Click any line to copy it, or *Copy all* for the lot
+- **New Keybinds tab** — every shortcut the panel actually has, in one place
+- **The eye dropper shows what you are pointing at** — while *pick from screen* is waiting for a click, a swatch of the colour under the pointer rides the panel edge with its hex code
+- **The calendar boxes start on today** — and the wheel or the arrow keys step them, wrapping at the ends, the same way the timer does. Switching between the two calendars refills them with today instead of blanking them
+- **The Add time zone page is shorter** — five suggestions instead of ten-plus, and the zones you already added sit two to a row
+- **The snippet list scrolls again** — with the placeholder list open it could not be scrolled at all
+- **`{{ip}}`** — your public address, asked for once when you use it. It sits just before `{{clipboard}}`; offline it keeps its name rather than copying something wrong
+- **Num Convert** — the three outputs are full width under their own foldable headers, and the Arabic one starts folded away
+
 ### New in 1.4.23
 - **Reset to default no longer corrupts your settings** — 1.4.22 reloaded the panel the instant it asked to save, which could beat the write and leave a half-written `settings.json` behind. Deleting `%APPDATA%\RightPanel` fixed it; it should never have needed that. The panel now waits for the native side to confirm the file is on disk, then reloads
 - **The panel opens on the edge again after a reset** — the reloaded page starts closed, but the native side still thought it was open and so ignored the hover. The page now says hello on every load and the two agree
