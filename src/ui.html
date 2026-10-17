@@ -797,7 +797,8 @@ const W = {
   lock: { name: 'Lock PC', icon: I(LUC['lock']), kind: 'action', run: () => { app.close(); send('lock'); } },
   taskmgr: { name: { windows: 'Task Mgr', macos: 'Activity', linux: 'Monitor' }[OS], icon: I(LUC['activity']), kind: 'action', run: () => { app.close(); send('open', { target: 'taskmgr' }); } },
   settings:  { name: 'Settings', kind: 'panel', fixed: true },
-  winset: { name: 'Settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
+  // not "Settings": two tools with that name in one list is a trap, and this one hands over to Windows
+  winset: { name: 'Win settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
 };
 const DEF_DOCK = ['emoji', 'clip', 'color', 'shot', 'note', 'more'];
 const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
@@ -2600,17 +2601,18 @@ addEventListener('click', e => {
   S.folds = [...folds]; save(); drawFolds();
 });
 /* placeholders are filled in when the snippet is copied, so the saved one stays the template.
-   The list shows the same expansion, so what you read is what you get. */
+   The list shows the same expansion, so what you read is what you get. The order is the reading
+   order — English first, then its Persian twin right after it, then the two years. */
 const SNIP_PH = {
   date: () => GEN.Date(),
   jalali_date: () => GEN['Jalali date'](),
   time: () => GEN.Time(),
   time_12h: () => GEN['Time (12h)'](),
   weekday: () => new Date().toLocaleDateString(undefined, { weekday: 'long' }),
-  month: () => GMONTHS[new Date().getMonth()],
-  jalali_month: () => JMONTHS[jalaliToday().m - 1],
   weekday_fa: () => FA_WEEK[new Date().getDay()],
+  month: () => GMONTHS[new Date().getMonth()],
   month_fa: () => FA_MONTH[new Date().getMonth()],
+  jalali_month: () => JMONTHS[jalaliToday().m - 1],
   jalali_month_fa: () => FA_JMONTH[jalaliToday().m - 1],
   year: () => String(new Date().getFullYear()),
   jalali_year: () => String(jalaliToday().y),
