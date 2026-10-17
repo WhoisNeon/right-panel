@@ -2829,7 +2829,9 @@ function drawCal() {
     const gd = toGregorian(t.y, t.m, jd);
     const isToday = jd === today.d && t.m === today.m && t.y === today.y;
     const isSel = calSel && calSel.y === t.y && calSel.m === t.m && calSel.d === jd;
-    cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${faNum(greg ? gd.d : jd)}</b><small>${faNum(greg ? jd : gd.d)}</small></button>`;
+    /* only the Jalali number is Persian: in the Gregorian grid that is the small one under the day,
+   and in the Jalali grid it is the big one */
+cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${greg ? gd.d : faNum(jd)}</b><small>${greg ? faNum(jd) : gd.d}</small></button>`;
   }
   $('#calGrid').innerHTML = cells;
   const cur = greg ? { y: first.y, m: first.m } : { y: t.y, m: t.m };
@@ -3318,9 +3320,11 @@ app.quitForUpdate = () => { toast('Installing update…'); setTimeout(() => send
 if (S.updates !== false && Date.now() - (S.lastCheck || 0) > 864e5) setTimeout(() => checkUpdates(false), 8000);
 $('#quitBtn').onclick = () => send('quit');
 /* Reset throws away the dock, the themes, the snippets and the zones, so it takes two taps: a
-   native confirm() is a separate window on Linux and steals focus off the panel. The panel is
-   reloaded afterwards so every control is painted from the defaults it just saved. */
-let resetArmed = 0;
+   native confirm() is a separate window on Linux and steals focus off the panel. The reload is
+   what repaints every control from the defaults — and it waits for the native side to say the
+   settings are on disk, because reloading early is what used to leave a half-written file. */
+let resetArmed = 0, resetWanted = false;
+app.saved = () => { if (resetWanted) { resetWanted = false; location.reload(); } };
 $('#resetBtn').onclick = () => {
   const b = $('#resetBtn'), label = b.querySelector('span');
   if (!resetArmed) {
@@ -3333,8 +3337,8 @@ $('#resetBtn').onclick = () => {
   resetArmed = 0;
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, S_DEF);
+  resetWanted = true;
   save();
-  location.reload();
 };
 
 applyTheme();
@@ -3365,8 +3369,9 @@ $$('select').forEach(sel => {
     list.innerHTML = [...sel.options].map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${esc(o.textContent)}</button>`).join('');
     box.classList.add('open');
     /* The panel is a strip at the screen edge, not the window: measuring the room against the
-       window is what sent these lists out through the bottom of the panel. */
-    const host = btn.closest('.panel') || document.body, hb = host.getBoundingClientRect();
+       window is what sent these lists out through the bottom. And the box that actually clips a
+       list is the scrolling page it sits in, not the panel around it. */
+    const host = btn.closest('.spage, .panel') || document.body, hb = host.getBoundingClientRect();
     const r = btn.getBoundingClientRect(), need = Math.min(list.scrollHeight, 220) + 12;
     const below = hb.bottom - r.bottom, above = r.top - hb.top;
     const up = below < need && above > below;

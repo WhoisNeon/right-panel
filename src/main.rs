@@ -832,6 +832,15 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                             t.set_open_mod(mod_code(&st["openMod"]));   // the tray's ticks follow the panel's choice
                         }
                         let _ = fs::write(&settings_path, st.to_string());
+                        // the panel asks for this before it reloads itself (Reset to default):
+                        // without the ack the reload can beat the write and leave half a file
+                        let _ = webview.evaluate_script("app.saved()");
+                    }
+                    // the page has just loaded, or loaded again. It starts closed, so the native
+                    // side has to agree: left open, the edge hover is ignored and the panel looks dead.
+                    "ready" => {
+                        set_passthrough(&window, true);
+                        OPEN.store(false, Ordering::Relaxed);
                     }
                     "screenshot" => sys::screenshot(),
                     "pickColor" => {
