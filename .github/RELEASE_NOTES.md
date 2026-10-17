@@ -9,6 +9,17 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.19
+- **Sections fold shut** — the snippet placeholders and the two Settings groups (**Panel**, **System**) now close like the search engine groups do, and each one remembers whether you left it open or shut
+- **The world clock got a proper Add page** — *Add* opens the picker as its own full panel with the search box in it, and the clock list behind it is just the clock: no search, no ✕. The **✕ Close** button works here now, so the picker is where your cities are added *and* removed
+- **The QR preview is the same picture you copy** — it used to be redrawn in the panel from the module matrix, and that matrix never arrived intact, so the preview was blank while the clipboard was fine. The preview is now the exact bitmap that lands on your clipboard, drawn as an image, and the two can no longer disagree
+- **The calendar boxes hold what a date can hold** — the year takes four digits, month and day two, `13` becomes `12`, and the day stops at 29, 30 or 31 depending on the month you typed next to it (February included)
+- **The calendar is written in Persian digits** — the day numbers in the grid are now ۰۱۲۳; the two cards at the bottom keep the digits you chose in Settings
+- **Performance shows more** — RAM in GB under its gauge, plus how long the machine has been up. The hint reads *sampled once a second* now that the label above it says CPU and RAM
+- **Six date formats, in one order** — YYYY/MM/DD, YYYY-MM-DD, MM/DD/YYYY, MM-DD-YYYY, DD/MM/YYYY, DD-MM-YYYY
+- **Five more snippet placeholders** — `{{weekday_fa}}`, `{{month_fa}}`, `{{jalali_month_fa}}`, `{{year}}` and `{{jalali_year}}` (you wrote `jalili__month_fa`; it is one l and no gap)
+- Smaller things — the weekday row over the calendar is set in Arad, **UUID** moved above the Lorem lines in Generate, the icons on the header links are a size smaller, and today in the calendar only takes the accent colour when it is not the selected day
+
 ### New in 1.4.18
 - **The world clock reads in UTC offsets** — each city now shows `UTC+03:30` or `UTC-04:00` instead of "Today, +3h", read per moment so daylight saving is already right
 - **Ten time zones without scrolling** (was six), each row now **city · clock**, and the add picker has room to breathe
