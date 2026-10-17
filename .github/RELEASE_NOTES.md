@@ -9,6 +9,12 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.23
+- **Reset to default no longer corrupts your settings** — 1.4.22 reloaded the panel the instant it asked to save, which could beat the write and leave a half-written `settings.json` behind. Deleting `%APPDATA%\RightPanel` fixed it; it should never have needed that. The panel now waits for the native side to confirm the file is on disk, then reloads
+- **The panel opens on the edge again after a reset** — the reloaded page starts closed, but the native side still thought it was open and so ignored the hover. The page now says hello on every load and the two agree
+- **Only the Jalali numbers are Persian in the calendar** — in the Gregorian month the big day numbers are English and the Jalali day underneath is Farsi; in the Jalali month it is the other way round
+- **Dropdown lists measure the box that clips them** — on a short panel a list could be cut off part-way instead of simply opening downward
+
 ### New in 1.4.22
 - **The dropdowns stay inside the panel** — a Settings list near the foot of the panel used to open straight out through the bottom edge, because it measured the room against the screen rather than the panel. Each list now flips up or caps its height to the room it actually has
 - **The time zone picker got shorter** — the zones you already added are just the city name and a ✕, so a list of ten no longer fills the Add page. The clocks themselves are still on the World clock page, one click back
