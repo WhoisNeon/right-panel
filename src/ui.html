@@ -258,7 +258,10 @@
   .engsec { display: flex; flex-direction: column; gap: 5px; }
   .engbody { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .28s ease, opacity .28s ease; }
   .engsec.shut .engbody { grid-template-rows: 0fr; opacity: 0; }
-  .engbody > .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; overflow: hidden; min-height: 0; }
+  /* a grid row keeps its content height unless it is told it may shrink, so every fold child
+     needs min-height 0 — without it a shut fold turns transparent and leaves its hole behind */
+  .engbody > * { min-height: 0; overflow: hidden; }
+  .engbody > .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
   /* system monitor: one sparkline per counter, drawn as an inline SVG path */
   .meters { display: grid; gap: 8px; }
   .meter-row { background: var(--soft); border-radius: 12px; padding: 8px 10px; }
@@ -627,7 +630,10 @@
       </div>
     </div>
     <div class="spage" data-p="general">
-      <div class="engsec" data-g="genPanel"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Panel</span></button><div class="engbody">
+      <div class="engsec" data-g="genPanel">
+        <button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Panel</span></button>
+        <div class="engbody">
+          <div class="engrows">
       <div class="set"><span>Panel edge<small class="hint">Which screen edge the tab sits on</small></span><select class="field" id="edgeSel" aria-label="Panel edge" style="width:auto"><option value="right">Right</option><option value="left">Left</option></select></div>
       <div class="set" id="monRow"><span>Monitor<small class="hint">Which display the panel opens on</small></span><select class="field" id="monSel" aria-label="Monitor" style="width:auto"></select></div>
       <div class="set" id="openModRow"><span>Hold to open<small class="hint">Hold this key at the screen edge to open the panel</small></span><select class="field" id="openModSel" aria-label="Hold to open the panel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
@@ -635,11 +641,19 @@
       <div class="set"><span>Gregorian date<small class="hint">How Gregorian dates are written, everywhere</small></span><select class="field" id="dateFmtG" aria-label="Gregorian date format" style="width:auto"></select></div>
       <div class="set"><span>Jalali date<small class="hint">How Jalali dates are written, everywhere</small></span><select class="field" id="dateFmtJ" aria-label="Jalali date format" style="width:auto"></select></div>
       <div class="set"><span>Magnify dock icons<small class="hint">Icons grow as the pointer passes over them</small></span><button class="toggle" id="tMagnify" aria-label="Magnify dock icons"></button></div>
-      </div><div class="engsec" data-g="genSystem"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>System</span></button><div class="engbody">
+          </div>
+        </div>
+      </div>
+      <div class="engsec" data-g="genSystem">
+        <button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>System</span></button>
+        <div class="engbody">
+          <div class="engrows">
       <div class="set"><span><span id="startLbl">Start with Windows</span><small class="hint">Launch Right Panel when you sign in</small></span><button class="toggle" id="tStartup" aria-label="Start with Windows"></button></div>
       <div class="set" id="ctxRow"><span>Add to right-click menu<small class="hint">Files &amp; folders → “Add to Right Panel”</small></span><button class="toggle" id="tContext" aria-label="Add to right-click menu"></button></div>
       <div class="set"><span>Check for updates<small class="hint">Ask GitHub once a day for a newer version</small></span><button class="toggle" id="tUpdates" aria-label="Check for updates"></button></div>
-      </div></div>
+          </div>
+        </div>
+      </div>
       <div class="item plain" id="aboutRow">Right Panel <b id="verNow"></b><small id="updLine">Click to check for updates</small></div>
       <button class="btn primary" id="updBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></svg><span>Download &amp; install update</span></button>
       <button class="btn" id="quitBtn"><svg viewBox="0 0 24 24"><path d="M12 2v10" /> <path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></svg>Quit Right Panel</button>
