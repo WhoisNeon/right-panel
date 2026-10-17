@@ -9,6 +9,10 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.21
+- **One "Settings" again** — the tool that hands over to Windows is back to being called **Win settings**, so the list no longer has two entries with the same name and only one of them opens this panel
+- **The snippet placeholders are in reading order** — `date`, `jalali_date`, `time`, `time_12h`, `weekday`, `weekday_fa`, `month`, `month_fa`, `jalali_month`, `jalali_month_fa`, `year`, `jalali_year`, and `clipboard` last. Each English one is followed by its Persian twin
+
 ### New in 1.4.20
 - **The settings folds actually close** — 1.4.19 could look shut but wasn't: closing **Panel** or **System** turned the rows invisible and left the space they took up behind, so the page kept a gap where the settings used to be. Both folds now close the way the search engine groups do
 - **The General page is a page again** — the same change had wrapped the System section, the version line and the Quit button *inside* the Panel section's box, which is why the rows sat oddly and the spacing came out wrong. Everything is back at page level
