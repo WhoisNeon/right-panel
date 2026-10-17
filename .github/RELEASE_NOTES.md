@@ -9,6 +9,11 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.22
+- **The dropdowns stay inside the panel** — a Settings list near the foot of the panel used to open straight out through the bottom edge, because it measured the room against the screen rather than the panel. Each list now flips up or caps its height to the room it actually has
+- **The time zone picker got shorter** — the zones you already added are just the city name and a ✕, so a list of ten no longer fills the Add page. The clocks themselves are still on the World clock page, one click back
+- **Reset to default** — the last button in Settings → General puts everything back: your dock and More layout, custom themes, snippets, time zones and preferences. It takes two taps, because it throws all of that away, and it is not a native dialog (those are a second window on Linux)
+
 ### New in 1.4.21
 - **One "Settings" again** — the tool that hands over to Windows is back to being called **Win settings**, so the list no longer has two entries with the same name and only one of them opens this panel
 - **The snippet placeholders are in reading order** — `date`, `jalali_date`, `time`, `time_12h`, `weekday`, `weekday_fa`, `month`, `month_fa`, `jalali_month`, `jalali_month_fa`, `year`, `jalali_year`, and `clipboard` last. Each English one is followed by its Persian twin
