@@ -106,6 +106,7 @@
   .btn svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .btn:hover { background: var(--soft2); }
   .btn.primary { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
+  .btn.armed { background: #ff453a; color: #fff; font-weight: 600; }
   .btn.iconbtn { flex: none; display: grid; place-items: center; padding: 9px 11px; }
   .btn.iconbtn svg { width: 16px; height: 16px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .row { display: flex; gap: 6px; }
@@ -228,10 +229,10 @@
   .zone .zt { font-size: 18px; font-weight: 300; font-variant-numeric: tabular-nums; text-align: end; flex: none; }
   .zone .zn { flex: 1; min-width: 0; font-size: 13px; line-height: 1.2; }
   .zone .zn small { display: block; color: var(--muted); font-size: 10px; }
-  /* the picker needs its own gap so the search box is not flush against the list */
-  #zonePick { display: flex; flex-direction: column; gap: 10px; }
-  .zadded { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px 2px 0; }
-  .zadded span { font-size: 10px; color: var(--muted); background: var(--soft); border-radius: 7px; padding: 3px 7px; }
+  /* the added zones sit at the top of the picker as a short list: name and cross, nothing else */
+  .zadded { display: flex; flex-direction: column; gap: 4px; }
+  .zone.slim { padding: 3px 4px 3px 10px; gap: 6px; }
+  .zone.slim .zn { font-size: 12px; }
   .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
   .zone .x svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .zone .x:hover { background: var(--soft2); color: var(--ink); }
@@ -656,6 +657,7 @@
       </div>
       <div class="item plain" id="aboutRow">Right Panel <b id="verNow"></b><small id="updLine">Click to check for updates</small></div>
       <button class="btn primary" id="updBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></svg><span>Download &amp; install update</span></button>
+      <button class="btn" id="resetBtn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" /><path d="M3 3v5h5" /></svg><span>Reset to default</span></button>
       <button class="btn" id="quitBtn"><svg viewBox="0 0 24 24"><path d="M12 2v10" /> <path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></svg>Quit Right Panel</button>
     </div>
   </div>
@@ -682,8 +684,9 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const send = (t, o = {}) => window.ipc.postMessage(JSON.stringify({ t, ...o }));
 const init = window.__init || {};
 const OS = init.platform || 'windows';   // windows | macos | linux
-const S = Object.assign({ theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
-  edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] }, init.settings || {});
+const S_DEF = { theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
+  edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] };
+const S = Object.assign({}, S_DEF, init.settings || {});
 const save = () => send('settings', { settings: S });
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -2940,8 +2943,10 @@ function renderZones() {
    where they are managed now. */
 function renderZoneList() {
   const q = fold($('#zoneQ').value).replace(/[\s_]+/g, '');
-  const have = S.zones.map((z, i) => { const p = zoneParts(z);
-    return `<div class="zone"><span class="zn">${esc(city(z))}<small>${p.sub}</small></span><span class="zt">${p.t}</span><button class="x" data-z="${esc(z)}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`; }).join('');
+  /* the zones already on the clock are only here to be taken off, so they stay a name and a
+     cross — the clock itself is on the other page, one click back */
+  const have = S.zones.map(z =>
+    `<div class="zone slim"><span class="zn">${esc(city(z))}</span><button class="x" data-z="${esc(z)}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`).join('');
   const hits = (q ? ALL_ZONES.filter(z => fold(z).replace(/[\s_]+/g, '').includes(q)) : ALL_ZONES)
     .filter(z => !S.zones.includes(z)).slice(0, q ? 60 : 24);
   $('#zoneList').innerHTML = (have ? `<div class="zadded">${have}</div>` : '')
@@ -3312,6 +3317,25 @@ app.quitForUpdate = () => { toast('Installing update…'); setTimeout(() => send
 // quiet daily check in the background
 if (S.updates !== false && Date.now() - (S.lastCheck || 0) > 864e5) setTimeout(() => checkUpdates(false), 8000);
 $('#quitBtn').onclick = () => send('quit');
+/* Reset throws away the dock, the themes, the snippets and the zones, so it takes two taps: a
+   native confirm() is a separate window on Linux and steals focus off the panel. The panel is
+   reloaded afterwards so every control is painted from the defaults it just saved. */
+let resetArmed = 0;
+$('#resetBtn').onclick = () => {
+  const b = $('#resetBtn'), label = b.querySelector('span');
+  if (!resetArmed) {
+    resetArmed = 1;
+    label.textContent = 'Tap again to erase everything';
+    b.classList.add('armed');
+    setTimeout(() => { resetArmed = 0; label.textContent = 'Reset to default'; b.classList.remove('armed'); }, 4000);
+    return;
+  }
+  resetArmed = 0;
+  for (const k of Object.keys(S)) delete S[k];
+  Object.assign(S, S_DEF);
+  save();
+  location.reload();
+};
 
 applyTheme();
 renderAll();
@@ -3340,7 +3364,13 @@ $$('select').forEach(sel => {
     if (!open) return;
     list.innerHTML = [...sel.options].map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${esc(o.textContent)}</button>`).join('');
     box.classList.add('open');
-    const r = btn.getBoundingClientRect(), up = innerHeight - r.bottom < Math.min(list.scrollHeight, 220) + 12 && r.top > innerHeight - r.bottom;
+    /* The panel is a strip at the screen edge, not the window: measuring the room against the
+       window is what sent these lists out through the bottom of the panel. */
+    const host = btn.closest('.panel') || document.body, hb = host.getBoundingClientRect();
+    const r = btn.getBoundingClientRect(), need = Math.min(list.scrollHeight, 220) + 12;
+    const below = hb.bottom - r.bottom, above = r.top - hb.top;
+    const up = below < need && above > below;
+    list.style.maxHeight = Math.max(90, (up ? above : below) - 10) + 'px';
     list.style.top = up ? 'auto' : ''; list.style.bottom = up ? 'calc(100% + 4px)' : '';
   };
   list.onclick = e => {
