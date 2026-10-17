@@ -259,7 +259,7 @@ pub fn beep() {
    tested without a Windows box — those meters wait until there is a way to prove them.
    windows-sys 0.61 does not export GetSystemTimes, so that one is declared here: a FILETIME is two
    u32s, so the 100ns ticks read straight out of three u64s. */
-use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+use windows_sys::Win32::System::SystemInformation::{GetTickCount64, GlobalMemoryStatusEx, MEMORYSTATUSEX};
 
 #[link(name = "kernel32")]
 unsafe extern "system" {
@@ -297,12 +297,26 @@ impl Meters {
             f64::NAN
         };
         let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
-        let ram = if unsafe { GlobalMemoryStatusEx(&mut mem) } != 0 {
-            (mem.ullTotalPhys - mem.ullAvailPhys) as f64 / mem.ullTotalPhys.max(1) as f64 * 100.0
+        let (ram, used, total) = if unsafe { GlobalMemoryStatusEx(&mut mem) } != 0 {
+            (
+                (mem.ullTotalPhys - mem.ullAvailPhys) as f64 / mem.ullTotalPhys.max(1) as f64 * 100.0,
+                (mem.ullTotalPhys - mem.ullAvailPhys) / 1024 / 1024 / 1024,
+                mem.ullTotalPhys / 1024 / 1024 / 1024,
+            )
         } else {
-            0.0
+            (0.0, 0, 0)
         };
-        serde_json::json!({ "cpu": if cpu.is_nan() { 0.0 } else { cpu }, "ram": ram })
+        // how long the machine has been up, which is a free extra reading from the same call set
+        let secs = unsafe { GetTickCount64() } / 1000;
+        serde_json::json!({
+            "cpu": if cpu.is_nan() { 0.0 } else { cpu },
+            "ram": ram,
+            "used": used,
+            "total": total,
+            "upDays": secs / 86400,
+            "upHours": secs / 3600 % 24,
+            "upMins": secs / 60 % 60,
+        })
     }
 }
 

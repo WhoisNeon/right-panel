@@ -874,14 +874,16 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         let _ = METERS.lock().ok().and_then(|mut g| g.take());
                     }
                     "qr" => {
+                        // the preview is the same bitmap the clipboard gets, so the two can never
+                        // disagree: encode once, draw once, and hand the panel a data: image
                         let call = match util::qr(&s("text")) {
-                            // one string of 0/1 rather than a bool array: it halves the payload and
-                            // there is no way for the panel to read it as a list of something else
                             Some((w, bits)) => {
-                                let rows: String = bits.iter().map(|b| if *b { '1' } else { '0' }).collect();
-                                format!("app.qr{}", json!({ "w": w, "rows": rows, "err": false }))
+                                let side = (w as u32 + 8) * 8;
+                                let (_, _, px) = util::qr_bitmap(w, &bits, 8, 4);
+                                let uri = format!("data:image/png;base64,{}", util::base64(&util::png(side, side, &px)));
+                                format!("app.qr{}", json!({ "w": w, "png": uri, "err": false }))
                             }
-                            None => format!("app.qr{}", json!({ "w": 0, "rows": "", "err": true })),
+                            None => format!("app.qr{}", json!({ "w": 0, "png": "", "err": true })),
                         };
                         let _ = webview.evaluate_script(&call);
                     }

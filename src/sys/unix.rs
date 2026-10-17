@@ -167,7 +167,7 @@ impl Meters {
     }
 
     pub fn sample(&mut self) -> serde_json::Value {
-        serde_json::json!({ "cpu": 0.0, "ram": 0.0 })
+        serde_json::json!({ "cpu": 0.0, "ram": 0.0, "used": 0, "total": 0, "upDays": 0, "upHours": 0, "upMins": 0 })
     }
 }
 
