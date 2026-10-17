@@ -147,6 +147,8 @@
   .item .acts span:hover { background: var(--soft2); color: var(--ink); }
   .item.pinned { box-shadow: inset 3px 0 0 var(--inv); }
   .item.plain { padding-right: 12px; }
+  .item.snipe { padding: 6px; }
+  .item.snipe .field { padding: 6px 9px; font-size: 12px; }
   .gen { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .ttout { display: flex; gap: 6px; }
   .ttout input { flex: 1; }
@@ -223,9 +225,13 @@
   .meter i { display: block; height: 100%; width: 0; background: var(--muted); transition: width .15s, background .15s; }
   #pwSets { gap: 5px; }
   .zone { display: flex; align-items: center; gap: 10px; background: var(--soft); border-radius: 12px; padding: 8px 10px 8px 12px; }
-  .zone .zt { font-size: 20px; font-weight: 300; font-variant-numeric: tabular-nums; min-width: 96px; }
-  .zone .zn { flex: 1; font-size: 13px; line-height: 1.2; }
+  .zone .zt { font-size: 18px; font-weight: 300; font-variant-numeric: tabular-nums; text-align: end; flex: none; }
+  .zone .zn { flex: 1; min-width: 0; font-size: 13px; line-height: 1.2; }
   .zone .zn small { display: block; color: var(--muted); font-size: 10px; }
+  /* the picker needs its own gap so the search box is not flush against the list */
+  #zonePick { display: flex; flex-direction: column; gap: 10px; }
+  .zadded { display: flex; flex-wrap: wrap; gap: 5px; padding: 2px 2px 0; }
+  .zadded span { font-size: 10px; color: var(--muted); background: var(--soft); border-radius: 7px; padding: 3px 7px; }
   .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
   .zone .x svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .zone .x:hover { background: var(--soft2); color: var(--ink); }
@@ -279,8 +285,11 @@
   .calday.on { background: var(--inv); color: var(--inv-ink); }
   .calday.on small { color: var(--inv-ink); opacity: .75; }
   .calout { display: flex; gap: 8px; }
-  .calout div { flex: 1; background: var(--soft); border-radius: 12px; padding: 8px 10px; font-size: 12px; }
+  .calout .card { flex: 1; background: var(--soft); border: 0; border-radius: 12px; padding: 8px 10px; font: inherit; font-size: 12px; color: var(--ink); text-align: start; cursor: pointer; }
+  .calout .card:hover { background: var(--soft2); }
   .calout small { display: block; color: var(--muted); font-size: 10px; }
+  .calin { display: flex; gap: 6px; }
+  .calin .field { text-align: center; }
   .engh { display: flex; align-items: center; gap: 3px; margin: 0; padding: 0; border: 0; background: none; cursor: pointer;
     color: var(--muted); font-family: inherit; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; }
   .engh:hover { color: var(--ink); }
@@ -553,7 +562,7 @@
   <div class="panel" data-name="snippets">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Snippets</h4><button class="link" id="snipClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button></div>
     <input class="field" dir="auto" id="snipIn" aria-label="New snippet" placeholder="Type a snippet and press Enter…">
-    <div class="chips" id="snipPh"><button class="chip" data-ph="date">{{date}}</button><button class="chip" data-ph="jalali_date">{{jalali_date}}</button><button class="chip" data-ph="time">{{time}}</button><button class="chip" data-ph="clipboard">{{clipboard}}</button></div>
+    <div class="chips" id="snipPh"><button class="chip" data-ph="date">{{date}}</button><button class="chip" data-ph="jalali_date">{{jalali_date}}</button><button class="chip" data-ph="time">{{time}}</button><button class="chip" data-ph="time_12h">{{time_12h}}</button><button class="chip" data-ph="weekday">{{weekday}}</button><button class="chip" data-ph="month">{{month}}</button><button class="chip" data-ph="jalali_month">{{jalali_month}}</button><button class="chip" data-ph="clipboard">{{clipboard}}</button></div>
     <div class="list scroll" id="snipList"></div>
   </div>
 
@@ -578,16 +587,16 @@
 
   <div class="panel" data-name="cal">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Calendar</h4><button class="link" id="calToday">Today</button></div>
-    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
+    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle" title="Switch between Gregorian and Jalali">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
     <div class="caldow" id="calDow"></div>
     <div class="calgrid" id="calGrid"></div>
-    <div class="calout"><div><small id="calGLab">Jalali</small><span id="calGOut">—</span></div><div><small>Gregorian</small><span id="calJOut">—</span></div></div>
-    <input class="field" dir="auto" id="calIn" aria-label="Convert a date" placeholder="Type a date — 2026-10-16 or 1405-07-24">
+    <div class="calout"><button class="card" id="calJCard"><small>Jalali</small><span id="calGOut">—</span></button><button class="card" id="calGCard"><small>Gregorian</small><span id="calJOut">—</span></button></div>
+    <div class="calin"><input class="field" id="calY" inputmode="numeric" aria-label="Year" placeholder="Year"><input class="field" id="calM" inputmode="numeric" aria-label="Month" placeholder="Month"><input class="field" id="calD" inputmode="numeric" aria-label="Day" placeholder="Day"></div>
   </div>
 
   <div class="panel" data-name="clock">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>World clock</h4><button class="link" id="zoneFmt">24h</button><button class="link" id="zoneAdd"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>Add</button></div>
-    <div class="list scroll" id="zones"></div>
+    <div class="list scroll" id="zones" style="max-height:none"></div>
     <div id="zonePick" hidden>
       <input class="field" dir="auto" id="zoneQ" aria-label="Search time zones" placeholder="City or Area/City, e.g. Asia/Tehran">
       <div class="list scroll" id="zoneList"></div>
@@ -620,6 +629,8 @@
       <div class="set" id="monRow"><span>Monitor<small class="hint">Which display the panel opens on</small></span><select class="field" id="monSel" aria-label="Monitor" style="width:auto"></select></div>
       <div class="set" id="openModRow"><span>Hold to open<small class="hint">Hold this key at the screen edge to open the panel</small></span><select class="field" id="openModSel" aria-label="Hold to open the panel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
       <div class="set"><span>Animation speed<small class="hint">How fast the panel and its menus move</small></span><select class="field" id="speedSel" aria-label="Animation speed" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
+      <div class="set"><span>Gregorian date<small class="hint">How Gregorian dates are written, everywhere</small></span><select class="field" id="dateFmtG" aria-label="Gregorian date format" style="width:auto"></select></div>
+      <div class="set"><span>Jalali date<small class="hint">How Jalali dates are written, everywhere</small></span><select class="field" id="dateFmtJ" aria-label="Jalali date format" style="width:auto"></select></div>
       <div class="set"><span>Magnify dock icons<small class="hint">Icons grow as the pointer passes over them</small></span><button class="toggle" id="tMagnify" aria-label="Magnify dock icons"></button></div>
       <div class="wsec"><span>System</span></div>
       <div class="set"><span><span id="startLbl">Start with Windows</span><small class="hint">Launch Right Panel when you sign in</small></span><button class="toggle" id="tStartup" aria-label="Start with Windows"></button></div>
@@ -729,6 +740,7 @@ const LUC = {
   moon: "<path d=\"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401\"/>",
   wifi: "<path d=\"M12 20h.01\" /> <path d=\"M2 8.82a15 15 0 0 1 20 0\" /> <path d=\"M5 12.859a10 10 0 0 1 14 0\" /> <path d=\"M8.5 16.429a5 5 0 0 1 7 0\" />",
   bluetooth: "<path d=\"m7 7 10 10-5 5V2l5 5L7 17\" />",
+  gauge: "<path d=\"m12 14 4-4\" /> <path d=\"M3.34 19a10 10 0 1 1 17.32 0\" />",
   calendar: "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" />",
   'qr-code': "<rect width=\"5\" height=\"5\" x=\"3\" y=\"3\" rx=\"1\" /> <rect width=\"5\" height=\"5\" x=\"16\" y=\"3\" rx=\"1\" /> <rect width=\"5\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\" /> <path d=\"M21 16h-3a2 2 0 0 0-2 2v3\" /> <path d=\"M21 21v.01\" /> <path d=\"M12 7v3a2 2 0 0 1-2 2H7\" /> <path d=\"M3 12h.01\" /> <path d=\"M12 3h.01\" /> <path d=\"M12 16v.01\" /> <path d=\"M16 12h1\" /> <path d=\"M21 12v.01\" /> <path d=\"M12 21v-1\" />",
 };
@@ -759,7 +771,7 @@ const W = {
   clock: { name: 'World clock', icon: I(LUC['globe']), kind: 'panel' },
   cal: { name: 'Calendar', icon: I(LUC['calendar']), kind: 'panel' },
   qr: { name: 'QR code', icon: I(LUC['qr-code']), kind: 'panel' },
-  mon: { os: ['windows'], name: 'System monitor', icon: I(LUC['activity']), kind: 'panel' },
+  mon: { os: ['windows'], name: 'Performance', icon: I(LUC['gauge']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
   desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['monitor']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
@@ -767,7 +779,7 @@ const W = {
   lock: { name: 'Lock PC', icon: I(LUC['lock']), kind: 'action', run: () => { app.close(); send('lock'); } },
   taskmgr: { name: { windows: 'Task Mgr', macos: 'Activity', linux: 'Monitor' }[OS], icon: I(LUC['activity']), kind: 'action', run: () => { app.close(); send('open', { target: 'taskmgr' }); } },
   settings:  { name: 'Settings', kind: 'panel', fixed: true },
-  winset: { name: OS === 'windows' ? 'Win Settings' : 'Settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
+  winset: { name: 'Settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
 };
 const DEF_DOCK = ['emoji', 'clip', 'color', 'shot', 'note', 'more'];
 const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
@@ -1033,11 +1045,13 @@ function markActive() {
   const act = panel && sub ? 'more' : panel;
   $$('#tabUi .tool').forEach(t => t.classList.toggle('active', !!act && t.dataset.w === act));
 }
+let lastPanel = null, switchedAt = -1e9, hoverOpened = false;
 function setPanel(name, fromMore = false) {
   if (name !== panel) { flyTop = null; flyUi.style.maxHeight = ''; }   // a new panel re-anchors; a tab switch inside one does not
   if (name && !panel) { fy.v = anchorY; fy.vel = 0; grow.v = 0; grow.vel = 0; }
   else if (name && panel && name !== panel) grow.vel -= 3;       // little squish when switching
   panel = name; sub = !!name && fromMore;
+  if (name !== lastPanel) lastPanel = name, switchedAt = performance.now();
   flyUi.classList.toggle('sub', sub);
   if (name) panels.forEach(p => p.classList.toggle('on', p.dataset.name === name));   // keep old content while it shrinks away
   markActive();
@@ -1052,7 +1066,7 @@ function setPanel(name, fromMore = false) {
   if (name === 'mon') { send('metersStart'); METERS.forEach(m => hist[m.k].length = 0); drawMeters(); }
   else send('metersStop');
   if (name === 'qr') setTimeout(() => $('#qrIn').focus(), 60);
-  if (name === 'cal') setTimeout(() => $('#calIn').focus(), 60);
+  if (name === 'cal') setTimeout(() => $('#calY').focus({ preventScroll: true }), 60);
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
   if (name === 'settings') { renderWidgets(); moveTpill(); }   // the pill can only be measured once the panel is visible
@@ -1076,7 +1090,12 @@ tabUi.addEventListener('click', e => {
   if (w.kind === 'app') { setTimeout(() => { app.close(); send('launch', { path: w.app.path }); }, 160); return; }
   if (w.kind === 'action') { w.run(); return; }
   anchorY = anchorOf(t);
-  setPanel(panel === id && !sub ? null : id);
+  // the pointer arriving on a tool opens it, so the click that follows must not read as "toggle it
+  // shut" — that made More look like it refused to open. A click with nothing hovered first is a
+  // real toggle, so double-clicking a tool still shuts it.
+  const keep = hoverOpened;
+  hoverOpened = false;
+  setPanel(keep ? id : panel === id && !sub ? null : id);
 });
 tabUi.addEventListener('mouseover', e => {
   const t = e.target.closest('.tool'); if (!t) return;
@@ -1085,7 +1104,10 @@ tabUi.addEventListener('mouseover', e => {
   // a drop target, so a tool can be dragged out of the dock and into More
   if (dragging) { if (id === 'more' && panel !== 'more') { anchorY = anchorOf(t); setPanel('more'); } return; }
   if (!panel) return;
-  if (info(id)?.kind === 'panel' && (id !== panel || sub) && !(id === 'more' && sub)) { anchorY = anchorOf(t); setPanel(id); }
+  if (info(id)?.kind === 'panel' && (id !== panel || sub) && !(id === 'more' && sub)) {
+    anchorY = anchorOf(t); setPanel(id);
+    hoverOpened = true;   // the pointer, not a click, is what opened this one
+  }
 });
 $('#tiles').addEventListener('click', e => {
   const t = e.target.closest('.tile'); if (!t || dragMoved) return;
@@ -2489,19 +2511,28 @@ const jalaliLeap = jy => jalCal(jy).leap === 0;            // the 12th month is 
 const jalaliMonthLen = (jy, jm) => jm <= 6 ? 31 : jm <= 11 ? 30 : jalaliLeap(jy) ? 30 : 29;
 const jalaliToday = () => { const d = new Date(); return toJalali(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
 const jalaliText = j => `${j.y}-${pad(j.m)}-${pad(j.d)}`;
+/* One place decides how a date is written, so every tool agrees without each one asking.
+   Each calendar has its own setting; a Jalali date is never written in the Gregorian order. */
+const DATE_FMTS = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD.MM.YYYY', 'YYYY/MM/DD'];
+function fmtDate(y, m, d, fmt) {
+  const p = n => String(n).padStart(2, '0');
+  return String(fmt || 'YYYY-MM-DD').replace('YYYY', y).replace('MM', p(m)).replace('DD', p(d));
+}
+const fmtG = g => fmtDate(g.y, g.m, g.d, S.dateFmtG);
+const fmtJ = j => fmtDate(j.y, j.m, j.d, S.dateFmtJ);
 const GEN = {
-  'Date': () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; },
-  'Jalali date': () => jalaliText(jalaliToday()),
+  'Date': () => fmtG({ y: new Date().getFullYear(), m: new Date().getMonth() + 1, d: new Date().getDate() }),
+  'Jalali date': () => fmtJ(jalaliToday()),
   'Time': () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; },
   'Time (12h)': () => { const d = new Date(); return `${d.getHours() % 12 || 12}:${pad(d.getMinutes())} ${d.getHours() < 12 ? 'AM' : 'PM'}`; },
   'ISO timestamp': () => new Date().toISOString(),
   'Unix time': () => String(Math.floor(Date.now() / 1000)),
   'Random 1–100': () => String(1 + crypto.getRandomValues(new Uint32Array(1))[0] % 100),
   'Coin flip': () => crypto.getRandomValues(new Uint8Array(1))[0] & 1 ? 'Heads' : 'Tails',
-  'Lorem sentence': () => LOREM.split('. ')[0] + '.',
-  'Lorem paragraph': () => LOREM,
   'Password': () => pwPick(PW_SETS.upper + PW_SETS.lower + PW_SETS.digit + PW_SETS.symbol, 16),
   'Token': () => [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''),   // 128 bits of hex
+  'Lorem sentence': () => LOREM.split('. ')[0] + '.',
+  'Lorem paragraph': () => LOREM,
   'UUID': () => (crypto.randomUUID || uuid4)(),
 };
 function renderGen() { $('#genList').innerHTML = Object.entries(GEN).map(([n, f]) => { let v; try { v = esc(f()); } catch { v = 'not available here'; } return `<button class="item plain spring gen" data-g="${n}">${n}<span>${v}</span></button>`; }).join(''); }
@@ -2526,18 +2557,39 @@ $('#folderAdd').onclick = () => send('addApp', { folder: true });
 renderFolders();
 
 /* ---- snippets ---- */
-/* placeholders are filled in at copy time, so the saved snippet stays the template it was typed as */
+/* placeholders are filled in when the snippet is copied, so the saved one stays the template.
+   The list shows the same expansion, so what you read is what you get. */
 const SNIP_PH = {
   date: () => GEN.Date(),
   jalali_date: () => GEN['Jalali date'](),
   time: () => GEN.Time(),
-  clipboard: () => lastClip,
+  time_12h: () => GEN['Time (12h)'](),
+  weekday: () => new Date().toLocaleDateString(undefined, { weekday: 'long' }),
+  month: () => GMONTHS[new Date().getMonth()],
+  jalali_month: () => JMONTHS[jalaliToday().m - 1],
+  clipboard: () => lastClip || '{{clipboard}}',   // nothing copied yet keeps the name rather than a blank
 };
 const expandSnip = s => s.replace(/\{\{(\w+)\}\}/g, (m, k) => k in SNIP_PH ? SNIP_PH[k]() : m);
+let snipEdit = -1;
 function renderSnips() {
-  $('#snipList').innerHTML = S.snippets.length ? S.snippets.map((t, i) =>
-    `<button class="item spring" data-i="${i}">${esc(t.replace(/\s+/g, ' ').slice(0, 100))}<span class="acts"><span data-x aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></span></button>`).join('')
+  $('#snipList').innerHTML = S.snippets.length ? S.snippets.map((t, i) => {
+    if (i === snipEdit) {
+      return `<div class="item snipe"><input class="field" id="snipEditIn" value="${esc(t)}" aria-label="Edit snippet"></div>`;
+    }
+    return `<button class="item spring" data-i="${i}">${esc(expandSnip(t).replace(/\s+/g, ' ').slice(0, 100))}<span class="acts">`
+      + `<span data-e aria-label="Edit"><svg viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></span>`
+      + `<span data-x aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></span></button>`;
+  }).join('')
     : '<div class="empty">Save text you type often: addresses, replies, signatures…</div>';
+  const box = $('#snipEditIn');
+  if (box) {
+    box.focus(); box.setSelectionRange(box.value.length, box.value.length);
+    box.onkeydown = ev => {
+      if (ev.key === 'Enter') { const v = box.value.trim(); if (v) S.snippets[snipEdit] = v; snipEdit = -1; save(); renderSnips(); }
+      else if (ev.key === 'Escape') { snipEdit = -1; renderSnips(); }
+    };
+    box.onblur = () => { const v = box.value.trim(); if (v && v !== S.snippets[snipEdit]) S.snippets[snipEdit] = v; else if (!v) S.snippets.splice(snipEdit, 1); snipEdit = -1; save(); renderSnips(); };
+  }
 }
 $('#snipIn').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { S.snippets.unshift(e.target.value.trim()); e.target.value = ''; save(); renderSnips(); } });
 $('#snipClear').onclick = () => { S.snippets = []; save(); renderSnips(); };
@@ -2547,7 +2599,9 @@ $('#snipPh').onclick = e => { const p = e.target.closest('[data-ph]')?.dataset.p
   i.value = i.value.slice(0, at) + `{{${p}}}` + i.value.slice(at); i.focus(); };
 $('#snipList').onclick = e => {
   const b = e.target.closest('.item'); if (!b) return; const i = +b.dataset.i;
-  if (e.target.closest('[data-x]')) { S.snippets.splice(i, 1); save(); renderSnips(); } else deliver(expandSnip(S.snippets[i]));
+  if (e.target.closest('[data-x]')) { S.snippets.splice(i, 1); save(); renderSnips(); }
+  else if (e.target.closest('[data-e]')) { snipEdit = i; renderSnips(); }
+  else deliver(expandSnip(S.snippets[i]));
 };
 renderSnips();
 
@@ -2640,12 +2694,15 @@ renderEngines();
 
 /* ---- QR: the matrix comes from Rust, the panel only draws it ---- */
 let qrText = '';
-app.qr = ({ w, bits, err }) => {
+app.qr = ({ w, rows, err }) => {
   const box = $('#qrBox');
-  if (err || !w) { box.innerHTML = '<div class="empt">Too long for a QR code</div>'; $('#qrSize').textContent = '—'; return; }
-  // one path for the whole matrix: every dark module in one move keeps the SVG small
+  const bad = msg => { box.innerHTML = `<div class="empt">${msg}</div>`; $('#qrSize').textContent = '—'; };
+  if (err) return bad('Too long for a QR code');
+  // the matrix arrives as one string of 0/1; anything else means the native side and the panel
+  // disagree, and saying so beats drawing a blank white square
+  if (!w || typeof rows !== 'string' || rows.length < w * w) return bad('The code came back unreadable');
   let d = '';
-  for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) if (bits[y * w + x]) d += `M${x} ${y}h1v1h-1z`;
+  for (let i = 0; i < w * w; i++) if (rows[i] === '1') d += `M${i % w} ${(i / w) | 0}h1v1h-1z`;
   box.innerHTML = `<svg viewBox="-1 -1 ${w + 2} ${w + 2}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect x="-1" y="-1" width="${w + 2}" height="${w + 2}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
   $('#qrSize').textContent = `${w}×${w} modules · version ${((w - 17) / 4) | 0}`;
 };
@@ -2688,49 +2745,53 @@ app.meters = v => {
 drawMeters();
 
 /* ---- calendar ----
-   Both calendars on one grid: the big number is the Jalali day, the small one the Gregorian, and
-   the week starts on Saturday (Shanbeh), which is how the Iranian week actually runs. */
+   One grid, either calendar. It is drawn in Jalali days either way, because that is what the week
+   arithmetic was built on, and each cell simply shows the chosen calendar's number on top. */
 const JMONTHS = ['Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand'];
 const GMONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const JDAYS = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];   // Shanbeh to Yekshanbeh
-let calCur = null, calSel = null;
+const GDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+let calCur = null, calSel = null, calSys = S.calSys || 'gregorian';
+const calMonths = () => calSys === 'jalali' ? JMONTHS : GMONTHS;
 function drawCal() {
+  const greg = calSys === 'gregorian';
   const t = calCur || (calCur = jalaliToday());
-  $('#calDow').innerHTML = JDAYS.map(d => `<span>${d}</span>`).join('');
-  const g = toGregorian(t.y, t.m, 1);
-  // how many Jalali days the grid needs before and after, to land on a Saturday
-  const firstDow = (g.d - 1 + 6) % 7;                 // 1 = Saturday
-  const len = jalaliMonthLen(t.y, t.m);
-  const today = jalaliToday();
+  $('#calDow').innerHTML = (greg ? GDAYS : JDAYS).map(d => `<span>${d}</span>`).join('');
+  const first = toGregorian(t.y, t.m, 1);
+  // the Iranian week opens on Saturday, the Gregorian one on Monday
+  const firstDow = greg ? (first.d + 6) % 7 : (first.d + 5) % 7;
+  const len = jalaliMonthLen(t.y, t.m), today = jalaliToday();
   let cells = '';
   for (let i = 0; i < 42; i++) {
-    const off = i - firstDow, jd = off + 1;
+    const jd = i - firstDow + 1;
     if (jd < 1 || jd > len) { cells += '<span></span>'; continue; }
     const gd = toGregorian(t.y, t.m, jd);
     const isToday = jd === today.d && t.m === today.m && t.y === today.y;
     const isSel = calSel && calSel.y === t.y && calSel.m === t.m && calSel.d === jd;
-    cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${jd}</b><small>${gd.d}</small></button>`;
+    cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${greg ? gd.d : jd}</b><small>${greg ? jd : gd.d}</small></button>`;
   }
   $('#calGrid').innerHTML = cells;
-  $('#calTitle').textContent = `${JMONTHS[t.m - 1]} ${t.y}`;
+  const cur = greg ? { y: first.y, m: first.m } : { y: t.y, m: t.m };
+  $('#calTitle').textContent = `${calMonths()[cur.m - 1]} ${cur.y}`;
+  const onToday = calSel && calSel.y === today.y && calSel.m === today.m && calSel.d === today.d;
+  $('#calToday').classList.toggle('on', !!onToday);
 }
 function calShow(j) {
   calSel = j;
-  $('#calGOut').textContent = jalaliText(j);
-  const g = toGregorian(j.y, j.m, j.d);
-  $('#calJOut').textContent = `${g.y}-${pad(g.m)}-${pad(g.d)}`;
+  $('#calGOut').textContent = fmtJ(j);
+  $('#calJOut').textContent = fmtG(toGregorian(j.y, j.m, j.d));
   drawCal();
 }
-/* typing a date converts it either way. The two calendars do not overlap in practice — the Jalali
-   year is ~1405 where the Gregorian one is ~2026 — so 1700 is a safe place to tell them apart. */
-function calParse(text) {
-  const m = String(text).trim().match(/^(\d{3,4})\s*[-\/.]\s*(\d{1,2})\s*[-\/.]\s*(\d{1,2})$/);
-  if (!m) return null;
-  const y = +m[1], mo = +m[2], d = +m[3];
-  if (mo < 1 || mo > 12 || d < 1) return null;
-  if (y > 1700) return d <= daysInGregorianMonth(y, mo) ? { j: toJalali(y, mo, d), g: { y, m: mo, d } } : null;
-  if (d > jalaliMonthLen(y, mo)) return null;
-  return { j: { y, m: mo, d }, g: toGregorian(y, mo, d) };
+/* the three boxes are read as whichever calendar the grid is showing */
+function calRead() {
+  const y = +$('#calY').value, m = +$('#calM').value, d = +$('#calD').value;
+  if (!y || !m || !d) return null;
+  if (calSys === 'gregorian') {
+    if (m < 1 || m > 12 || d < 1 || d > daysInGregorianMonth(y, m)) return null;
+    return { j: toJalali(y, m, d), g: { y, m, d } };
+  }
+  if (y > 1300 || m < 1 || m > 12 || d < 1 || d > jalaliMonthLen(y, m)) return null;   // a Jalali year is nowhere near 1300+
+  return { j: { y, m, d }, g: toGregorian(y, m, d) };
 }
 const daysInGregorianMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
 $('#calGrid').onclick = e => {
@@ -2739,14 +2800,23 @@ $('#calGrid').onclick = e => {
 };
 $('#calPrev').onclick = () => { const t = calCur; calCur = t.m > 1 ? { y: t.y, m: t.m - 1, d: 1 } : { y: t.y - 1, m: 12, d: 1 }; drawCal(); };
 $('#calNext').onclick = () => { const t = calCur; calCur = t.m < 12 ? { y: t.y, m: t.m + 1, d: 1 } : { y: t.y + 1, m: 1, d: 1 }; drawCal(); };
-$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); $('#calIn').value = ''; };
-$('#calIn').addEventListener('input', e => {
-  const p = calParse(e.target.value);
+$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); $('#calY').value = $('#calM').value = $('#calD').value = ''; };
+/* clicking the month name flips between the two calendars and remembers which one you left it on */
+$('#calTitle').onclick = () => {
+  calSys = calSys === 'gregorian' ? 'jalali' : 'gregorian';
+  S.calSys = calSys; save();
+  calCur = calSel || jalaliToday();
+  calShow(calCur);
+  $('#calY').value = $('#calM').value = $('#calD').value = '';
+};
+for (const id of ['#calY', '#calM', '#calD']) $(id).addEventListener('input', () => {
+  const p = calRead();
   if (!p) return;
   calCur = p.j;
   calShow(p.j);
 });
-$('#calGLab').textContent = 'Jalali';
+$('#calJCard').onclick = () => calSel && copy($('#calGOut').textContent, 'Jalali date copied');
+$('#calGCard').onclick = () => calSel && copy($('#calJOut').textContent, 'Gregorian date copied');
 calShow(jalaliToday());
 
 /* ---- world clock ---- */
@@ -2760,32 +2830,52 @@ const city = z => z.split('/').pop().replace(/_/g, ' ');
 const zoneClock = z => S.hour24
   ? new Intl.DateTimeFormat('en-GB', { timeZone: z, hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())
   : new Intl.DateTimeFormat('en-US', { timeZone: z, hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
+/* The offset as UTC±HH:MM, read for this moment, so daylight saving is already accounted for.
+   The zone's wall clock is formatted and read back as if it were UTC; the difference is the offset.
+   Going through a formatted string instead is worse: new Date(str) parsing is implementation
+   defined and drops the seconds, which lands half an hour out on some zones. */
+const offFmt = {};
+function zoneOffset(z) {
+  const now = Date.now();
+  const f = offFmt[z] ||= new Intl.DateTimeFormat('en-US', { timeZone: z, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const p = Object.fromEntries(f.formatToParts(new Date(now)).map(x => [x.type, x.value]));
+  const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  const mins = Math.round((asUTC - now) / 6e4), sign = mins < 0 ? '-' : '+', a = Math.abs(mins);
+  return `UTC${sign}${pad(a / 60 | 0)}:${pad(a % 60)}`;
+}
 function zoneParts(z) {
-  const now = new Date();
-  const t = zoneClock(z);
-  const d = (tz => new Date(now.toLocaleString('en-US', { timeZone: tz })))(z), l = new Date(now.toLocaleString('en-US'));
-  const diffH = Math.round((d - l) / 36e5 * 2) / 2, day = d.getDate() - l.getDate();
-  return { t, sub: `${day === 0 ? 'Today' : day > 0 || day < -20 ? 'Tomorrow' : 'Yesterday'}, ${diffH === 0 ? 'same time' : (diffH > 0 ? '+' : '') + diffH + 'h'}` };
+  return { t: zoneClock(z), sub: zoneOffset(z) };
 }
 function renderZones() {
   $('#zones').innerHTML = S.zones.map((z, i) => { const p = zoneParts(z);
-    return `<div class="zone"><span class="zt">${p.t}</span><span class="zn">${city(z)}<small>${p.sub}</small></span><button class="x" data-i="${i}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`; }).join('')
+    return `<div class="zone"><span class="zn">${esc(city(z))}<small>${p.sub}</small></span><span class="zt">${p.t}</span><button class="x" data-i="${i}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`; }).join('')
     || '<div class="empty">Add a time zone below</div>';
 }
-/* the picker matches on the whole id, so "asia/teh", "tehran" and "teh" all find Asia/Tehran */
+/* the picker matches on the whole id, so "asia/teh", "tehran" and "teh" all find Asia/Tehran.
+   Zones already on the clock sit at the top, greyed, so you can see what is there without it
+   reading like a suggestion to add it again. */
 function renderZoneList() {
   const q = fold($('#zoneQ').value).replace(/[\s_]+/g, '');
+  const have = S.zones.filter(z => ALL_ZONES.includes(z));
   const hits = (q ? ALL_ZONES.filter(z => fold(z).replace(/[\s_]+/g, '').includes(q)) : ALL_ZONES)
     .filter(z => !S.zones.includes(z)).slice(0, q ? 60 : 24);
-  $('#zoneList').innerHTML = hits.length
+  const added = have.length ? `<div class="zadded">${have.map(z => `<span>${esc(city(z))}</span>`).join('')}</div>` : '';
+  $('#zoneList').innerHTML = added + (hits.length
     ? hits.map(z => `<button class="item plain" data-z="${z}">${esc(city(z))}<small>${esc(z)}</small></button>`).join('')
-    : `<div class="empty">${q ? 'No matching time zone' : 'Every zone is already shown'}</div>`;
+    : `<div class="empty">${q ? 'No matching time zone' : 'Every zone is already shown'}</div>`);
 }
 $('#zones').onclick = e => { const i = e.target.closest('.x')?.dataset.i; if (i !== undefined) { S.zones.splice(+i, 1); save(); renderZones(); renderZoneList(); } };
 $('#zoneList').onclick = e => { const z = e.target.closest('[data-z]')?.dataset.z; if (z) { S.zones.push(z); save(); $('#zoneQ').value = ''; renderZones(); renderZoneList(); } };
 $('#zoneQ').addEventListener('input', renderZoneList);
-/* the picker only exists once you ask for it: an always-open 418-zone list was most of the panel */
-$('#zoneAdd').onclick = () => { const p = $('#zonePick'); p.hidden = !p.hidden; if (!p.hidden) { $('#zoneQ').value = ''; renderZoneList(); $('#zoneQ').focus(); } };
+/* the picker only exists once you ask for it: an always-open 418-zone list was most of the panel.
+   While it is open the clock steps aside, and the button becomes its own way back out. */
+$('#zoneAdd').onclick = () => {
+  const p = $('#zonePick'), open = p.hidden;
+  p.hidden = !open;
+  $('#zones').hidden = open;
+  $('#zoneAdd').innerHTML = open ? `${I(LUC.x)}Close` : `${I(LUC.plus)}Add`;
+  if (open) { $('#zoneQ').value = ''; renderZoneList(); $('#zoneQ').focus(); }
+};
 $('#zoneFmt').onclick = () => { S.hour24 = !S.hour24; save(); $('#zoneFmt').textContent = S.hour24 ? '24h' : '12h'; renderZones(); };
 $('#zoneFmt').textContent = S.hour24 ? '24h' : '12h';
 setInterval(() => { if (panel === 'clock') renderZones(); }, 1000);
@@ -3101,6 +3191,11 @@ function applyPlacement() {
 $('#edgeSel').onchange = applyPlacement;
 $('#speedSel').value = String(S.speed || 1);
 $('#speedSel').onchange = e => { S.speed = +e.target.value || 1; save(); };
+for (const [sel, key] of [['#dateFmtG', 'dateFmtG'], ['#dateFmtJ', 'dateFmtJ']]) {
+  $(sel).innerHTML = DATE_FMTS.map(f => `<option value="${f}">${f}</option>`).join('');
+  $(sel).value = S[key] || 'YYYY-MM-DD';
+  $(sel).onchange = e => { S[key] = e.target.value; save(); if (calSel) calShow(calSel); };
+}
 /* reading the modifier key needs OS-level APIs we only have on Windows */
 if (OS === 'windows') {
   $('#openModSel').value = S.openMod || 'none';

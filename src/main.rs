@@ -874,10 +874,14 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         let _ = METERS.lock().ok().and_then(|mut g| g.take());
                     }
                     "qr" => {
-                        let want = s("text");
-                        let call = match util::qr(&want) {
-                            Some((w, bits)) => format!("app.qr{}", json!({ "w": w, "bits": bits, "err": false })),
-                            None => format!("app.qr{}", json!({ "w": 0, "bits": [], "err": true })),
+                        let call = match util::qr(&s("text")) {
+                            // one string of 0/1 rather than a bool array: it halves the payload and
+                            // there is no way for the panel to read it as a list of something else
+                            Some((w, bits)) => {
+                                let rows: String = bits.iter().map(|b| if *b { '1' } else { '0' }).collect();
+                                format!("app.qr{}", json!({ "w": w, "rows": rows, "err": false }))
+                            }
+                            None => format!("app.qr{}", json!({ "w": 0, "rows": "", "err": true })),
                         };
                         let _ = webview.evaluate_script(&call);
                     }
