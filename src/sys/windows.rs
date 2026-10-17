@@ -20,7 +20,7 @@ use windows_sys::Win32::{
         Ole::CF_DIB,
         Diagnostics::Debug::MessageBeep,
         Power::{SetThreadExecutionState, ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED},
-        Registry::{RegDeleteKeyValueW, RegDeleteTreeW, RegGetValueW, RegSetKeyValueW, HKEY_CURRENT_USER, REG_SZ, RRF_RT_REG_SZ},
+        Registry::{RegDeleteKeyValueW, RegDeleteTreeW, RegGetValueW, RegSetKeyValueW, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, REG_SZ, RRF_RT_REG_SZ},
         Threading::CreateMutexW,
         Shutdown::LockWorkStation,
     },
@@ -45,6 +45,52 @@ static PINNED_HWND: AtomicIsize = AtomicIsize::new(0);
 
 fn wide(s: &str) -> Vec<u16> {
     s.encode_utf16().chain(Some(0)).collect()
+}
+
+/// Reads a REG_SZ out of the registry. Everything the system info tool shows that is not a
+/// counter comes from here: Windows keeps the marketing names of the OS, the processor and the
+/// display adapter in plain strings, so there is nothing to guess and no process to start.
+fn reg_string(key: &str, name: &str) -> Option<String> {
+    let (k, v) = (wide(key), wide(name));
+    let mut len: u32 = 0;
+    unsafe {
+        if RegGetValueW(HKEY_LOCAL_MACHINE, k.as_ptr(), v.as_ptr(), RRF_RT_REG_SZ, std::ptr::null_mut(),
+            std::ptr::null_mut(), &mut len) != 0 || len == 0 || len > 4096 {
+            return None;
+        }
+        let mut buf = vec![0u16; (len as usize / 2) + 1];
+        if RegGetValueW(HKEY_LOCAL_MACHINE, k.as_ptr(), v.as_ptr(), RRF_RT_REG_SZ, std::ptr::null_mut(),
+            buf.as_mut_ptr().cast(), &mut len) != 0 {
+            return None;
+        }
+        let s = String::from_utf16_lossy(&buf[..(len as usize / 2).saturating_sub(1)]);
+        let s = s.trim().to_string();
+        if s.is_empty() { None } else { Some(s) }
+    }
+}
+
+/// The bits the System info tool shows, read fresh each time it is opened.
+pub fn system_info() -> serde_json::Value {
+    let os_key = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+    let gpu_key = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000";
+    let name_key = "SYSTEM\\CurrentControlSet\\Control\\ComputerName\\ComputerName";
+    let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
+    let ram_gb = unsafe { GlobalMemoryStatusEx(&mut mem) } as u64 / 1024 / 1024 / 1024;
+    let secs = unsafe { GetTickCount64() } / 1000;
+    let gpu = reg_string(gpu_key, "DriverDesc")
+        .or_else(|| reg_string("SYSTEM\\CurrentControlSet\\Control\\Video\\Vga2D0", "DriverDesc"));
+    serde_json::json!({
+        "os": reg_string(os_key, "ProductName").unwrap_or_else(|| "Windows".into()),
+        "build": reg_string(os_key, "DisplayVersion").unwrap_or_default(),
+        "cpu": reg_string("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "ProcessorNameString")
+            .map(|s| s.split_whitespace().collect::<Vec<_>>().join(" ")).unwrap_or_default(),
+        "gpu": gpu.unwrap_or_default(),
+        "name": reg_string(name_key, "ComputerName").unwrap_or_default(),
+        "ram": ram_gb,
+        "upDays": secs / 86400,
+        "upHours": secs / 3600 % 24,
+        "upMins": secs / 60 % 60,
+    })
 }
 
 pub fn data_dir() -> PathBuf {
@@ -334,23 +380,36 @@ pub fn screenshot() {
 }
 
 /// Screen eyedropper: waits for the next click, returns the pixel color.
-pub fn pick_color(done: impl FnOnce(Option<String>) + Send + 'static) {
+/// `look` is called with the colour under the pointer, and where the pointer is, while it moves;
+/// `done` gets the chosen colour, or None if the grab was called off.
+pub fn pick_color(
+    look: impl Fn(String, i32, i32) + Send + 'static,
+    done: impl FnOnce(Option<String>) + Send + 'static,
+) {
     thread::spawn(move || unsafe {
         while GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
             thread::sleep(Duration::from_millis(10));
         }
+        let mut last = String::new();
+        let mut last_y = (0i32, 0i32);
         loop {
-            thread::sleep(Duration::from_millis(10));
+            thread::sleep(Duration::from_millis(40));
             if GetAsyncKeyState(VK_ESCAPE as i32) < 0 {
                 return done(None);
             }
+            let mut p = POINT { x: 0, y: 0 };
+            GetCursorPos(&mut p);
+            let dc = GetDC(std::ptr::null_mut());
+            let c = GetPixel(dc, p.x, p.y);
+            ReleaseDC(std::ptr::null_mut(), dc);
+            let hex = format!("#{:02x}{:02x}{:02x}", c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
+            if hex != last || p.y != last_y.0 {
+                last = hex.clone();
+                last_y.0 = p.y;
+                look(hex.clone(), p.x, p.y);
+            }
             if GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
-                let mut p = POINT { x: 0, y: 0 };
-                GetCursorPos(&mut p);
-                let dc = GetDC(std::ptr::null_mut());
-                let c = GetPixel(dc, p.x, p.y);
-                ReleaseDC(std::ptr::null_mut(), dc);
-                return done(Some(format!("#{:02x}{:02x}{:02x}", c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff)));
+                return done(Some(hex));
             }
         }
     });

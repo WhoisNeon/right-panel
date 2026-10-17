@@ -212,7 +212,37 @@ pub fn screenshot() {
     }
 }
 
-pub fn pick_color(done: impl FnOnce(Option<String>) + Send + 'static) {
+/* ---------------- system info ---------------- */
+pub fn system_info() -> serde_json::Value {
+    let read = |p: &str| std::fs::read_to_string(p).unwrap_or_default().trim().to_string();
+    let os = if cfg!(target_os = "macos") {
+        let v = read("/System/Library/CoreServices/SystemVersion.plist");
+        format!("macOS {}", v.lines().find(|l| l.contains("ProductVersion")).map(|l| l.split('>').nth(1).map(str::trim).unwrap_or("")).unwrap_or(""))
+    } else {
+        let v = read("/etc/os-release");
+        v.lines().find_map(|l| l.strip_prefix("PRETTY_NAME=").map(|s| s.trim_matches('"').to_string())).unwrap_or_else(|| "Linux".into())
+    };
+    let model = read("/proc/device-tree/model");
+    let cpu = read("/proc/cpuinfo").lines().find_map(|l| l.strip_prefix("model name").map(|s| s.trim_start_matches([' ', ':']).trim().to_string())).unwrap_or_default();
+    let ram_kb: u64 = read("/proc/meminfo").lines().find_map(|l| l.strip_prefix("MemTotal:")).and_then(|s| s.split_whitespace().next()).and_then(|s| s.parse().ok()).unwrap_or(0);
+    let up = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    serde_json::json!({
+        "os": os,
+        "build": "",
+        "cpu": cpu,
+        "gpu": model,
+        "name": read("/etc/hostname"),
+        "ram": ram_kb / 1024 / 1024,
+        "upDays": up / 86400,
+        "upHours": up / 3600 % 24,
+        "upMins": up / 60 % 60,
+    })
+}
+
+pub fn pick_color(
+    _look: impl Fn(String, i32, i32) + Send + 'static,
+    done: impl FnOnce(Option<String>) + Send + 'static,
+) {
     done(None);
 }
 

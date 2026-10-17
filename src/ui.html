@@ -136,7 +136,15 @@
   .emoji-grid button:hover { background: var(--soft2); transform: scale(1.22); }
 
   /* lists (clipboard, snippets, units…) */
-  .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+  .list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; min-height: 0; }
+  /* the snippet list takes whatever room is left, so it still scrolls with the placeholder
+     fold open — without this it cannot shrink below its content and the panel just clips */
+  #snipList { flex: 1 1 auto; max-height: none; min-height: 60px; }
+  /* num convert: the outputs are the point of the tool, so each one is full width under a
+     header, and the Arabic digits start folded away */
+  #ncOut .engrows { display: flex; gap: 6px; align-items: stretch; }
+  #ncOut .engrows textarea { flex: 1 1 auto; width: 100%; min-width: 0; }
+  #ncOut .engrows .btn { flex: none; }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -196,8 +204,8 @@
   .mb.sm svg { width: 19px; height: 19px; }
   .mb svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .mb.big svg { fill: currentColor; }
-  .display { font-size: 26px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; padding: 4px 6px; min-height: 40px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; }
-  .display.line { font-size: 12px; font-weight: 400; color: var(--muted); min-height: 15px; padding: 0 6px; cursor: default; }
+  .display { font-size: 30px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; padding: 0px 6px; min-height: 40px; cursor: pointer; overflow: hidden; direction:rtl; line-height: 1; }
+  .display.line { font-size: 16px; font-weight: 400; color: var(--muted); min-height: 15px; cursor: default; }
   .display.err { font-size: 13px; font-weight: 500; color: var(--muted); }
   .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
   .keys button { border: 0; background: var(--soft); color: var(--ink); border-radius: 10px; height: 38px; font-size: 15px; font-family: inherit; cursor: pointer; display: grid; place-items: center; }
@@ -229,10 +237,12 @@
   .zone .zt { font-size: 18px; font-weight: 300; font-variant-numeric: tabular-nums; text-align: end; flex: none; }
   .zone .zn { flex: 1; min-width: 0; font-size: 13px; line-height: 1.2; }
   .zone .zn small { display: block; color: var(--muted); font-size: 10px; }
-  /* the added zones sit at the top of the picker as a short list: name and cross, nothing else */
-  .zadded { display: flex; flex-direction: column; gap: 4px; }
-  .zone.slim { padding: 3px 4px 3px 10px; gap: 6px; }
+  /* the added zones sit at the top of the picker as a short list: name and cross, nothing else.
+     Two to a row, so ten of them do not push the suggestions off the page. */
+  .zadded { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .zone.slim { padding: 3px 3px 3px 9px; gap: 4px; }
   .zone.slim .zn { font-size: 12px; }
+  .zone.slim .x { width: 20px; height: 20px; }
   .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
   .zone .x svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   .zone .x:hover { background: var(--soft2); color: var(--ink); }
@@ -310,6 +320,8 @@
   .set > span { min-width: 0; }
   .set > select { flex: none; }
   .set > .pick { flex: none; }
+  /* keybinds: the key is a thing you press, so it is shown as one */
+  .kbd { flex: none; font-family: Consolas, monospace; font-size: 11px; background: var(--soft2); color: var(--ink); border-radius: 7px; padding: 4px 8px; white-space: nowrap; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--inv-ink); transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .toggle.on { background: var(--inv); }
@@ -326,14 +338,17 @@
   .pick > .field.center { text-align: center; }
   /* the rows this list covers are --soft themselves, so a --soft list still read as see-through and
      its true extent stayed invisible. Use the same inverted surface as the context menus. */
-  .pick .opts { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 100%; max-height: 220px; overflow-y: auto;
+  /* The list floats on the body, not inside the page: the settings pages scroll, and anything
+     drawn inside them is cut off at the page's edge. Measuring against the window is right
+     here for the same reason it was wrong inside the panel. */
+  .opts { position: fixed; z-index: 60; min-width: 100px; max-height: 220px; overflow-y: auto;
     background: var(--inv); color: var(--inv-ink); border-radius: 12px; padding: 4px;
     box-shadow: 0 0 0 1px var(--line), 0 10px 30px -10px rgba(0,0,0,.5); transform-origin: top right;
     opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-4px) scale(.97);
     transition: opacity .16s, transform .2s var(--pop), visibility 0s .2s; }
-  .pick.open .opts { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
-  .pick .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-  .pick .opts button:hover, .pick .opts button.on { background: var(--inv-ink); color: var(--inv); }
+  .opts.open { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
+  .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .opts button:hover, .opts button.on { background: var(--inv-ink); color: var(--inv); }
   .spage { display: none; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .spage.on { display: flex; animation: rise .4s cubic-bezier(.2,.8,.2,1) both; }
   /* switching tabs slides the new page in from the side you moved toward */
@@ -380,6 +395,15 @@
   .theme:hover i { transform: scale(1.08); border-radius: 19px; }
   .theme.on { color: var(--ink); }
   .theme.on i { box-shadow: 0 0 0 2px var(--liquid), 0 0 0 4px var(--inv); }
+
+  /* the eye dropper's swatch: it sits by the pointer, so the panel is not in the way and the
+     colour under the pointer is the thing you aim with */
+  #pickHint { position: fixed; z-index: 95; left: 0; top: 0; width: 30px; height: 30px; border-radius: 8px;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0006, 0 8px 20px -6px rgba(0,0,0,.6); pointer-events: none; }
+  #pickHint[hidden] { display: none; }
+  #pickHint i { position: absolute; left: 38px; top: 50%; transform: translateY(-50%);
+    font-family: Consolas, monospace; font-style: normal; font-size: 11px; color: #fff;
+    background: #000a; border-radius: 6px; padding: 3px 7px; white-space: nowrap; }
 
   /* custom color picker — the panel draws its own, so no native color dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
@@ -541,9 +565,9 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4></div>
     <textarea class="field" dir="auto" id="ncIn" rows="2" aria-label="Text to convert" placeholder="Type or paste text…"></textarea>
     <div class="ncout" id="ncOut">
-      <div class="set"><span>English</span><span><textarea class="field" dir="auto" id="ncEn" readonly rows="2"></textarea><button class="btn" data-nc="en"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
-      <div class="set"><span>Farsi</span><span><textarea class="field" dir="auto" id="ncFa" readonly rows="2"></textarea><button class="btn" data-nc="fa"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
-      <div class="set"><span>Arabic</span><span><textarea class="field" dir="auto" id="ncAr" readonly rows="2"></textarea><button class="btn" data-nc="ar"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></span></div>
+      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncEn" readonly rows="2" aria-label="English digits"></textarea><button class="btn" data-nc="en"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div></div></div>
+      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits"></textarea><button class="btn" data-nc="fa"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div></div></div>
+      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits"></textarea><button class="btn" data-nc="ar"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div></div></div>
       <button class="btn" id="ncClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button>
     </div>
   </div>
@@ -584,6 +608,12 @@
     <div class="hint" id="qrSize">—</div>
   </div>
 
+  <div class="panel" data-name="sysinfo">
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>System info</h4><button class="link" id="siCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button></div>
+    <div class="list" id="siList"></div>
+    <div class="hint">Read fresh each time you open it. Click any line to copy just that one.</div>
+  </div>
+
   <div class="panel" data-name="mon">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>System monitor</h4></div>
     <div class="meters" id="meters"></div>
@@ -612,7 +642,7 @@
 
   <div class="panel" data-name="settings">
     <div class="head"><h4>Settings</h4></div>
-    <div class="tabs" id="stabs"><i id="tpill"></i><button data-p="widgets" class="on">Widgets</button><button data-p="look">Theme</button><button data-p="general">General</button></div>
+    <div class="tabs" id="stabs"><i id="tpill"></i><button data-p="widgets" class="on">Widgets</button><button data-p="look">Theme</button><button data-p="keys">Keybinds</button><button data-p="general">General</button></div>
     <div class="spage on" data-p="widgets">
       <div class="wsec"><span>In the dock</span><span class="addpair"><button class="link" id="addApp"><svg viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></svg>App</button></span></div>
       <div class="wlist scroll" id="wDock" data-zone="dock"></div>
@@ -630,6 +660,25 @@
         <div class="row"><button class="btn" id="teCancel"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg>Cancel</button><button class="btn primary" id="teSave"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>Save</button></div>
       </div>
     </div>
+    <div class="spage" data-p="keys">
+      <div class="wsec"><span>Anywhere</span></div>
+      <div class="set"><span>Close the panel<small class="hint">From any tool, whatever has focus</small></span><span class="kbd">Esc</span></div>
+      <div class="set"><span>Close a flyout<small class="hint">Cancel a picker, a colour grab or a dialog first</small></span><span class="kbd">Esc</span></div>
+      <div class="wsec"><span>In a text box</span></div>
+      <div class="set"><span>Add a snippet<small class="hint">Snippets</small></span><span class="kbd">Enter</span></div>
+      <div class="set"><span>Run the search<small class="hint">Web search</small></span><span class="kbd">Enter</span></div>
+      <div class="set"><span>Take the colour<small class="hint">Colour picker</small></span><span class="kbd">Enter</span></div>
+      <div class="wsec"><span>Stepping a value</span></div>
+      <div class="set"><span>Up or down<small class="hint">Calendar date boxes, Timer, Units</small></span><span class="kbd">↑ ↓</span></div>
+      <div class="set"><span>Roll the value<small class="hint">Same places: the wheel steps them too</small></span><span class="kbd">Wheel</span></div>
+      <div class="set"><span>Round to step<small class="hint">Calculator: × ÷ − +</small></span><span class="kbd">Enter</span></div>
+      <div class="wsec"><span>Pointer</span></div>
+      <div class="set"><span>Right-click a tool<small class="hint">Move it between the dock and More, or switch it off</small></span><span class="kbd">Right click</span></div>
+      <div class="set"><span>Grab the panel<small class="hint">The edge you chose in General</small></span><span class="kbd">Pointer</span></div>
+      <div class="wsec"><span>Coming from the tray</span></div>
+      <div class="set"><span>Open or close<small class="hint">Right-click the tray icon</small></span><span class="kbd">Right click</span></div>
+    </div>
+
     <div class="spage" data-p="general">
       <div class="engsec" data-g="genPanel">
         <button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Panel</span></button>
@@ -673,6 +722,8 @@
 <div class="ctxmenu" id="toolMenu" hidden></div>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
+<!-- the eye dropper's preview: it follows the pointer while the native grab is waiting for a click -->
+<div id="pickHint" hidden><i id="pickHex">#000000</i></div>
 <div class="cpick" id="cpick" hidden>
   <div class="sv" id="cpSv" aria-label="Saturation and brightness"><i></i></div>
   <div class="hue" id="cpHue" aria-label="Hue"><i></i></div>
@@ -793,6 +844,7 @@ const W = {
   cal: { name: 'Calendar', icon: I(LUC['calendar']), kind: 'panel' },
   qr: { name: 'QR code', icon: I(LUC['qr-code']), kind: 'panel' },
   mon: { os: ['windows'], name: 'Performance', icon: I(LUC['gauge']), kind: 'panel' },
+  sysinfo: { name: 'System info', icon: I(LUC['monitor']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
   desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['monitor']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
@@ -1088,6 +1140,7 @@ function setPanel(name, fromMore = false) {
   if (name === 'mon') { send('metersStart'); METERS.forEach(m => hist[m.k].length = 0); drawMeters(); }
   else send('metersStop');
   if (name === 'qr') setTimeout(() => $('#qrIn').focus(), 60);
+  if (name === 'sysinfo') send('sysinfo');
   if (name === 'cal') setTimeout(() => $('#calY').focus({ preventScroll: true }), 60);
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
@@ -2237,7 +2290,24 @@ function renderRecent() { $('#recentColors').innerHTML = S.recentColors.length ?
 [$('#palette'), $('#recentColors')].forEach(el => el.addEventListener('click', e => { const c = e.target.dataset.c; if (c) { setColor(c); copy(c.toUpperCase()); } }));
 $$('.fmt').forEach(b => b.onclick = () => { copy(fmts()[b.dataset.f]); pushRecentColor(color); });
 $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () => pushRecentColor(color));
-$('#eyedrop').onclick = () => { app.close(); send('pickColor'); };
+$('#eyedrop').onclick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
+/* the eye dropper is a native grab, so the panel is out of the way while it runs: it puts a
+   swatch of whatever is under the pointer next to it, which is the only way to aim at a shade
+   you cannot name yet */
+const pickHint = $('#pickHint');
+app.picking = (hex, x, y) => {
+  pickHint.hidden = false;
+  pickHint.style.background = hex;
+  $('#pickHex').textContent = hex.toUpperCase();
+  // the panel cannot paint outside its own window, so the swatch rides the edge nearest the
+  // pointer and sits level with it — which is the same spot, to the eye
+  const left = DIR < 0 ? Math.max(4, x - 34) : Math.max(4, innerWidth - 38);
+  pickHint.style.transform = `translate(${Math.round(left)}px, ${Math.round(Math.max(4, Math.min(y - 15, innerHeight - 36)))}px)`;
+};
+app.picked = hex => {
+  pickHint.hidden = true;
+  setColor(hex); pushRecentColor(color); copy(color.toUpperCase());
+};
 setColor(color); renderRecent();
 
 /* ---- custom color picker: the panel draws its own, so no native dialog leaks in ---- */
@@ -2587,7 +2657,9 @@ renderFolders();
 
 /* ---- snippets ---- */
 /* Every folding header works the same way and remembers itself, the same way the engine list folds. */
-const folds = new Set(S.folds || []);
+/* the placeholder list is long and rarely wanted, so it starts closed for anyone who has not
+   said otherwise; so do the Arabic digits in Num Convert */
+const folds = new Set(S.folds === undefined ? ['snipPh', 'ncAr'] : S.folds);
 function drawFolds() {
   for (const sec of $$('.engsec[data-g]')) {
     const shut = folds.has(sec.dataset.g);
@@ -2619,8 +2691,19 @@ const SNIP_PH = {
   jalali_month_fa: () => FA_JMONTH[jalaliToday().m - 1],
   year: () => String(new Date().getFullYear()),
   jalali_year: () => String(jalaliToday().y),
+  ip: () => myIp || '{{ip}}',   // asked for at the moment of copying; until then it keeps its name
   clipboard: () => lastClip || '{{clipboard}}',   // nothing copied yet keeps the name rather than a blank
 };
+/* Your public address can only come from outside, so it is asked for once and kept for the
+   session. There is no local way to know it: the machine's own addresses are not what a snippet
+   like "remote into me at …" needs. Offline, the placeholder simply stays as it is. */
+let myIp = '';
+async function loadIp() {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    myIp = (await r.json()).ip || '';
+  } catch { myIp = ''; }
+}
 const FA_WEEK = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
 const FA_MONTH = ['ژانویه', 'فوریه', 'مارس', 'آوریل', 'مه', 'ژوئن', 'ژوئیه', 'اوت', 'سپتامبر', 'اکتبر', 'نوامبر', 'دسامبر'];
 const FA_JMONTH = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
@@ -2750,23 +2833,57 @@ renderEngines();
 
 /* ---- QR: the matrix comes from Rust, the panel only draws it ---- */
 let qrText = '';
-/* The preview is the same bitmap that lands on the clipboard, drawn by the one encoder both share.
-   It used to be an SVG built here from the module matrix, and that matrix never made it across the
-   bridge intact — the clipboard copy was always right, the preview always blank. So the picture is
-   made where it is already made correct and arrives as a data: image, with no decode step in the
-   panel and nothing to go wrong between the two. */
-app.qr = ({ w, png, err }) => {
-  const box = $('#qrBox');
-  const bad = msg => { box.innerHTML = `<div class="empt">${msg}</div>`; $('#qrSize').textContent = '—'; };
-  if (err) return bad('Too long for a QR code');
-  if (!w || !png) return bad('The code came back unreadable');
-  box.innerHTML = `<img src="${png}" alt="QR code" width="${w}" height="${w}">`;
-  $('#qrSize').textContent = `${w}×${w} modules · version ${((w - 17) / 4) | 0}`;
+/* Rust announces the size first and then hands the matrix over in pieces the panel asks for.
+   The panel draws only when it holds every character, so a short transfer cannot turn into a
+   blank code — which is what two earlier attempts did. */
+let qrW = 0, qrWant = 0, qrBuf = '';
+const qrFail = msg => { qrW = 0; qrWant = 0; qrBuf = ''; $('#qrBox').innerHTML = `<div class="empt">${msg}</div>`; $('#qrSize').textContent = '—'; };
+app.qrHead = (w, len) => {
+  if (!w || !len) return qrFail('Too long for a QR code');
+  qrW = w; qrWant = len; qrBuf = '';
+  $('#qrSize').textContent = 'reading…';
+  send('qrNext', { i: 0 });
 };
+app.qrPart = part => {
+  qrBuf += part;
+  if (qrBuf.length >= qrWant) return qrDraw();
+  send('qrNext', { i: qrBuf.length });
+};
+function qrDraw() {
+  const w = qrW, box = $('#qrBox');
+  if (qrBuf.length !== w * w) return qrFail('The code came back unreadable');
+  let d = '';
+  for (let i = 0; i < w * w; i++) if (qrBuf[i] === '1') d += `M${i % w} ${(i / w) | 0}h1v1h-1z`;
+  box.innerHTML = `<svg viewBox="-4 -4 ${w + 8} ${w + 8}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect x="-4" y="-4" width="${w + 8}" height="${w + 8}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  $('#qrSize').textContent = `${w}×${w} modules · version ${((w - 17) / 4) | 0}`;
+}
 $('#qrIn').addEventListener('input', e => { qrText = e.target.value; send('qr', { text: qrText }); });
 $('#qrClip').onclick = () => { if (!qrText) return toast('Type something first'); send('copyQR', { text: qrText }); };
 app.qrCopied = ok => toast(ok ? 'QR code copied as an image' : 'Could not put the image on the clipboard');
 send('qr', { text: '' });
+
+/* ---- system info: read fresh each time it is opened, every line its own copy ---- */
+let sysRows = [];
+function renderSys(v) {
+  const gb = v.ram ? `${v.ram} GB` : '—';  const up = `${v.upDays || 0}d ${v.upHours || 0}h ${v.upMins || 0}m`;
+  sysRows = [
+    ['Operating system', [v.os, v.build].filter(Boolean).join(' ') || '—'],
+    ['Processor', v.cpu || '—'],
+    ['Graphics', v.gpu || '—'],
+    ['Memory', gb],
+    ['Computer name', v.name || '—'],
+    ['Uptime', up],
+  ];
+  $('#siList').innerHTML = sysRows.map(([k, val], i) =>
+    `<div class="set" data-si="${i}"><span>${esc(k)}</span><b>${esc(val)}</b></div>`).join('');
+}
+app.sysinfo = renderSys;
+$('#siList').onclick = e => {
+  const i = e.target.closest('[data-si]')?.dataset.si;
+  if (i !== undefined) copy(sysRows[+i][1], 'Copied');
+};
+$('#siCopy').onclick = () => copy(sysRows.map(([k, v]) => `${k}: ${v}`).join('\n'), 'System info copied');
+renderSys({});
 
 /* ---- system monitor ---- */
 const METERS = [
@@ -2875,6 +2992,29 @@ for (const [id, key] of [['#calY', 'y'], ['#calM', 'm'], ['#calD', 'd']]) {
     calCur = p.j;
     calShow(p.j);
   });
+  // the boxes spin like the timer: the wheel or the arrow keys step them, month and day carry
+  // over when they roll past their end, so 12 + 1 is January of the next year
+  const step = dir => {
+    const lim = calLimits()[key], lo = lim[0], hi = lim[1];
+    let v = +el.value || (key === 'y' ? 2000 : 1);
+    if (v < lo || v > hi) v = lo;
+    v += dir;
+    if (v > hi) v = lo;                    // December + 1 wraps to the first month
+    if (v < lo) v = hi;
+    el.value = String(v);
+    el.dispatchEvent(new Event('input'));
+  };
+  el.addEventListener('wheel', e => { e.preventDefault(); step(-Math.sign(e.deltaY)); }, { passive: false });
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    step(e.key === 'ArrowUp' ? 1 : -1);
+  });
+}
+/* the boxes open on today, so the panel is a date converter you can already read */
+function calFillToday() {
+  const t = calSys === 'gregorian' ? toGregorian(jalaliToday().y, jalaliToday().m, jalaliToday().d) : jalaliToday();
+  $('#calY').value = t.y; $('#calM').value = pad(t.m); $('#calD').value = pad(t.d);
 }
 /* the three boxes are read as whichever calendar the grid is showing */
 function calRead() {
@@ -2894,19 +3034,20 @@ $('#calGrid').onclick = e => {
 };
 $('#calPrev').onclick = () => { const t = calCur; calCur = t.m > 1 ? { y: t.y, m: t.m - 1, d: 1 } : { y: t.y - 1, m: 12, d: 1 }; drawCal(); };
 $('#calNext').onclick = () => { const t = calCur; calCur = t.m < 12 ? { y: t.y, m: t.m + 1, d: 1 } : { y: t.y + 1, m: 1, d: 1 }; drawCal(); };
-$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); $('#calY').value = $('#calM').value = $('#calD').value = ''; };
+$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); calFillToday(); };
 /* clicking the month name flips between the two calendars and remembers which one you left it on */
 $('#calTitle').onclick = () => {
   calSys = calSys === 'gregorian' ? 'jalali' : 'gregorian';
   S.calSys = calSys; save();
   calCur = calSel || jalaliToday();
   calShow(calCur);
-  $('#calY').value = $('#calM').value = $('#calD').value = '';
+  calFillToday();     // the boxes are read in whichever calendar is showing, so they start on today again
 };
 /* (the three boxes have their constrained handlers above) */
 $('#calJCard').onclick = () => calSel && copy($('#calGOut').textContent, 'Jalali date copied');
 $('#calGCard').onclick = () => calSel && copy($('#calJOut').textContent, 'Gregorian date copied');
 calShow(jalaliToday());
+calFillToday();
 
 /* ---- world clock ---- */
 /* every IANA zone the engine knows, in "Area/City" form. Intl has had supportedValuesOf since Chrome 99,
@@ -2950,7 +3091,7 @@ function renderZoneList() {
   const have = S.zones.map(z =>
     `<div class="zone slim"><span class="zn">${esc(city(z))}</span><button class="x" data-z="${esc(z)}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`).join('');
   const hits = (q ? ALL_ZONES.filter(z => fold(z).replace(/[\s_]+/g, '').includes(q)) : ALL_ZONES)
-    .filter(z => !S.zones.includes(z)).slice(0, q ? 60 : 24);
+    .filter(z => !S.zones.includes(z)).slice(0, q ? 60 : 5);
   $('#zoneList').innerHTML = (have ? `<div class="zadded">${have}</div>` : '')
     + (hits.length
       ? hits.map(z => `<button class="item plain" data-z="${z}">${esc(city(z))}<small>${esc(z)}</small></button>`).join('')
@@ -3342,6 +3483,7 @@ $('#resetBtn').onclick = () => {
 };
 
 applyTheme();
+drawFolds();
 renderAll();
 save();
 // re-read icons of saved apps (clean, no shortcut arrow)
@@ -3355,7 +3497,7 @@ $$('select').forEach(sel => {
   const aria = sel.getAttribute('aria-label'); if (aria) btn.setAttribute('aria-label', aria);
   if (sel.hasAttribute('data-center')) btn.classList.add('center');
   if (sel.style.width) box.style.width = sel.style.width; else box.style.width = '100%', btn.style.maxWidth = 'none', btn.style.width = '100%';
-  sel.before(box); box.append(btn, list, sel); sel.style.display = 'none';
+  sel.before(box); box.append(btn, sel); document.body.appendChild(list); sel.style.display = 'none';
   const label = () => {
     const o = sel.selectedOptions[0], ic = o?.dataset.icon;
     btn.classList.toggle('ic', !!ic);
@@ -3363,32 +3505,31 @@ $$('select').forEach(sel => {
   };
   btn.onclick = e => {
     e.stopPropagation();
-    const open = !box.classList.contains('open');
-    $$('.pick.open').forEach(p => p.classList.remove('open'));
+    const open = !list.classList.contains('open');
+    $$('.opts.open').forEach(l => l.classList.remove('open'));
     if (!open) return;
     list.innerHTML = [...sel.options].map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${esc(o.textContent)}</button>`).join('');
-    box.classList.add('open');
-    /* The panel is a strip at the screen edge, not the window: measuring the room against the
-       window is what sent these lists out through the bottom. And the box that actually clips a
-       list is the scrolling page it sits in, not the panel around it. */
-    const host = btn.closest('.spage, .panel') || document.body, hb = host.getBoundingClientRect();
+    list.classList.add('open');
+    // the list is on the body now, so the window is the only frame of reference, and the room is
+    // whatever is between the button and the edge of the screen
     const r = btn.getBoundingClientRect(), need = Math.min(list.scrollHeight, 220) + 12;
-    const below = hb.bottom - r.bottom, above = r.top - hb.top;
-    const up = below < need && above > below;
-    list.style.maxHeight = Math.max(90, (up ? above : below) - 10) + 'px';
-    list.style.top = up ? 'auto' : ''; list.style.bottom = up ? 'calc(100% + 4px)' : '';
+    const below = innerHeight - r.bottom, up = below < need && r.top > below;
+    list.style.maxHeight = Math.max(90, (up ? r.top : below) - 12) + 'px';
+    list.style.top = up ? '' : Math.round(r.bottom + 4) + 'px';
+    list.style.bottom = up ? Math.round(innerHeight - r.top + 4) + 'px' : '';
+    list.style.left = Math.max(6, Math.min(r.left, innerWidth - list.offsetWidth - 8)) + 'px';
   };
   list.onclick = e => {
     e.stopPropagation();
     const b = e.target.closest('[data-v]'); if (!b) return;
-    sel.value = b.dataset.v; box.classList.remove('open'); label();
+    sel.value = b.dataset.v; list.classList.remove('open'); label();
     sel.dispatchEvent(new Event('change', { bubbles: true })); label();
   };
   new MutationObserver(label).observe(sel, { childList: true, subtree: true });
   sel.addEventListener('change', label);
   label();
 });
-addEventListener('click', () => $$('.pick.open').forEach(p => p.classList.remove('open')));
+addEventListener('click', () => $$('.opts.open').forEach(l => l.classList.remove('open')));
 </script>
 </body>
 </html>

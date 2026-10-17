@@ -32,6 +32,8 @@ const WIN_H: f64 = 680.0;
 
 static OPEN: AtomicBool = AtomicBool::new(false);
 static PICKING: AtomicBool = AtomicBool::new(false);
+/// The last QR the panel asked for, held here so it can be handed over a piece at a time.
+static QR: Mutex<Option<(usize, String)>> = Mutex::new(None);
 /// Where the panel currently lives, so the hover watcher follows moves between edges / monitors.
 static PANEL_X: AtomicI32 = AtomicI32::new(0);
 static PANEL_Y: AtomicI32 = AtomicI32::new(0);
@@ -327,11 +329,24 @@ fn newer(latest: &str, current: &str) -> bool {
     parts(latest) > parts(current)
 }
 
+/// A windowed app that starts a console program gets a black console window on Windows. The
+/// flag is CREATE_NO_WINDOW; the other platforms have no console to leak in the first place.
+#[cfg(windows)]
+fn quiet(cmd: &mut std::process::Command) -> &mut std::process::Command {
+    use std::os::windows::process::CommandExt;
+    cmd.creation_flags(0x0800_0000)
+}
+
+#[cfg(not(windows))]
+fn quiet(cmd: &mut std::process::Command) -> &mut std::process::Command {
+    cmd
+}
+
 /// Asks GitHub for the newest release (through curl, which ships with every supported OS).
 fn spawn_update_check(proxy: EventLoopProxy<Ev>, manual: bool) {
     thread::spawn(move || {
         let url = format!("https://api.github.com/repos/{REPO}/releases/latest");
-        let out = std::process::Command::new("curl")
+        let out = quiet(&mut std::process::Command::new("curl"))
             .args(["-sL", "--max-time", "15", "-H", "Accept: application/vnd.github+json", "-H", "User-Agent: RightPanel", &url])
             .output();
         let latest = out.ok().and_then(|o| serde_json::from_slice::<Value>(&o.stdout).ok()).and_then(|v| v["tag_name"].as_str().map(str::to_owned));
@@ -353,7 +368,7 @@ fn install_update(proxy: EventLoopProxy<Ev>) {
         }
         let file = std::env::temp_dir().join("RightPanel-Setup.exe");
         let url = format!("https://github.com/{REPO}/releases/latest/download/RightPanel-Setup.exe");
-        let ok = std::process::Command::new("curl")
+        let ok = quiet(&mut std::process::Command::new("curl"))
             .args(["-sL", "--max-time", "300", "-o", &file.display().to_string(), &url])
             .status()
             .map(|s| s.success())
@@ -842,19 +857,33 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         set_passthrough(&window, true);
                         OPEN.store(false, Ordering::Relaxed);
                     }
+                    "sysinfo" => {
+                        let _ = webview.evaluate_script(&format!("app.sysinfo({})", sys::system_info()));
+                    }
                     "screenshot" => sys::screenshot(),
                     "pickColor" => {
                         if !PICKING.swap(true, Ordering::Relaxed) {
                             let p = proxy.clone();
-                            sys::pick_color(move |hex| {
-                                if let Some(hex) = hex {
-                                    set_clip(&hex);
-                                    OPEN.store(true, Ordering::Relaxed);
-                                    let _ = p.send_event(Ev::Open);
-                                    let _ = p.send_event(Ev::Script(format!("app.picked('{hex}')")));
-                                }
-                                PICKING.store(false, Ordering::Relaxed);
-                            });
+                            // the first callback follows the pointer: the panel is out of the way
+                            // and cannot paint outside its own window, so the swatch is placed
+                            // at the panel edge, level with the pointer, and takes screen point
+                            let look = proxy.clone();
+                            sys::pick_color(
+                                move |hex, sx, sy| {
+                                    let x = sx - PANEL_X.load(Ordering::Relaxed);
+                                    let y = sy - PANEL_Y.load(Ordering::Relaxed);
+                                    let _ = look.send_event(Ev::Script(format!("app.picking('{hex}',{x},{y})")));
+                                },
+                                move |hex| {
+                                    if let Some(hex) = hex {
+                                        set_clip(&hex);
+                                        OPEN.store(true, Ordering::Relaxed);
+                                        let _ = p.send_event(Ev::Open);
+                                        let _ = p.send_event(Ev::Script(format!("app.picked('{hex}')")));
+                                    }
+                                    PICKING.store(false, Ordering::Relaxed);
+                                },
+                            );
                         }
                     }
                     "lock" => sys::lock(),
@@ -883,18 +912,36 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         let _ = METERS.lock().ok().and_then(|mut g| g.take());
                     }
                     "qr" => {
-                        // the preview is the same bitmap the clipboard gets, so the two can never
-                        // disagree: encode once, draw once, and hand the panel a data: image
-                        let call = match util::qr(&s("text")) {
+                        // The matrix is handed over in pieces the panel asks for, and the panel is
+                        // told how long it is first. One big push arrived incomplete more than
+                        // once — the panel waits until it holds every character, so a short read
+                        // shows up as a short read and never as a blank code.
+                        match util::qr(&s("text")) {
                             Some((w, bits)) => {
-                                let side = (w as u32 + 8) * 8;
-                                let (_, _, px) = util::qr_bitmap(w, &bits, 8, 4);
-                                let uri = format!("data:image/png;base64,{}", util::base64(&util::png(side, side, &px)));
-                                format!("app.qr{}", json!({ "w": w, "png": uri, "err": false }))
+                                let rows: String = bits.iter().map(|b| if *b { '1' } else { '0' }).collect();
+                                let len = rows.len();
+                                *QR.lock().unwrap() = Some((w, rows));
+                                let _ = webview.evaluate_script(&format!("app.qrHead({w},{len})"));
                             }
-                            None => format!("app.qr{}", json!({ "w": 0, "png": "", "err": true })),
+                            None => {
+                                *QR.lock().unwrap() = None;
+                                let _ = webview.evaluate_script("app.qrHead(0,0)");
+                            }
+                        }
+                    }
+                    "qrNext" => {
+                        let part = {
+                            let g = QR.lock().unwrap();
+                            match g.as_ref() {
+                                Some((_, rows)) => {
+                                    let at = m["i"].as_u64().unwrap_or(0) as usize;
+                                    let end = rows.len().min(at + 512);
+                                    if at <= end { rows[at..end].to_string() } else { String::new() }
+                                }
+                                None => String::new(),
+                            }
                         };
-                        let _ = webview.evaluate_script(&call);
+                        let _ = webview.evaluate_script(&format!("app.qrPart({})", json!(part)));
                     }
                     "copyQR" => {
                         // Rust already holds the matrix, so it builds the bitmap and puts it on the
