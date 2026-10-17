@@ -9,6 +9,18 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.18
+- **The world clock reads in UTC offsets** — each city now shows `UTC+03:30` or `UTC-04:00` instead of "Today, +3h", read per moment so daylight saving is already right
+- **Ten time zones without scrolling** (was six), each row now **city · clock**, and the add picker has room to breathe
+- **The add picker gets out of the way** — while it is open the clock hides, the button turns into **✕ Close**, and the zones you already have sit at the top in grey so you can see what is there
+- **The calendar opens in Gregorian now** — click the month name to flip between the two, and it remembers which one you left it on. The date at the bottom is three boxes (year, month, day) read in whichever calendar you are looking at, and both cards copy on click
+- **Two date formats, one place** — Settings → General has *Gregorian date* and *Jalali date*, each with DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD.MM.YYYY or YYYY/MM/DD. They apply to Generate, the calendar and the snippet placeholders at once, and the two calendars keep their own order
+- **Snippets are editable** — a pencil before the bin opens the row for editing, Enter saves and Escape backs out
+- **Snippets show what they will copy** — a snippet saved as `hi {{date}}` reads `hi 17/10/2026` in the list, with four more placeholders on the box: `{{time_12h}}`, `{{weekday}}`, `{{month}}`, `{{jalali_month}}`
+- **The QR preview draws again** — the code matrix now crosses the bridge as one string instead of a bool array, which was arriving empty and leaving a white square
+- **More opens when you click it right after the panel appears** — the pointer opening a tool and the click that followed were reading as open-then-close
+- **System monitor is now Performance**, with a gauge of its own rather than Task Manager's icon, and *Win settings* is just *Settings*
+
 ### New in 1.4.17
 - **A calendar, in both calendars at once** — a month grid where every day carries its Jalali number big and its Gregorian number small, so you never have to convert anything in your head. It opens on the Iranian week (Saturday first), has Today and month arrows, and marks today. Below it a box takes either calendar's date — `2026-10-16` or `1405-07-24`, with `/` or `-` — and shows you the other one, in both directions
 - **A QR code generator** — type text, a link, a Wi-Fi password, and it is drawn as a sharp inline SVG with the quiet zone already in. *Copy PNG* puts it on the clipboard as an image you can paste straight into a document or a message
