@@ -4,7 +4,7 @@ use std::{
     ffi::c_void,
     fs,
     path::{Path, PathBuf},
-    sync::atomic::{AtomicIsize, Ordering},
+    sync::atomic::{AtomicBool, AtomicIsize, Ordering},
     thread,
     time::Duration,
 };
@@ -493,10 +493,10 @@ const WM_RBUTTONDOWN: i32 = 0x204;
 const WM_RBUTTONUP: i32 = 0x205;
 const PM_REMOVE: u32 = 1;
 
-/// Where the grab was clicked. The hook is the one thing that sees every click, so it is also the
-/// one that decides — polling afterwards can miss the press between two ticks, which is how a click
-/// that visibly landed picked nothing.
-static PICK_AT: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+/// Whether the grab has been clicked. The hook is the one thing that sees every click, so it is
+/// also the one that decides — polling afterwards can miss the press between two ticks, which is
+/// how a click that visibly landed picked nothing.
+static PICKED: AtomicBool = AtomicBool::new(false);
 
 /// Swallows the left button while a grab is up, so the click that picks the colour cannot also
 /// press whatever was under the pointer. Right-click is left alone: it is how a menu is opened
@@ -507,9 +507,7 @@ unsafe extern "system" fn eat_mouse(code: i32, wparam: isize, _lparam: isize) ->
     }
     match wparam as i32 {
         WM_LBUTTONDOWN => {
-            let mut p = POINT { x: 0, y: 0 };
-            unsafe { GetCursorPos(&mut p) };
-            *PICK_AT.lock().unwrap() = Some((p.x, p.y));
+            PICKED.store(true, Ordering::Relaxed);
             1   // swallowed: this one belongs to the panel
         }
         WM_LBUTTONUP => 1,
@@ -540,7 +538,7 @@ pub fn pick_color(
             pump_mouse_messages();
             thread::sleep(Duration::from_millis(10));
         }
-        *PICK_AT.lock().unwrap() = None;
+        PICKED.store(false, Ordering::Relaxed);
         // a hook is told which module it lives in; leaving that null is refused on some builds,
         // and then the click passes straight through to whatever was under the pointer
         let hook = SetWindowsHookExW(WH_MOUSE_LL, eat_mouse, GetModuleHandleW(std::ptr::null()), 0);
@@ -565,7 +563,7 @@ pub fn pick_color(
                 last_y = p.y;
                 look(hex.clone(), p.x, p.y);
             }
-            if PICK_AT.lock().unwrap().is_some() {
+            if PICKED.load(Ordering::Relaxed) {
                 if !hook.is_null() { UnhookWindowsHookEx(hook); }
                 return done(Some(hex));
             }
