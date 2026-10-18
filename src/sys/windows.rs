@@ -27,6 +27,9 @@ use windows_sys::Win32::{
     UI::Input::KeyboardAndMouse::{
         GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_CONTROL, VK_D, VK_ESCAPE, VK_LBUTTON, VK_LWIN, VK_SHIFT, VK_SPACE,
         VK_MEDIA_NEXT_TRACK, VK_MEDIA_PLAY_PAUSE, VK_MEDIA_PREV_TRACK, VK_V, VK_VOLUME_DOWN, VK_VOLUME_MUTE, VK_VOLUME_UP,
+        VK_MENU, VK_RETURN, VK_TAB, VK_BACK, VK_DELETE, VK_INSERT, VK_HOME, VK_END, VK_PRIOR, VK_NEXT, VK_UP, VK_DOWN, VK_LEFT,
+        VK_RIGHT, VK_F1, VK_OEM_1, VK_OEM_2, VK_OEM_3, VK_OEM_4, VK_OEM_5, VK_OEM_6, VK_OEM_7, VK_OEM_COMMA, VK_OEM_MINUS,
+        VK_OEM_PERIOD, VK_OEM_PLUS,
     },
     UI::WindowsAndMessaging::{
         GetCursorPos, GetForegroundWindow, GetWindowTextW, PostMessageW, SetForegroundWindow, SetWindowPos, HWND_NOTOPMOST,
@@ -74,19 +77,32 @@ pub fn system_info() -> serde_json::Value {
     let os_key = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
     let gpu_key = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000";
     let name_key = "SYSTEM\\CurrentControlSet\\Control\\ComputerName\\ComputerName";
-    let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
-    let ram_gb = unsafe { GlobalMemoryStatusEx(&mut mem) } as u64 / 1024 / 1024 / 1024;
     let secs = unsafe { GetTickCount64() } / 1000;
     let gpu = reg_string(gpu_key, "DriverDesc")
         .or_else(|| reg_string("SYSTEM\\CurrentControlSet\\Control\\Video\\Vga2D0", "DriverDesc"));
+    // "installed" is the memory on the boards; "usable" is what the system can actually hand out,
+    // which is always a little less. Windows reports both the same way, so it is asked the same way.
+    let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
+    let usable = unsafe { GlobalMemoryStatusEx(&mut mem) } as u64 / 1024 / 1024 / 1024;
+    let mut physical: usize = 0;      // kilobytes, as the API wants it
+    unsafe { GetPhysicallyInstalledSystemMemory(&mut physical) };
+    let installed = physical as u64 / 1024;
+    let arch = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITECTURE").unwrap_or_default();
+    let wow = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITEW6432").is_some();
+    let bits = if wow { 32 } else { 64 };
+    let proc = match arch.to_ascii_uppercase().as_str() {
+        "AMD64" => "x64", "ARM64" => "ARM64", "X86" => "x86", _ => "",
+    };
     serde_json::json!({
         "os": reg_string(os_key, "ProductName").unwrap_or_else(|| "Windows".into()),
         "build": reg_string(os_key, "DisplayVersion").unwrap_or_default(),
+        "system": if proc.is_empty() { String::new() } else { format!("{bits}-bit operating system, {proc}-based processor") },
         "cpu": reg_string("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "ProcessorNameString")
             .map(|s| s.split_whitespace().collect::<Vec<_>>().join(" ")).unwrap_or_default(),
         "gpu": gpu.unwrap_or_default(),
         "name": reg_string(name_key, "ComputerName").unwrap_or_default(),
-        "ram": ram_gb,
+        "ram": installed,
+        "ramUsable": usable,
         "upDays": secs / 86400,
         "upHours": secs / 3600 % 24,
         "upMins": secs / 60 % 60,
@@ -158,15 +174,74 @@ pub fn left_down() -> bool {
     unsafe { GetAsyncKeyState(VK_LBUTTON as i32) < 0 }
 }
 
-/// Is the key the user picked in Settings — 1 Ctrl, 2 Shift, 3 Space — currently held?
-pub fn mod_held(which: u8) -> bool {
-    let vk = match which {
-        1 => VK_CONTROL,
-        2 => VK_SHIFT,
-        3 => VK_SPACE,
-        _ => return true,
+/// A single virtual key code from the panel's binding list: modifiers keep their own codes, a
+/// letter or digit is the key's own, everything else is its named code.
+pub fn key_code(name: &str) -> Option<u8> {
+    let n = name.trim();
+    let code = match n {
+        "Control" | "Ctrl" => VK_CONTROL,
+        "Shift" => VK_SHIFT,
+        "Alt" => VK_MENU,
+        "Meta" | "Win" => VK_LWIN,
+        " " | "Space" | "Spacebar" => VK_SPACE,
+        "Enter" | "Return" => VK_RETURN,
+        "Escape" | "Esc" => VK_ESCAPE,
+        "Tab" => VK_TAB,
+        "Backspace" => VK_BACK,
+        "Delete" | "Del" => VK_DELETE,
+        "Insert" => VK_INSERT,
+        "Home" => VK_HOME,
+        "End" => VK_END,
+        "PageUp" => VK_PRIOR,
+        "PageDown" => VK_NEXT,
+        "Up" | "ArrowUp" => VK_UP,
+        "Down" | "ArrowDown" => VK_DOWN,
+        "Left" | "ArrowLeft" => VK_LEFT,
+        "Right" | "ArrowRight" => VK_RIGHT,
+        "`" => VK_OEM_3,
+        "-" => VK_OEM_MINUS,
+        "=" => VK_OEM_PLUS,
+        "[" => VK_OEM_4,
+        "]" => VK_OEM_6,
+        "\\" => VK_OEM_5,
+        ";" => VK_OEM_1,
+        "'" => VK_OEM_7,
+        "," => VK_OEM_COMMA,
+        "." => VK_OEM_PERIOD,
+        "/" => VK_OEM_2,
+        other => {
+            let b = other.as_bytes();
+            match b.len() {
+                1 => match b[0] {
+                    c @ b'A'..=b'Z' => c as i32,
+                    c @ b'0'..=b'9' => c as i32,
+                    c if c.is_ascii_lowercase() => c.to_ascii_uppercase() as i32,
+                    _ => return None,
+                },
+                // F1..F12 are not contiguous: F10 sits nine past F1
+                2 if b[0].to_ascii_uppercase() == b'F' => match b[1] {
+                    d @ b'1'..=b'9' => VK_F1 + (d - b'1') as i32,
+                    _ => return None,
+                },
+                3 if b[0].to_ascii_uppercase() == b'F' && b[1] == b'1' => match b[2] {
+                    d @ b'0'..=b'2' => VK_F1 + 9 + (d - b'0') as i32,
+                    _ => return None,
+                },
+                _ => return None,
+            }
+        }
     };
-    unsafe { GetAsyncKeyState(vk as i32) < 0 }
+    Some(code as u8)
+}
+/// Is this whole combination down at once?
+pub fn keys_down(codes: &[u8]) -> bool {
+    codes.iter().all(|c| key_down(*c as i32))
+}
+pub fn key_is_down(vk: u8) -> bool {
+    key_down(vk as i32)
+}
+fn key_down(vk: i32) -> bool {
+    unsafe { GetAsyncKeyState(vk) < 0 }
 }
 
 /// Remember the app the user was in, so paste / pin can target it.
@@ -305,7 +380,7 @@ pub fn beep() {
    tested without a Windows box — those meters wait until there is a way to prove them.
    windows-sys 0.61 does not export GetSystemTimes, so that one is declared here: a FILETIME is two
    u32s, so the 100ns ticks read straight out of three u64s. */
-use windows_sys::Win32::System::SystemInformation::{GetTickCount64, GlobalMemoryStatusEx, MEMORYSTATUSEX};
+use windows_sys::Win32::System::SystemInformation::{GetPhysicallyInstalledSystemMemory, GetTickCount64, GlobalMemoryStatusEx, MEMORYSTATUSEX};
 
 #[link(name = "kernel32")]
 unsafe extern "system" {
@@ -343,14 +418,16 @@ impl Meters {
             f64::NAN
         };
         let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
+        // one decimal on the gigabytes: "11.3 of 15.8 GB" is a reading, "11 of 15 GB" is a rounding
         let (ram, used, total) = if unsafe { GlobalMemoryStatusEx(&mut mem) } != 0 {
+            let gb = |b: u64| (b as f64 / 1024.0 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
             (
                 (mem.ullTotalPhys - mem.ullAvailPhys) as f64 / mem.ullTotalPhys.max(1) as f64 * 100.0,
-                (mem.ullTotalPhys - mem.ullAvailPhys) / 1024 / 1024 / 1024,
-                mem.ullTotalPhys / 1024 / 1024 / 1024,
+                gb(mem.ullTotalPhys - mem.ullAvailPhys),
+                gb(mem.ullTotalPhys),
             )
         } else {
-            (0.0, 0, 0)
+            (0.0, 0.0, 0.0)
         };
         // how long the machine has been up, which is a free extra reading from the same call set
         let secs = unsafe { GetTickCount64() } / 1000;
@@ -379,6 +456,58 @@ pub fn screenshot() {
     });
 }
 
+/* While the eyedropper is up, a click is meant for the panel alone. Without this the click that
+   picks the colour also presses whatever button happens to be under the pointer, which is how you
+   end up closing a dialog you were only trying to sample. A low-level mouse hook is the one thing
+   Windows offers that can refuse input to every other process, and it only fires on a thread that
+   pumps messages — so the grab thread does that instead of sleeping. */
+type HookProc = unsafe extern "system" fn(i32, isize, isize) -> isize;
+
+#[repr(C)]
+struct Msg {
+    hwnd: *mut core::ffi::c_void,
+    message: u32,
+    wparam: isize,
+    lparam: isize,
+    time: u32,
+    pt: POINT,
+}
+
+#[link(name = "user32")]
+unsafe extern "system" {
+    fn SetWindowsHookExW(id: i32, cb: HookProc, hmod: *mut core::ffi::c_void, tid: u32) -> *mut core::ffi::c_void;
+    fn UnhookWindowsHookEx(hhk: *mut core::ffi::c_void) -> i32;
+    fn PeekMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, remove: u32) -> i32;
+    fn DispatchMessageW(msg: *const Msg) -> isize;
+    fn CallNextHookEx(hhk: *mut core::ffi::c_void, code: i32, wparam: isize, lparam: isize) -> isize;
+}
+
+const WH_MOUSE_LL: i32 = 14;
+const WM_LBUTTONDOWN: i32 = 0x201;
+const WM_LBUTTONUP: i32 = 0x202;
+const WM_RBUTTONDOWN: i32 = 0x204;
+const WM_RBUTTONUP: i32 = 0x205;
+const PM_REMOVE: u32 = 1;
+
+unsafe extern "system" fn eat_mouse(code: i32, wparam: isize, lparam: isize) -> isize {
+    if code < 0 {
+        return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);   // not ours to judge
+    }
+    match wparam as i32 {
+        WM_LBUTTONDOWN | WM_LBUTTONUP | WM_RBUTTONDOWN | WM_RBUTTONUP => 1,   // swallowed
+        _ => CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam),
+    }
+}
+
+/// Runs whatever the hook wants to see, then hands the thread back. Without this the hook is
+/// installed but never called: Windows delivers it as a message to the thread that set it.
+unsafe fn pump_mouse_messages() {
+    let mut msg = Msg { hwnd: std::ptr::null_mut(), message: 0, wparam: 0, lparam: 0, time: 0, pt: POINT { x: 0, y: 0 } };
+    while PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, PM_REMOVE) != 0 {
+        DispatchMessageW(&msg);
+    }
+}
+
 /// Screen eyedropper: waits for the next click, returns the pixel color.
 /// `look` is called with the colour under the pointer, and where the pointer is, while it moves;
 /// `done` gets the chosen colour, or None if the grab was called off.
@@ -387,14 +516,19 @@ pub fn pick_color(
     done: impl FnOnce(Option<String>) + Send + 'static,
 ) {
     thread::spawn(move || unsafe {
+        // let go of whatever button started the grab before the hook goes up
         while GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
+            pump_mouse_messages();
             thread::sleep(Duration::from_millis(10));
         }
+        let hook = SetWindowsHookExW(WH_MOUSE_LL, eat_mouse, std::ptr::null_mut(), 0);
         let mut last = String::new();
         let mut last_y = (0i32, 0i32);
         loop {
-            thread::sleep(Duration::from_millis(40));
+            pump_mouse_messages();
+            thread::sleep(Duration::from_millis(20));
             if GetAsyncKeyState(VK_ESCAPE as i32) < 0 {
+                if !hook.is_null() { UnhookWindowsHookEx(hook); }
                 return done(None);
             }
             let mut p = POINT { x: 0, y: 0 };
@@ -409,6 +543,8 @@ pub fn pick_color(
                 look(hex.clone(), p.x, p.y);
             }
             if GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
+                // the press is seen here before the hook ever sees it, so the hook is already down
+                if !hook.is_null() { UnhookWindowsHookEx(hook); }
                 return done(Some(hex));
             }
         }

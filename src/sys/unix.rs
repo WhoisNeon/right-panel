@@ -100,12 +100,6 @@ pub fn left_down() -> bool {
     false
 }
 
-/// No cheap way to poll a modifier here without spawning a process every tick, so the
-/// setting is Windows-only; never report "held" or the panel could be locked shut.
-pub fn mod_held(_: u8) -> bool {
-    true
-}
-
 pub fn remember_foreground() {}
 
 pub fn clip_seq() -> u64 {
@@ -167,7 +161,9 @@ impl Meters {
     }
 
     pub fn sample(&mut self) -> serde_json::Value {
-        serde_json::json!({ "cpu": 0.0, "ram": 0.0, "used": 0, "total": 0, "upDays": 0, "upHours": 0, "upMins": 0 })
+        serde_json::json!({
+        "cpu": 0.0, "ram": 0.0, "used": 0.0, "total": 0.0, "upDays": 0, "upHours": 0, "upMins": 0,
+    })
     }
 }
 
@@ -212,6 +208,19 @@ pub fn screenshot() {
     }
 }
 
+/* ---------------- keybinds (nothing to watch on the other platforms yet) ---------------- */
+pub fn key_code(_name: &str) -> Option<u8> {
+    None
+}
+
+pub fn keys_down(_codes: &[u8]) -> bool {
+    false
+}
+
+pub fn key_is_down(_vk: u8) -> bool {
+    true
+}
+
 /* ---------------- system info ---------------- */
 pub fn system_info() -> serde_json::Value {
     let read = |p: &str| std::fs::read_to_string(p).unwrap_or_default().trim().to_string();
@@ -229,10 +238,12 @@ pub fn system_info() -> serde_json::Value {
     serde_json::json!({
         "os": os,
         "build": "",
+        "system": std::env::consts::ARCH.to_string(),
         "cpu": cpu,
         "gpu": model,
         "name": read("/etc/hostname"),
-        "ram": ram_kb / 1024 / 1024,
+        "ram": (ram_kb as f64 / 1024.0 / 1024.0 * 10.0).round() / 10.0,
+        "ramUsable": (ram_kb as f64 / 1024.0 / 1024.0 * 10.0).round() / 10.0,
         "upDays": up / 86400,
         "upHours": up / 3600 % 24,
         "upMins": up / 60 % 60,

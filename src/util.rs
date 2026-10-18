@@ -122,6 +122,34 @@ pub fn qr_bitmap(w: usize, bits: &[bool], scale: u32, quiet: u32) -> (u32, u32, 
     (side, side, px)
 }
 
+/// The same matrix as an SVG document: one path for the dark modules, which is what a scanner
+/// wants and what every vector editor will open without asking.
+pub fn qr_svg(w: usize, bits: &[bool], quiet: u32, side: u32) -> String {
+    let mut d = String::with_capacity(w * w * 12);
+    for y in 0..w {
+        for x in 0..w {
+            if bits[y * w + x] {
+                d.push_str(&format!("M{} {}h1v1h-1z", x, y));
+            }
+        }
+    }
+    let q = quiet as i32;
+    let span = w as i32 + q * 2;
+    format!(
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{side}\" height=\"{side}\" viewBox=\"{q} {q} {span} {span}\" shape-rendering=\"crispEdges\"><rect x=\"{q}\" y=\"{q}\" width=\"{span}\" height=\"{span}\" fill=\"#fff\"/><path d=\"{d}\" fill=\"#000\"/></svg>"
+    )
+}
+
+/// A QR matrix as a baseline JPEG. Black on white compresses to almost nothing.
+pub fn qr_jpg(w: usize, bits: &[bool], quiet: u32) -> Option<Vec<u8>> {
+    let (_, _, px) = qr_bitmap(w, bits, 4, quiet);
+    let side = w as u16 + (quiet as u16) * 2;
+    let mut buf = Vec::new();
+    let mut enc = jpeg_encoder::Encoder::new(&mut buf, 90);
+    enc.encode(&px, side, side, jpeg_encoder::ColorType::Rgba).ok()?;
+    Some(buf)
+}
+
 /// Nearest-neighbour downscale so the UI can show a small preview.
 pub fn thumbnail(w: u32, h: u32, rgba: &[u8], max: u32) -> (u32, u32, Vec<u8>) {
     if w <= max && h <= max {

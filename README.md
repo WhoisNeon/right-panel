@@ -10,19 +10,19 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 [![Latest release](https://img.shields.io/github/v/release/WhoisNeon/right-panel?style=flat-square&color=000&cacheSeconds=300)](https://github.com/WhoisNeon/right-panel/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/WhoisNeon/right-panel/total?style=flat-square&color=000)](https://github.com/WhoisNeon/right-panel/releases)
 [![Build](https://img.shields.io/github/actions/workflow/status/WhoisNeon/right-panel/release.yml?style=flat-square)](https://github.com/WhoisNeon/right-panel/actions)
-![Size](https://img.shields.io/badge/size-~2.9%20MB-000?style=flat-square)
+![Size](https://img.shields.io/badge/size-~3.0%20MB-000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-000?style=flat-square)
 
 <br>
 
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.24-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.24-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.24-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.25-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.25-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.25-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
 <br>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.24-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.24-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.24-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.24-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.25-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.25-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.25-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.25-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
 
 <br><br>
 

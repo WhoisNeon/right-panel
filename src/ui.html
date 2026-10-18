@@ -28,6 +28,9 @@
   .item .acts span svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .item.pinned .acts span[data-pin] svg { fill: currentColor; }
   button { font: inherit; color: inherit; }
+  /* no focus rings: the panel is driven with the pointer, and the rings sit on top of the
+     thing being looked at. Focus still works, it just is not drawn. */
+  :focus, :focus-visible, :focus-within { outline: none; }
   input, textarea, select { -webkit-user-select: text; user-select: text; }
   svg.i, .ic svg { stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   svg.i { width: 20px; height: 20px; }
@@ -144,7 +147,18 @@
      header, and the Arabic digits start folded away */
   #ncOut .engrows { display: flex; gap: 6px; align-items: stretch; }
   #ncOut .engrows textarea { flex: 1 1 auto; width: 100%; min-width: 0; }
-  #ncOut .engrows .btn { flex: none; }
+  /* system info: a long processor or adapter name gets an ellipsis, never a second line */
+  #siList .set { gap: 10px; }
+  #siList .set > span { flex: none; }
+  #siList .set > b { flex: 1 1 auto; min-width: 0; font-weight: 500; text-align: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #siList .set[data-si] { cursor: pointer; }
+  #siList .set[data-si]:hover { background: var(--soft2); border-radius: 12px; }
+  /* network: the address is the headline, the flag sits beside it */
+  .nethero { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
+  .nethero img { width: 30px; height: 30px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
+  .nethero .netip { font-family: Consolas, monospace; font-size: 15px; }
+  #netList .set { cursor: pointer; }
+  #netList .set:hover { background: var(--soft2); border-radius: 12px; }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -204,7 +218,11 @@
   .mb.sm svg { width: 19px; height: 19px; }
   .mb svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .mb.big svg { fill: currentColor; }
-  .display { font-size: 30px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; padding: 0px 6px; min-height: 40px; cursor: pointer; overflow: hidden; direction:rtl; line-height: 1; }
+  /* A long number keeps its last digits: the text is laid out at the end of a flex line, so
+     whatever runs past the left edge is what gets clipped — no direction:rtl, no bidi quirks
+     with the minus sign or the digits. */
+  .display { display: flex; justify-content: flex-end; align-items: center; font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 0px 6px; min-height: 40px; cursor: pointer; overflow: hidden; line-height: 1; }
+  .display > span { display: block; overflow: hidden; white-space: nowrap; text-overflow: clip; }
   .display.line { font-size: 16px; font-weight: 400; color: var(--muted); min-height: 15px; cursor: default; }
   .display.err { font-size: 13px; font-weight: 500; color: var(--muted); }
   .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
@@ -242,12 +260,14 @@
   .zadded { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
   .zone.slim { padding: 3px 3px 3px 9px; gap: 4px; }
   .zone.slim .zn { font-size: 12px; }
-  .zone.slim .x { width: 20px; height: 20px; }
   .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
   .zone .x svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+  /* last, so the cross in a two-to-a-row row is centred rather than nudged up by the line-height */
+  .zone.slim .x { width: 20px; height: 20px; margin: 0; display: grid; place-items: center; }
+  .zone.slim .x svg { margin: 0; display: block; width: 11px; height: 11px; }
   .zone .x:hover { background: var(--soft2); color: var(--ink); }
 
-  /* dock tooltips: title="" is never used here, this is the styled replacement */
+  /* tooltips: a native title attribute is never used, this is the styled replacement */
   .tip { position: fixed; z-index: 80; background: var(--inv); color: var(--inv-ink); font-size: 11px; font-weight: 500; padding: 5px 9px; border-radius: 8px;
     pointer-events: none; white-space: nowrap; opacity: 0; will-change: transform, opacity; transition: opacity .16s, transform .28s var(--pop);
     box-shadow: 0 8px 22px -8px rgba(0,0,0,.55); }
@@ -285,6 +305,9 @@
   /* qr */
   .qrbox { display: grid; place-items: center; background: #fff; border-radius: 14px; padding: 12px; min-height: 180px; }
   .qrbox svg, .qrbox img { width: 100%; height: auto; max-height: 240px; display: block; image-rendering: pixelated; }
+  /* a square box, so the white around the code is the same on both sides */
+  .qrbox { aspect-ratio: 1 / 1; width: 100%; display: grid; place-items: center; padding: 8px; border-radius: 12px; background: var(--soft); }
+  .qrbox svg { width: auto; height: 100%; max-width: 100%; max-height: none; }
   .qrbox .empt { color: #666; font-size: 12px; text-align: center; }
   /* calendar: a month grid with both calendars on every cell, so a date never needs converting by hand */
   .calnav { display: flex; align-items: center; gap: 6px; }
@@ -322,6 +345,11 @@
   .set > .pick { flex: none; }
   /* keybinds: the key is a thing you press, so it is shown as one */
   .kbd { flex: none; font-family: Consolas, monospace; font-size: 11px; background: var(--soft2); color: var(--ink); border-radius: 7px; padding: 4px 8px; white-space: nowrap; }
+  /* a bound key reads like a key: monospaced, on a chip, click to re-record */
+  .bind { font-family: Consolas, monospace; font-size: 11px; background: var(--soft2); color: var(--ink);
+    border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; min-width: 76px; white-space: nowrap; }
+  .bind.listening { background: var(--inv); color: var(--inv-ink); }
+  #bindTools .wn { flex: 1; min-width: 0; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--inv-ink); transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .toggle.on { background: var(--inv); }
@@ -404,6 +432,8 @@
   #pickHint i { position: absolute; left: 38px; top: 50%; transform: translateY(-50%);
     font-family: Consolas, monospace; font-style: normal; font-size: 11px; color: #fff;
     background: #000a; border-radius: 6px; padding: 3px 7px; white-space: nowrap; }
+  /* on a left-edge panel the label would run off the right of the window, so it turns around */
+  body.left #pickHint i { left: auto; right: 38px; }
 
   /* custom color picker — the panel draws its own, so no native color dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
@@ -515,8 +545,8 @@
 
   <div class="panel" data-name="calc">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Calculator</h4></div>
-    <div class="display line" id="calcLine" aria-hidden="true"></div>
-    <div class="display" id="calcOut" aria-label="Click to copy">0</div>
+    <div class="display line" id="calcLine" aria-hidden="true"><span></span></div>
+    <div class="display" id="calcOut" aria-label="Click to copy"><span>0</span></div>
     <div class="keys" id="calcKeys"></div>
   </div>
 
@@ -565,9 +595,10 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4></div>
     <textarea class="field" dir="auto" id="ncIn" rows="2" aria-label="Text to convert" placeholder="Type or paste text…"></textarea>
     <div class="ncout" id="ncOut">
-      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncEn" readonly rows="2" aria-label="English digits"></textarea><button class="btn" data-nc="en"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div></div></div>
-      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits"></textarea><button class="btn" data-nc="fa"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div></div></div>
-      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits"></textarea><button class="btn" data-nc="ar"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div></div></div>
+      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncEn" readonly rows="2" aria-label="English digits" data-tip="Click to copy"></textarea></div></div></div>
+      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits" data-tip="Click to copy"></textarea></div></div></div>
+      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits" data-tip="Click to copy"></textarea></div></div></div>
+      <div class="hint">Click an output to copy it.</div>
       <button class="btn" id="ncClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button>
     </div>
   </div>
@@ -602,16 +633,22 @@
   </div>
 
   <div class="panel" data-name="qr">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>QR code</h4><button class="link" id="qrClip"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy PNG</button></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>QR code</h4></div>
     <input class="field" dir="auto" id="qrIn" aria-label="Text to encode" placeholder="Text, a link, a Wi-Fi password…">
     <div class="qrbox" id="qrBox"></div>
     <div class="hint" id="qrSize">—</div>
+    <div class="row"><button class="btn" data-qr="png">PNG</button><button class="btn" data-qr="jpg">JPG</button><button class="btn" data-qr="svg">SVG</button></div>
+  </div>
+
+  <div class="panel" data-name="net">
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Network</h4><button class="link" id="netCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button></div>
+    <div class="nethero"><img id="netFlag" alt="" hidden><span class="netip" id="netIp">…</span></div>
+    <div class="list" id="netList"></div>
   </div>
 
   <div class="panel" data-name="sysinfo">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>System info</h4><button class="link" id="siCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button></div>
     <div class="list" id="siList"></div>
-    <div class="hint">Read fresh each time you open it. Click any line to copy just that one.</div>
   </div>
 
   <div class="panel" data-name="mon">
@@ -622,7 +659,7 @@
 
   <div class="panel" data-name="cal">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Calendar</h4><button class="link" id="calToday">Today</button></div>
-    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle" title="Switch between Gregorian and Jalali">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
+    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle" data-tip="Click to switch between Gregorian and Jalali">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
     <div class="caldow" id="calDow"></div>
     <div class="calgrid" id="calGrid"></div>
     <div class="calout"><button class="card" id="calJCard"><small>Jalali</small><span id="calGOut">—</span></button><button class="card" id="calGCard"><small>Gregorian</small><span id="calJOut">—</span></button></div>
@@ -637,7 +674,8 @@
   <div class="panel" data-name="zoneadd" data-parent="clock">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Time zones</h4></div>
     <input class="field" dir="auto" id="zoneQ" aria-label="Search time zones" placeholder="City or Area/City, e.g. Asia/Tehran">
-    <div class="list scroll" id="zoneList" style="max-height:none"></div>
+    <!-- the whole list is there, the box is what is short: about five rows, then it scrolls -->
+    <div class="list scroll" id="zoneList" style="max-height:196px"></div>
   </div>
 
   <div class="panel" data-name="settings">
@@ -661,24 +699,12 @@
       </div>
     </div>
     <div class="spage" data-p="keys">
-      <div class="wsec"><span>Anywhere</span></div>
-      <div class="set"><span>Close the panel<small class="hint">From any tool, whatever has focus</small></span><span class="kbd">Esc</span></div>
-      <div class="set"><span>Close a flyout<small class="hint">Cancel a picker, a colour grab or a dialog first</small></span><span class="kbd">Esc</span></div>
-      <div class="wsec"><span>In a text box</span></div>
-      <div class="set"><span>Add a snippet<small class="hint">Snippets</small></span><span class="kbd">Enter</span></div>
-      <div class="set"><span>Run the search<small class="hint">Web search</small></span><span class="kbd">Enter</span></div>
-      <div class="set"><span>Take the colour<small class="hint">Colour picker</small></span><span class="kbd">Enter</span></div>
-      <div class="wsec"><span>Stepping a value</span></div>
-      <div class="set"><span>Up or down<small class="hint">Calendar date boxes, Timer, Units</small></span><span class="kbd">↑ ↓</span></div>
-      <div class="set"><span>Roll the value<small class="hint">Same places: the wheel steps them too</small></span><span class="kbd">Wheel</span></div>
-      <div class="set"><span>Round to step<small class="hint">Calculator: × ÷ − +</small></span><span class="kbd">Enter</span></div>
-      <div class="wsec"><span>Pointer</span></div>
-      <div class="set"><span>Right-click a tool<small class="hint">Move it between the dock and More, or switch it off</small></span><span class="kbd">Right click</span></div>
-      <div class="set"><span>Grab the panel<small class="hint">The edge you chose in General</small></span><span class="kbd">Pointer</span></div>
-      <div class="wsec"><span>Coming from the tray</span></div>
-      <div class="set"><span>Open or close<small class="hint">Right-click the tray icon</small></span><span class="kbd">Right click</span></div>
+      <div class="wsec"><span>The panel</span></div>
+      <div class="set"><span>Hold to open<small class="hint">The key held at the screen edge</small></span><button class="bind" id="bindOpen">None</button></div>
+      <div class="wsec"><span>Open a tool</span></div>
+      <div class="wlist" id="bindTools"></div>
+      <div class="hint">Click a key, then press the combination you want. Esc clears the one being recorded.</div>
     </div>
-
     <div class="spage" data-p="general">
       <div class="engsec" data-g="genPanel">
         <button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Panel</span></button>
@@ -686,7 +712,6 @@
           <div class="engrows">
       <div class="set"><span>Panel edge<small class="hint">Which screen edge the tab sits on</small></span><select class="field" id="edgeSel" aria-label="Panel edge" style="width:auto"><option value="right">Right</option><option value="left">Left</option></select></div>
       <div class="set" id="monRow"><span>Monitor<small class="hint">Which display the panel opens on</small></span><select class="field" id="monSel" aria-label="Monitor" style="width:auto"></select></div>
-      <div class="set" id="openModRow"><span>Hold to open<small class="hint">Hold this key at the screen edge to open the panel</small></span><select class="field" id="openModSel" aria-label="Hold to open the panel" style="width:auto"><option value="none">No key</option><option value="ctrl">Ctrl</option><option value="shift">Shift</option><option value="space">Space</option></select></div>
       <div class="set"><span>Animation speed<small class="hint">How fast the panel and its menus move</small></span><select class="field" id="speedSel" aria-label="Animation speed" style="width:auto"><option value="0.5">Slow</option><option value="0.75">Relaxed</option><option value="1">Normal</option><option value="1.5">Fast</option><option value="2.5">Very fast</option></select></div>
       <div class="set"><span>Gregorian date<small class="hint">How Gregorian dates are written, everywhere</small></span><select class="field" id="dateFmtG" aria-label="Gregorian date format" style="width:auto"></select></div>
       <div class="set"><span>Jalali date<small class="hint">How Jalali dates are written, everywhere</small></span><select class="field" id="dateFmtJ" aria-label="Jalali date format" style="width:auto"></select></div>
@@ -736,7 +761,7 @@ const send = (t, o = {}) => window.ipc.postMessage(JSON.stringify({ t, ...o }));
 const init = window.__init || {};
 const OS = init.platform || 'windows';   // windows | macos | linux
 const S_DEF = { theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
-  edge: 'right', monitor: 0, speed: 1, openMod: 'none', updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] };
+  edge: 'right', monitor: 0, speed: 1, updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] };
 const S = Object.assign({}, S_DEF, init.settings || {});
 const save = () => send('settings', { settings: S });
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -845,9 +870,10 @@ const W = {
   qr: { name: 'QR code', icon: I(LUC['qr-code']), kind: 'panel' },
   mon: { os: ['windows'], name: 'Performance', icon: I(LUC['gauge']), kind: 'panel' },
   sysinfo: { name: 'System info', icon: I(LUC['monitor']), kind: 'panel' },
+  net: { name: 'Network', icon: I(LUC['wifi']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
-  desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['monitor']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
+  desktop: { os: ['windows'], name: 'Desktop', icon: I(LUC['eye']), kind: 'action', run: () => { app.close(); send('key', { name: 'desktop' }); } },
   screenoff: { name: 'Screen off', icon: I(LUC['monitor-off']), kind: 'action', run: () => { app.close(); send('screenoff'); } },
   lock: { name: 'Lock PC', icon: I(LUC['lock']), kind: 'action', run: () => { app.close(); send('lock'); } },
   taskmgr: { name: { windows: 'Task Mgr', macos: 'Activity', linux: 'Monitor' }[OS], icon: I(LUC['activity']), kind: 'action', run: () => { app.close(); send('open', { target: 'taskmgr' }); } },
@@ -856,7 +882,9 @@ const W = {
   winset: { name: 'Win settings', icon: I(LUC['settings-2']), kind: 'action', run: () => { app.close(); send('open', { target: 'ms-settings:' }); } },
 };
 const DEF_DOCK = ['emoji', 'clip', 'color', 'shot', 'note', 'more'];
-const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
+// network and system info sit before the meters: the two questions they answer come before the
+// question the meters answer
+const DEF_MORE = ['calc', 'timer', 'stopwatch', 'search', 'snippets', 'text', 'media', 'cal', 'clock', 'qr', 'net', 'sysinfo', 'mon', 'gen', 'pass', 'unit', 'numconv', 'folders', 'awake', 'pinwin', 'desktop', 'screenoff', 'lock', 'taskmgr', 'winset'];
 
 /* the folders the panel starts with; the user can add, remove and reorder from the Folders tool */
 const HOME = init.home || '~';
@@ -971,13 +999,12 @@ const app = window.app = {
   },
   iconFor(id, icon) { const a = S.apps.find(x => x.id === id); if (a && icon && a.icon !== icon) { a.icon = icon; save(); renderAll(); } },
   syncStartup(v) { S.startup = v; $('#tStartup').classList.toggle('on', v); save(); },
-  syncOpenMod(v) { S.openMod = v; $('#openModSel').value = v; save(); },   // the tray menu sets this too
   // a paste hands focus to the app behind the panel, so a blur on its own is not a reason to
   // close: only close when the pointer has actually left as well
   blur() { if (isOpen && !dragging && performance.now() - openedAt > 260 && !(lastPt && inside(lastPt.x, lastPt.y))) app.close(); },
   stats() {},
   clip(text) { addClip(text); },
-  picked(hex) { setColor(hex); pushRecentColor(hex); copy(hex, 'Picked ' + hex); isOpen = true; openWidget('color'); },
+  picked(hex) { setColor(hex); pushRecentColor(color); copy(color.toUpperCase(), 'Picked'); isOpen = true; openWidget('color'); },
   toast: m => toast(m),
 };
 
@@ -1006,7 +1033,6 @@ addEventListener('mousemove', e => {
   if (inside(e.clientX, e.clientY)) { clearTimeout(outT); sticky = false; } else maybeClose();
 });
 document.documentElement.addEventListener('mouseleave', () => { hoverY = null; maybeClose(); });
-addEventListener('keydown', e => { if (e.key === 'Escape') app.close(); });
 // mouse reaching the edge strip opens the panel (Linux: the only input area while closed)
 let edgeSent = false;
 addEventListener('mousemove', e => { if (!isOpen && !edgeSent && atEdge(e.clientX)) { edgeSent = true; send('edge'); setTimeout(() => edgeSent = false, 400); } });
@@ -1141,6 +1167,7 @@ function setPanel(name, fromMore = false) {
   else send('metersStop');
   if (name === 'qr') setTimeout(() => $('#qrIn').focus(), 60);
   if (name === 'sysinfo') send('sysinfo');
+  if (name === 'net') loadNet();
   if (name === 'cal') setTimeout(() => $('#calY').focus({ preventScroll: true }), 60);
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
@@ -1160,7 +1187,11 @@ function openWidget(id) {
 function press(el) { if (el._p) { el._p.v = 1; el._p.vel = 0; } }
 tabUi.addEventListener('mousedown', e => { const t = e.target.closest('.tool'); if (t) press(t); });
 tabUi.addEventListener('click', e => {
-  const t = e.target.closest('.tool'); if (!t || dragMoved) return;
+  // while the dock is still springing, the click can land on the flyout rather than on the tool;
+  // what was pressed is the tool the pointer was after, so it is used when no tool is under it
+  const t = e.target.closest('.tool') || (!dragMoved && pressedEl?.isConnected ? pressedEl : null);
+  if (!t || dragMoved) return;
+  pressedEl = null;
   const id = t.dataset.w, w = info(id);
   if (w.kind === 'app') { setTimeout(() => { app.close(); send('launch', { path: w.app.path }); }, 160); return; }
   if (w.kind === 'action') { w.run(); return; }
@@ -1263,7 +1294,11 @@ function dropDrag(e) {
   } else clearPh();
   setTimeout(() => { dragMoved = false; if (lastPt && !inside(lastPt.x, lastPt.y)) maybeClose(); }, 60);
 }
-addEventListener('mousedown', e => { const el = e.target.closest('[data-w]'); if (el && e.button === 0) beginDrag(el, e); });
+// The dock springs into place when it opens. A press that starts while it is still moving can end
+// on the flyout behind it, and the browser then fires no click at all — which is why More would
+// sometimes do nothing. What was pressed is remembered here and used if the click finds no tool.
+let pressedEl = null;
+addEventListener('mousedown', e => { const el = e.target.closest('[data-w]'); if (el && e.button === 0) { pressedEl = el; beginDrag(el, e); } });
 
 // files dragged in from the file manager
 app.dropHint = on => $('#dropHint').classList.toggle('on', !!on);
@@ -1279,7 +1314,6 @@ function moveWidget(id, list, idx, withHidden = false) {
   S[list].splice(at < 0 ? S[list].length : at, 0, id);
   if (wasHidden && !withHidden) S.hidden = S.hidden.filter(x => x !== id);   // dropping in the dock/More shows it again
   save(); renderAll();
-  if (list === 'dock' && panel === 'more') toast(`${info(id).name} → dock`);
 }
 function moveFolder(id, idx) {
   const from = S.folders.findIndex(f => f.id === id); if (from < 0) return;
@@ -1339,8 +1373,8 @@ function copy(text, msg) { send('copy', { text }); toast(msg || 'Copied', 'copy'
 /* ---- dock tooltips (styled, not a title attribute) ---- */
 const tipEl = $('#tip');
 let tipT;
-function showTip(el) {
-  tipEl.textContent = info(el.dataset.w)?.name || '';
+function showTip(el, text) {
+  tipEl.textContent = text || info(el.dataset.w)?.name || '';
   tipEl.classList.add('on');
   const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
   const x = DIR > 0 ? r.left - w - 10 : r.right + 10;
@@ -1355,6 +1389,13 @@ tabUi.addEventListener('mouseover', e => {          // the whole tab, so the Set
   clearTimeout(tipT); tipT = setTimeout(() => showTip(el), 300);
 });
 tabUi.addEventListener('mouseout', e => { if (e.target.closest('.tool')) hideTip(); });
+/* anything may carry a tip, not just the dock: data-tip="…" instead of a title attribute,
+   which Chromium shows after a second in its own grey box */
+addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]'); if (!el) return;
+  clearTimeout(tipT); tipT = setTimeout(() => showTip(el, el.dataset.tip), 300);
+});
+addEventListener('mouseout', e => { if (e.target.closest('[data-tip]')) hideTip(); });
 /* clicking a value copies it; the panel never pastes on your behalf */
 function deliver(text) { copy(text); }
 
@@ -2280,14 +2321,15 @@ function rgbToHsl([r, g, b]) { r /= 255; g /= 255; b /= 255; const mx = Math.max
 const fmts = () => { const rgb = hexToRgb(color), hsl = rgbToHsl(rgb);
   return { hex: color.toUpperCase(), rgb: `rgb(${rgb.join(', ')})`, hsl: `hsl(${hsl[0]}, ${hsl[1]}%, ${hsl[2]}%)` }; };
 function setColor(hex) {
-  color = hex.toLowerCase(); $('#bigSwatch').style.background = color;
+  // the eyedropper hands over #rrggbb, the palette hands over rrggbb; the panel keeps one form
+  color = hex.replace('#', '').toLowerCase(); $('#bigSwatch').style.background = '#' + color;
   const f = fmts(); $$('.fmt').forEach(b => b.querySelector('span').textContent = f[b.dataset.f]);
 }
 function pushRecentColor(hex) { S.recentColors = [hex, ...S.recentColors.filter(c => c !== hex)].slice(0, 16); save(); renderRecent(); }
 const PALETTE = ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#78716c','#64748b','#111827','#374151','#9ca3af','#e5e7eb','#ffffff'];
 $('#palette').innerHTML = PALETTE.map(c => `<button class="spring" style="background:${c}" data-c="${c}"></button>`).join('');
 function renderRecent() { $('#recentColors').innerHTML = S.recentColors.length ? S.recentColors.map(c => `<button class="spring" style="background:${c}" data-c="${c}"></button>`).join('') : '<div class="empty" style="grid-column:1/-1;padding:6px">Picked colors appear here</div>'; }
-[$('#palette'), $('#recentColors')].forEach(el => el.addEventListener('click', e => { const c = e.target.dataset.c; if (c) { setColor(c); copy(c.toUpperCase()); } }));
+[$('#palette'), $('#recentColors')].forEach(el => el.addEventListener('click', e => { const c = e.target.dataset.c; if (c) { setColor(c); copy(color.toUpperCase()); } }));
 $$('.fmt').forEach(b => b.onclick = () => { copy(fmts()[b.dataset.f]); pushRecentColor(color); });
 $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () => pushRecentColor(color));
 $('#eyedrop').onclick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
@@ -2299,10 +2341,15 @@ app.picking = (hex, x, y) => {
   pickHint.hidden = false;
   pickHint.style.background = hex;
   $('#pickHex').textContent = hex.toUpperCase();
-  // the panel cannot paint outside its own window, so the swatch rides the edge nearest the
-  // pointer and sits level with it — which is the same spot, to the eye
-  const left = DIR < 0 ? Math.max(4, x - 34) : Math.max(4, innerWidth - 38);
-  pickHint.style.transform = `translate(${Math.round(left)}px, ${Math.round(Math.max(4, Math.min(y - 15, innerHeight - 36)))}px)`;
+  // The panel is a strip and cannot paint outside itself, so the swatch rides inside it: offset
+  // from the pointer so the thing being sampled stays visible, and clamped so the hex label — which
+  // sits on whichever side has room — can never run off the edge of the window.
+  const hexW = $('#pickHex').offsetWidth || 64;
+  const inset = DIR < 0
+    ? Math.min(Math.max(x - 18, hexW + 46), innerWidth - 34)      // label to the left of the swatch
+    : Math.max(4, Math.min(x + 18, innerWidth - hexW - 42));      // label to the right of it
+  const top = Math.max(4, Math.min(y + 22, innerHeight - 44));
+  pickHint.style.transform = `translate(${Math.round(inset)}px, ${Math.round(top)}px)`;
 };
 app.picked = hex => {
   pickHint.hidden = true;
@@ -2700,10 +2747,11 @@ const SNIP_PH = {
 let myIp = '';
 async function loadIp() {
   try {
-    const r = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
-    myIp = (await r.json()).ip || '';
+    myIp = await (await fetch('https://api.ipify.org/', { cache: 'no-store' })).text();
+    myIp = myIp.trim();
   } catch { myIp = ''; }
 }
+loadIp();   // once at start-up, so a snippet copied later does not have to wait for the lookup
 const FA_WEEK = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
 const FA_MONTH = ['ژانویه', 'فوریه', 'مارس', 'آوریل', 'مه', 'ژوئن', 'ژوئیه', 'اوت', 'سپتامبر', 'اکتبر', 'نوامبر', 'دسامبر'];
 const FA_JMONTH = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
@@ -2733,9 +2781,22 @@ function renderSnips() {
 $('#snipIn').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { S.snippets.unshift(e.target.value.trim()); e.target.value = ''; save(); renderSnips(); } });
 $('#snipClear').onclick = () => { S.snippets = []; save(); renderSnips(); };
 /* the chips drop their placeholder into the box, so the names are discoverable without a tooltip */
-$('#snipPhChips').onclick = e => { const p = e.target.closest('[data-ph]')?.dataset.ph; if (!p) return;
-  const i = $('#snipIn'), at = i.value.length;
-  i.value = i.value.slice(0, at) + `{{${p}}}` + i.value.slice(at); i.focus(); };
+/* A placeholder dropped into an empty box gets a space after it, so the next word you type is
+   not glued to it. Dropped after "date:" it gets one before as well, because there is nothing
+   after the colon to do that job. "date: " already has the gap, so it only gets the trailing
+   one. */
+function padPlaceholder(before, name) {
+  const token = `{{${name}}}`;
+  const tail = ' ';
+  return before === '' || /\s$/.test(before)
+    ? { text: token + tail, caret: token.length }
+    : { text: ' ' + token + tail, caret: token.length + 1 };
+}
+$('#snipPhChips').onclick = e => {
+  const p = e.target.closest('[data-ph]')?.dataset.ph; if (!p) return;
+  const i = $('#snipIn'), { text, caret } = padPlaceholder(i.value, p);
+  i.value = text; i.focus(); i.setSelectionRange(caret, caret);
+};
 $('#snipList').onclick = e => {
   const b = e.target.closest('.item'); if (!b) return; const i = +b.dataset.i;
   if (e.target.closest('[data-x]')) { S.snippets.splice(i, 1); save(); renderSnips(); }
@@ -2841,7 +2902,6 @@ const qrFail = msg => { qrW = 0; qrWant = 0; qrBuf = ''; $('#qrBox').innerHTML =
 app.qrHead = (w, len) => {
   if (!w || !len) return qrFail('Too long for a QR code');
   qrW = w; qrWant = len; qrBuf = '';
-  $('#qrSize').textContent = 'reading…';
   send('qrNext', { i: 0 });
 };
 app.qrPart = part => {
@@ -2854,20 +2914,133 @@ function qrDraw() {
   if (qrBuf.length !== w * w) return qrFail('The code came back unreadable');
   let d = '';
   for (let i = 0; i < w * w; i++) if (qrBuf[i] === '1') d += `M${i % w} ${(i / w) | 0}h1v1h-1z`;
-  box.innerHTML = `<svg viewBox="-4 -4 ${w + 8} ${w + 8}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect x="-4" y="-4" width="${w + 8}" height="${w + 8}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
-  $('#qrSize').textContent = `${w}×${w} modules · version ${((w - 17) / 4) | 0}`;
+  // two modules of quiet zone, not four: it still scans, and the white border stops dominating
+  box.innerHTML = `<svg viewBox="-2 -2 ${w + 4} ${w + 4}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect x="-2" y="-2" width="${w + 4}" height="${w + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  $('#qrSize').textContent = '…';
+  send('qrSize', { text: qrText });             // the native side answers with the real numbers
 }
 $('#qrIn').addEventListener('input', e => { qrText = e.target.value; send('qr', { text: qrText }); });
-$('#qrClip').onclick = () => { if (!qrText) return toast('Type something first'); send('copyQR', { text: qrText }); };
-app.qrCopied = ok => toast(ok ? 'QR code copied as an image' : 'Could not put the image on the clipboard');
+$('#qrSize').textContent = '—';
+$('.panel[data-name=qr]').addEventListener('click', e => {
+  const f = e.target.closest('[data-qr]')?.dataset.qr;
+  if (!f) return;
+  if (!qrW) return toast('Type something first');
+  send('qrSave', { text: qrText, format: f });
+});
+app.qrSaved = msg => toast(msg);
+app.qrSize = v => {
+  if (!v.ok) return;
+  const size = v.bytes < 1048576 ? `${Math.max(1, Math.round(v.bytes / 1024))} KB` : `${(v.bytes / 1048576).toFixed(1)} MB`;
+  $('#qrSize').textContent = `${v.px}×${v.px} · ${size}`;
+};
 send('qr', { text: '' });
+
+/* ---- keybinds: bind a combination to a tool, and the key the panel is held open by ----
+   A binding is written in a fixed order — Ctrl, Alt, Shift, Win, then the key — so the same
+   combination always reads the same way and two of them cannot look alike. */
+const KEY_MODS = ['Control', 'Alt', 'Shift', 'Meta'];
+const KEY_PRETTY = { ' ': 'Space', Control: 'Ctrl', Alt: 'Alt', Shift: 'Shift', Meta: 'Win', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Escape: 'Esc' };
+const bindLabel = keys => keys && keys.length ? keys.map(k => KEY_PRETTY[k] || k).join(' + ') : 'None';
+function renderBinds() {
+  const open = $('#bindOpen');
+  open.textContent = bindLabel(S.openKeys);
+  open.classList.toggle('listening', listening === 'open');
+  const ids = Object.keys(W).filter(id => W[id].kind !== 'app' && id !== 'settings');
+  $('#bindTools').innerHTML = ids.map(id => {
+    const keys = (S.binds || {})[id];
+    return `<div class="wrow" data-bind="${id}"><span class="wi">${W[id].icon}</span><span class="wn">${esc(W[id].name)}</span>`
+      + `<span class="wacts"><button class="bind${listening === id ? ' listening' : ''}" data-k="${id}">${esc(bindLabel(keys))}</button>`
+      + `<span data-un="${id}" aria-label="Remove binding"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></span></div>`;
+  }).join('');
+}
+let listening = null;
+const pushBinds = () => send('binds', { binds: S.binds || {}, openKeys: S.openKeys || [] });
+function bindKey(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const mods = KEY_MODS.filter(k => e.getModifierState && e.getModifierState(k));
+  if (['Control', 'Alt', 'Shift', 'Meta', 'CapsLock'].includes(e.key)) return;   // still choosing
+  const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  if (listening) {
+    S.binds = S.binds || {};
+    if (e.key === 'Escape') { if (listening === 'open') S.openKeys = []; else delete S.binds[listening]; }
+    else if (listening === 'open') S.openKeys = [...mods, key];
+    else S.binds[listening] = [...mods, key];
+    listening = null; save(); renderBinds(); pushBinds();
+  }
+}
+addEventListener('keydown', e => { if (listening) bindKey(e); }, true);
+addEventListener('keydown', e => { if (!listening && e.key === 'Escape') app.close(); });
+$('#bindOpen').onclick = () => { listening = 'open'; renderBinds(); };
+$('#bindTools').onclick = e => {
+  const un = e.target.closest('[data-un]');
+  if (un) { delete (S.binds ||= {})[un.dataset.un]; save(); renderBinds(); pushBinds(); return; }
+  const k = e.target.closest('[data-k]');
+  if (k) { listening = k.dataset.k; renderBinds(); }
+};
+renderBinds();
+pushBinds();   // the saved bindings go to the native side at start-up, not only when one changes
+/* the native side saw one of the bound combinations: it has already brought the panel up, so all
+   that is left is to open the tool in it */
+app.hotkey = id => {
+  const w = info(id); if (!w) return;
+  if (w.kind === 'action') { app.close(); w.run(); }
+  else setTimeout(() => openWidget(id), 90);
+};
+
+/* ---- network: the public address, and where it says it is ----
+   Two lookups, both to services that answer a plain request with JSON. Offline, or if either
+   one refuses, the tool says so rather than showing half an answer. */
+let netRows = [], netIp = '';
+const NET_FLAG = cc => `https://raw.githubusercontent.com/HatScripts/circle-flags/gh-pages/flags/${String(cc).toLowerCase()}.svg`;
+async function fetchText(url) {
+  const r = await fetch(url, { cache: 'no-store' });
+  if (!r.ok) throw new Error(url);
+  return (await r.text()).trim();
+}
+async function loadNet() {
+  $('#netList').innerHTML = '<div class="empty">Asking…</div>';
+  try {
+    const ip = await fetchText('https://api.ipify.org/');
+    netIp = ip;
+    $('#netIp').textContent = ip;
+    const g = await (await fetch('https://ipwho.is/' + encodeURIComponent(ip), { cache: 'no-store' })).json();
+    if (!g || g.success === false) throw new Error('geo');
+    const flag = $('#netFlag');
+    if (g.country_code) { flag.src = NET_FLAG(g.country_code); flag.hidden = false; } else flag.hidden = true;
+    netRows = [
+      ['IP address', ip],
+      ['Country', [g.country, g.country_code].filter(Boolean).join(' · ') || '—'],
+      ['Region', g.region || '—'],
+      ['City', g.city || '—'],
+      ['Postal code', g.postal || '—'],
+      ['Coordinates', g.latitude !== undefined ? `${g.latitude}, ${g.longitude}` : '—'],
+      ['Time zone', g.timezone?.id || '—'],
+      ['Connection', [g.connection?.isp, g.connection?.org].filter(Boolean).join(' · ') || '—'],
+    ];
+  } catch {
+    netRows = [];
+    $('#netFlag').hidden = true;
+    $('#netIp').textContent = '—';
+    $('#netList').innerHTML = '<div class="empty">Could not reach the lookup services</div>';
+    return;
+  }
+  $('#netList').innerHTML = netRows.map(([k, v], i) =>
+    `<div class="set" data-net="${i}"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+}
+$('#netList').onclick = e => {
+  const i = e.target.closest('[data-net]')?.dataset.net;
+  if (i !== undefined) copy(netRows[+i][1], 'Copied');
+};
+$('#netCopy').onclick = () => netRows.length && copy(netRows.map(([k, v]) => `${k}: ${v}`).join('\n'), 'Network info copied');
 
 /* ---- system info: read fresh each time it is opened, every line its own copy ---- */
 let sysRows = [];
 function renderSys(v) {
-  const gb = v.ram ? `${v.ram} GB` : '—';  const up = `${v.upDays || 0}d ${v.upHours || 0}h ${v.upMins || 0}m`;
+  const gb = v.ram ? `${v.ram} GB${v.ramUsable && v.ramUsable !== v.ram ? ` (${v.ramUsable} GB usable)` : ''}` : '—';  const up = `${v.upDays || 0}d ${v.upHours || 0}h ${v.upMins || 0}m`;
   sysRows = [
     ['Operating system', [v.os, v.build].filter(Boolean).join(' ') || '—'],
+    ['System type', v.system || '—'],
     ['Processor', v.cpu || '—'],
     ['Graphics', v.gpu || '—'],
     ['Memory', gb],
@@ -2961,6 +3134,12 @@ function calShow(j) {
   $('#calGOut').textContent = fmtJ(j);
   $('#calJOut').textContent = fmtG(toGregorian(j.y, j.m, j.d));
   drawCal();
+  calFillBox(j);      // the boxes follow the grid: clicking a day is choosing a date, not just looking
+}
+/* the boxes always hold the selected date, written in whichever calendar the grid is showing */
+function calFillBox(j) {
+  const t = calSys === 'gregorian' ? toGregorian(j.y, j.m, j.d) : j;
+  $('#calY').value = t.y; $('#calM').value = pad(t.m); $('#calD').value = pad(t.d);
 }
 /* the boxes are typed into, not spun: the year takes four digits, month and day two, and each one
    is held inside what the month next to it can actually hold, so Esfand and February stop at 29
@@ -3011,11 +3190,8 @@ for (const [id, key] of [['#calY', 'y'], ['#calM', 'm'], ['#calD', 'd']]) {
     step(e.key === 'ArrowUp' ? 1 : -1);
   });
 }
-/* the boxes open on today, so the panel is a date converter you can already read */
-function calFillToday() {
-  const t = calSys === 'gregorian' ? toGregorian(jalaliToday().y, jalaliToday().m, jalaliToday().d) : jalaliToday();
-  $('#calY').value = t.y; $('#calM').value = pad(t.m); $('#calD').value = pad(t.d);
-}
+/* the boxes spin like the timer: the wheel or the arrow keys step them, month and day carry
+   over when they roll past their end, so 12 + 1 is January of the next year */
 /* the three boxes are read as whichever calendar the grid is showing */
 function calRead() {
   const y = +$('#calY').value, m = +$('#calM').value, d = +$('#calD').value;
@@ -3034,20 +3210,18 @@ $('#calGrid').onclick = e => {
 };
 $('#calPrev').onclick = () => { const t = calCur; calCur = t.m > 1 ? { y: t.y, m: t.m - 1, d: 1 } : { y: t.y - 1, m: 12, d: 1 }; drawCal(); };
 $('#calNext').onclick = () => { const t = calCur; calCur = t.m < 12 ? { y: t.y, m: t.m + 1, d: 1 } : { y: t.y + 1, m: 1, d: 1 }; drawCal(); };
-$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); calFillToday(); };
+$('#calToday').onclick = () => { calCur = jalaliToday(); calShow(calCur); };
 /* clicking the month name flips between the two calendars and remembers which one you left it on */
 $('#calTitle').onclick = () => {
   calSys = calSys === 'gregorian' ? 'jalali' : 'gregorian';
   S.calSys = calSys; save();
   calCur = calSel || jalaliToday();
-  calShow(calCur);
-  calFillToday();     // the boxes are read in whichever calendar is showing, so they start on today again
+  calShow(calCur);     // the same date, written in whichever calendar is now showing
 };
 /* (the three boxes have their constrained handlers above) */
 $('#calJCard').onclick = () => calSel && copy($('#calGOut').textContent, 'Jalali date copied');
 $('#calGCard').onclick = () => calSel && copy($('#calJOut').textContent, 'Gregorian date copied');
 calShow(jalaliToday());
-calFillToday();
 
 /* ---- world clock ---- */
 /* every IANA zone the engine knows, in "Area/City" form. Intl has had supportedValuesOf since Chrome 99,
@@ -3091,7 +3265,7 @@ function renderZoneList() {
   const have = S.zones.map(z =>
     `<div class="zone slim"><span class="zn">${esc(city(z))}</span><button class="x" data-z="${esc(z)}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`).join('');
   const hits = (q ? ALL_ZONES.filter(z => fold(z).replace(/[\s_]+/g, '').includes(q)) : ALL_ZONES)
-    .filter(z => !S.zones.includes(z)).slice(0, q ? 60 : 5);
+    .filter(z => !S.zones.includes(z)).slice(0, q ? 200 : 400);
   $('#zoneList').innerHTML = (have ? `<div class="zadded">${have}</div>` : '')
     + (hits.length
       ? hits.map(z => `<button class="item plain" data-z="${z}">${esc(city(z))}<small>${esc(z)}</small></button>`).join('')
@@ -3130,14 +3304,23 @@ const CALC_KEYS = [['CE', '', 'opk'], ['C', '', 'opk'], ['⌫', 'back', 'opk'], 
 $('#calcKeys').innerHTML = CALC_KEYS.map(([k, g, c]) => `<button data-k="${k}" class="${c || ''}">${g ? I(KEY_SVG[g]) : k}</button>`).join('');
 const OP_OF = { '÷': '/', '×': '*', '−': '-' };
 let cEntry = '0', cAcc = null, cOp = null, cFresh = false, cRepeat = null, cErr = '', cLineL = '', cLineOp = null, cLineR = '';
-const cfmt = v => String(+v.toPrecision(12));                       // trims float noise: 0.1+0.2 → "0.3"
+/* thousands separators, so a long result can be read at a glance. The calculator only ever
+   holds one number, so grouping the whole thing is enough. */
+const cgroup = s => {
+  const [int, rest] = String(s).split('.');
+  return int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (rest === undefined ? '' : '.' + rest);
+};
+const cfmt = v => cgroup(+v.toPrecision(12));                     // trims float noise: 0.1+0.2 → "0.3"
 const cnum = () => parseFloat(cEntry) || 0;
 const capply = (a, o, b) => o === '+' ? a + b : o === '-' ? a - b : o === '*' ? a * b : b === 0 ? (a === 0 ? NaN : null) : a / b;
 function calcDraw() {
   const out = $('#calcOut');
-  out.textContent = cErr || cEntry;
+  // grouped on the way out, not on the way in: the entry stays a plain number to work on, and
+  // pressing backspace never has to delete a comma
+  out.firstElementChild.textContent = cErr || cgroup(cEntry);
   out.classList.toggle('err', !!cErr);
-  $('#calcLine').innerHTML = cLineL && !cErr ? esc(cLineL) + `<i>${I(OP_ICON[cLineOp])}</i>` + (cLineR !== '' ? esc(cLineR) + ' =' : '') : '';
+  const line = $('#calcLine').firstElementChild;
+  line.innerHTML = cLineL && !cErr ? esc(cLineL) + `<i>${I(OP_ICON[cLineOp])}</i>` + (cLineR !== '' ? esc(cLineR) + ' =' : '') : '';
 }
 /* a new calculation forgets the expression line; a new operand keeps it */
 function calcStart() { if (cRepeat) { cRepeat = null; cLineL = ''; cLineOp = null; cLineR = ''; } cFresh = false; }
@@ -3193,7 +3376,7 @@ $('#calcKeys').onclick = e => {
   const k = e.target.closest('[data-k]')?.dataset.k; if (k === undefined) return;
   calcType(k); calcDraw();
 };
-$('#calcOut').onclick = () => copy($('#calcOut').textContent);
+$('#calcOut').onclick = () => copy($('#calcOut').textContent.trim());
 /* typing goes through the same keys; Escape is left alone so it still closes the panel */
 addEventListener('keydown', e => {
   if (panel !== 'calc' || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -3386,7 +3569,10 @@ function ncRender() {
   for (const [k, to] of [['en', D_EN], ['fa', D_FA], ['ar', D_AR]]) $(NC_OUT[k]).value = digitsTo(t, to);
 }
 $('#ncIn').addEventListener('input', ncRender);
-$('#ncOut').onclick = e => { const k = e.target.dataset.nc; if (k) copy($(NC_OUT[k]).value); };
+$('#ncOut').onclick = e => {
+  const box = e.target.closest('textarea');
+  if (box && box.value) copy(box.value);
+};
 $('#ncClear').onclick = () => { $('#ncIn').value = ''; ncRender(); $('#ncIn').focus(); };
 ncRender();
 
@@ -3426,13 +3612,8 @@ for (const [sel, key] of [['#dateFmtG', 'dateFmtG'], ['#dateFmtJ', 'dateFmtJ']])
   $(sel).value = S[key] || 'YYYY-MM-DD';
   $(sel).onchange = e => { S[key] = e.target.value; save(); if (calSel) calShow(calSel); };
 }
-/* reading the modifier key needs OS-level APIs we only have on Windows */
-if (OS === 'windows') {
-  $('#openModSel').value = S.openMod || 'none';
-  $('#openModSel').onchange = e => { S.openMod = e.target.value; save(); };
-} else {
-  $('#openModRow').remove();
-}
+/* the key the panel is held open by is bound in Keybinds now, so there is nothing to set here */
+if (OS !== 'windows') $('#bindOpen').closest('.set').style.display = 'none';
 $('#monSel').onchange = applyPlacement;
 app.placed = ({ edge }) => { DIR = edge === 'left' ? -1 : 1; document.body.classList.toggle('left', DIR < 0); mx = -1; toast(`Panel moved to the ${edge}`); };
 if (S.edge === 'left') { DIR = -1; document.body.classList.add('left'); }

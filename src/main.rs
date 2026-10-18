@@ -3,6 +3,7 @@
 //! Right Panel — a liquid side panel that lives on the right edge of the screen.
 
 use std::{
+    collections::HashSet,
     fs,
     sync::{
         atomic::{AtomicBool, AtomicI32, AtomicU64, AtomicU8, Ordering},
@@ -44,6 +45,10 @@ static ON_LEFT: AtomicBool = AtomicBool::new(false);
 static SCALE_BITS: AtomicU64 = AtomicU64::new(0x3FF0_0000_0000_0000); // 1.0
 /// Which key must be held for the panel to open at the screen edge: 0 any, 1 Ctrl, 2 Shift, 3 Space.
 static OPEN_MOD: AtomicU8 = AtomicU8::new(0);
+/// What the panel bound to a key: tool id -> the virtual key codes that combination means.
+static BINDS: Mutex<Vec<(String, Vec<u8>)>> = Mutex::new(Vec::new());
+/// The key the edge hover needs, as one virtual key code, or 0 for none.
+static OPEN_KEYS: AtomicU8 = AtomicU8::new(0);
 static EDGE_SHARED: AtomicBool = AtomicBool::new(false);
 /// Recent clipboard images, newest last. Thumbnails go to the UI; the pixels stay here.
 static IMAGES: Mutex<Vec<(u64, u32, u32, Vec<u8>)>> = Mutex::new(Vec::new());
@@ -230,7 +235,8 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
             let shared = EDGE_SHARED.load(Ordering::Relaxed);
             dwell = if shared && in_band && (0..=3).contains(&dist) { dwell + 1 } else { 0 };
             let at_edge = if shared { dwell > 25 } else { moved && (0..=1).contains(&dist) };
-            if at_edge && in_band && (!dragging || held > 30) && sys::mod_held(OPEN_MOD.load(Ordering::Relaxed)) {
+            let hold_key = OPEN_KEYS.load(Ordering::Relaxed);
+            if at_edge && in_band && (!dragging || held > 30) && (hold_key == 0 || sys::key_is_down(hold_key)) {
                 dwell = 0;
                 sys::remember_foreground();
                 OPEN.store(true, Ordering::Relaxed);
@@ -244,6 +250,42 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
             } else if near {
                 near = false;
                 let _ = proxy.send_event(Ev::Script("app.cursor(-1)".into()));
+            }
+        }
+    });
+}
+
+/// The panel's key bindings: one virtual key code per name it wrote.
+fn key_codes(v: &Value) -> Option<Vec<u8>> {
+    let a = v.as_array()?;
+    if a.is_empty() { return None; }
+    let mut out = Vec::with_capacity(a.len());
+    for k in a {
+        out.push(sys::key_code(k.as_str()?)?);
+    }
+    Some(out)
+}
+
+/// Watches the bound combinations. A combination fires when every one of its keys is down and
+/// it was not down the tick before, so holding the key does not fire it over and over.
+fn spawn_bind_watch(proxy: EventLoopProxy<Ev>) {
+    thread::spawn(move || {
+        let mut fired: HashSet<String> = HashSet::new();
+        loop {
+            thread::sleep(Duration::from_millis(30));
+            if OPEN.load(Ordering::Relaxed) {
+                continue;                        // the panel is open: the keys belong to it
+            }
+            let binds = { BINDS.lock().unwrap().clone() };
+            for (id, codes) in binds {
+                let down = sys::keys_down(&codes);
+                if down && !fired.contains(&id) {
+                    fired.insert(id.clone());
+                    let _ = proxy.send_event(Ev::Open);         // the panel has to come up first
+                    let _ = proxy.send_event(Ev::Script(format!("app.hotkey('{}')", id.replace('\\', "\\\\").replace('\'', "\\'"))));
+                } else if !down {
+                    fired.remove(&id);
+                }
             }
         }
     });
@@ -741,6 +783,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
     restore_pins(proxy.clone());
     place(&window, &all_screens, screen_idx, on_left);
     spawn_edge_watch(proxy.clone());
+    spawn_bind_watch(proxy.clone());
     let mut tray: Option<tray::Tray> = None;
 
     event_loop.run(move |event, _, flow| {
@@ -857,6 +900,33 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         set_passthrough(&window, true);
                         OPEN.store(false, Ordering::Relaxed);
                     }
+                    "binds" => {
+                        // the panel's bindings: one combination opens a tool, one key is the
+                        // modifier the edge hover needs. Both are watched by the same thread.
+                        let mut out: Vec<(String, Vec<u8>)> = Vec::new();
+                        if let Some(obj) = m["binds"].as_object() {
+                            for (id, keys) in obj {
+                                if let Some(v) = key_codes(keys) { out.push((id.clone(), v)); }
+                            }
+                        }
+                        *BINDS.lock().unwrap() = out;
+                        OPEN_KEYS.store(
+                            m["openKeys"].as_array().and_then(|a| a.first())
+                                .and_then(|v| v.as_str()).and_then(sys::key_code).unwrap_or(0),
+                            Ordering::Relaxed,
+                        );
+                        // the tray's tick still speaks the old three-way language
+                        let open_key = m["openKeys"].as_array().and_then(|a| a.first()).and_then(|v| v.as_str());
+                        OPEN_MOD.store(
+                            match open_key {
+                                Some("Control") | Some("Ctrl") => 1,
+                                Some("Shift") => 2,
+                                Some(" ") | Some("Space") => 3,
+                                _ => 0,
+                            },
+                            Ordering::Relaxed,
+                        );
+                    }
                     "sysinfo" => {
                         let _ = webview.evaluate_script(&format!("app.sysinfo({})", sys::system_info()));
                     }
@@ -943,14 +1013,43 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         };
                         let _ = webview.evaluate_script(&format!("app.qrPart({})", json!(part)));
                     }
-                    "copyQR" => {
-                        // Rust already holds the matrix, so it builds the bitmap and puts it on the
-                        // clipboard itself — no image data crosses the bridge
-                        let ok = match util::qr(&s("text")) {
-                            Some((w, bits)) => { let (bw, bh, px) = util::qr_bitmap(w, &bits, 8, 4); sys::set_clip_image(bw, bh, &px) }
-                            None => false,
+                    // what the preview shows and what the files are written at are the same bitmap,
+                    // so the resolution and the file size under it are the real ones
+                    "qrSize" => {
+                        let info = match util::qr(&s("text")) {
+                            Some((w, bits)) => {
+                                let (side, _, px) = util::qr_bitmap(w, &bits, 8, 2);
+                                let png = util::png(side, side, &px);
+                                json!({ "ok": true, "px": side, "bytes": png.len() })
+                            }
+                            None => json!({ "ok": false }),
                         };
-                        let _ = webview.evaluate_script(&format!("app.qrCopied({})", ok));
+                        let _ = webview.evaluate_script(&format!("app.qrSize({info})"));
+                    }
+                    "qrSave" => {
+                        let format = m["format"].as_str().unwrap_or("png").to_string();
+                        let out = match util::qr(&s("text")) {
+                            Some((w, bits)) => match format.as_str() {
+                                "svg" => Some((util::qr_svg(w, &bits, 2, (w as u32 + 4) * 8), "svg".to_string())),
+                                "jpg" => util::qr_jpg(w, &bits, 2).map(|d| (d, "jpg".to_string())),
+                                _ => {
+                                    let (side, _, px) = util::qr_bitmap(w, &bits, 8, 2);
+                                    Some((util::png(side, side, &px), "png".to_string()))
+                                }
+                            },
+                            None => None,
+                        };
+                        let msg = match out {
+                            Some((data, ext)) => {
+                                let path = sys::data_dir().join(format!("qr-code.{ext}"));
+                                match fs::write(&path, data) {
+                                    Ok(()) => format!("Saved qr-code.{ext} to {}", path.display()),
+                                    Err(e) => format!("Could not write the file: {e}"),
+                                }
+                            }
+                            None => "Could not encode that text".to_string(),
+                        };
+                        let _ = webview.evaluate_script(&format!("app.qrSaved({})", json!(msg)));
                     }
                     "pinwin" => {
                         // the tool is a toggle, so the panel asks for a state; the native side answers

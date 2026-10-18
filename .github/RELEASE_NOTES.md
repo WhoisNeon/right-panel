@@ -9,6 +9,24 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.25
+- **Keybinds are now real bindings** — the tab used to be a list to read; now every tool has a key of your choosing. Click the chip, press the combination, and it is yours. Press Esc to clear one. *Hold to open* moved here out of General: no more fixed Ctrl/Shift/Space dropdown, you press the key you want at the screen edge
+- **New tool: Network** — your public address from ipify, the place it says it is from ipwho.is, and the country's circle flag. Sits just before System info and the meters; click any line to copy it
+- **`{{ip}}` actually works** — it was written but never asked for. It is fetched once at start-up, so a snippet copied later does not have to wait
+- **Picking a colour from the screen no longer presses what is under the pointer** — while the grab is up, clicks are held back from every other program, so the click that picks the colour cannot also hit a button behind it
+- **The colour swatch stays where it can be read** — it used to sit exactly under the pointer, pinned to the right-hand edge where its hex label ran off the side of the screen. It now keeps its distance from the pointer and the label turns around to whichever side has room
+- **The QR code is square and smaller, and you can keep it** — the preview lost its white border, and *PNG · JPG · SVG* in one row writes the file. The line under it is the real resolution and file size, e.g. `232×232 · 210 KB`
+- **The calculator groups thousands** — `1234567` reads as `1,234,567`. A long result keeps its last digits: the display clips from the left, with flexbox and no mirrored text, so the minus sign stays a minus sign
+- **Num Convert copies from the output** — the three Copy buttons are gone; click the number itself. The hex you copy no longer carries a leading `#`
+- **The calendar keeps up with the grid** — click a day and the three boxes follow it, in whichever calendar you are looking at. *Switch calendar* keeps the date instead of jumping back to today, and its tooltip is the panel's own, not the browser's
+- **Memory reads the way Windows reads it** — `16 GB (15.8 GB usable)` instead of a bare number, and the meters count of what is free too, to one decimal: `11.3 of 15.8 GB`. System type is a row of its own now, e.g. `64-bit operating system, x64-based processor`
+- **System info rows stay on one line** — a long processor or graphics name gets an ellipsis instead of wrapping the row in half. Desktop got a different icon from System info (an eye, not a monitor)
+- **The zone picker offers the whole list** — it was cut off at five rows with the rest simply not there. All of them now, in a box about five rows tall that scrolls
+- **The More button works while the dock is still opening** — a click that landed mid-animation used to be thrown away
+- **No focus rings, no browser tooltips** — both were asked for. Focus still moves, it just is not drawn
+- **Placeholder buttons space themselves** — into an empty box it pastes `{{date}} `, after `date:` it pastes ` {{date}} `, and after `date: ` just `{{date}} `
+- **Quieter** — the "moved to dock" toast is gone, and the read-fresh hint under System info with it
+
 ### New in 1.4.24
 - **The update check no longer flashes a console** — asking GitHub for the newest version started `curl` the way a windowed app does, which pops a black cmd window on Windows. It now runs with the window suppressed
 - **Dropdown lists are whole again** — the date formats and the other Settings pickers were being cut off part-way down the list, because they were drawn inside the page that scrolls. They now float above everything, flip up when there is no room below, and are capped to the space on screen. Every format in the list is reachable
