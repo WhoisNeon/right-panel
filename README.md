@@ -10,7 +10,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 [![Latest release](https://img.shields.io/github/v/release/WhoisNeon/right-panel?style=flat-square&color=000&cacheSeconds=300)](https://github.com/WhoisNeon/right-panel/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/WhoisNeon/right-panel/total?style=flat-square&color=000)](https://github.com/WhoisNeon/right-panel/releases)
 [![Build](https://img.shields.io/github/actions/workflow/status/WhoisNeon/right-panel/release.yml?style=flat-square)](https://github.com/WhoisNeon/right-panel/actions)
-![Size](https://img.shields.io/badge/size-~3.0%20MB-000?style=flat-square)
+![Size](https://img.shields.io/badge/size-~2.9%20MB-000?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-000?style=flat-square)
 
 <br>
