@@ -1068,13 +1068,15 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     "qrCopy" => {
                         let msg = match util::qr(&s("text")) {
                             Some((w, bits)) if m["format"].as_str() == Some("svg") => {
-                                let svg = util::qr_svg(w, &bits, 2, (w as u32 + 4) * 8);
-                                if set_clip(&svg) { "SVG copied".to_string() } else { "Could not copy".into() }
+                                set_clip(&util::qr_svg(w, &bits, 2, (w as u32 + 4) * 8));
+                                "SVG copied".to_string()
                             }
                             Some((w, bits)) => {
                                 let (side, _, px) = util::qr_bitmap(w, &bits, 8, 2);
                                 if sys::set_clip_image(side, side, &px) { "Image copied".to_string() } else { "Could not copy".into() }
                             }
+                            // a text too long for a QR code has no matrix to hand over
+                            None => "Could not encode that text".to_string(),
                             None => "Could not encode that text".to_string(),
                         };
                         let _ = webview.evaluate_script(&format!("app.qrSaved({})", json!(msg)));
