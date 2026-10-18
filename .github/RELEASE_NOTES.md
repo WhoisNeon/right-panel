@@ -9,6 +9,23 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.27
+- **Hold to open needs the whole combination** — `Ctrl + Shift + Space` opened on Ctrl alone, because only the first key of the combination was kept. All of it has to be down now, and "no key" still means no key
+- **The eyedropper leaves your mouse alone** — it was hanging a low-level mouse hook off its thread to keep the picking click from reaching the program underneath, and that changed how the pointer felt the whole time the grab was up. It is gone. The colour and the click are still right; the click simply reaches what is under the pointer again, which is the trade for a mouse that behaves normally
+- **The calendar names the right month and the right day** — it was titled from the *Jalali* month's first day, so 18 October said "September 2026"; and each column was worked out from the day of the month rather than the weekday, which put every day under the wrong name. `2026-10-18` now reads "October 2026" and lands under ی
+- **The month heading also says the other calendar** — "October 2026" with "Mehr 1405" under it, and the reverse in the Jalali grid
+- **The Iranian grid is drawn right to left** — شنبه is on the right, where the Iranian week starts
+- **Reset to default says what it will do next, and says it again after** — the second tap left it reading "tap again" over an already-reset panel. It now wears an octagon-alert while it waits and the teardrop wheel afterwards. *Reset to default* also puts Asia/Tehran back in the clock
+- **Settings tabs no longer resize the panel** — every one is given the height of the tallest, measured page by page rather than guessed, so moving between them leaves the panel still
+- **Memory shows the usable figure again** — the number was read out of the wrong field, so `16 GB (15.8 GB usable)` had lost the second half
+- **The calculator keeps what you typed** — opening it no longer wipes the display; *CE* and *C* are what clear it. And a number too long for the box used to shrink and slide itself out of sight: it is left alone until it can be measured, so it never disappears
+- **Holding Ctrl copies without commas** and says so
+- **More stays open** — a click that opened it left the dock still moving under the pointer, and the tool it passed over asked for its own panel. It opens for a moment and shut again, needing a second click; the pointer is left alone until the dock settles
+- **The output boxes behave alike** — Num Convert and the Generate tool both take the pointer and lift on hover, both copy themselves, and the hint telling you to click an output is gone. Num Convert's *Clear* moved up to its header beside the Clipboard tool's
+- **The Network tool** — the address banner is gone, the country's flag sits beside its name where it belongs, ISP and Org are rows of their own rather than one line joined by a dot, the loading bars stand in for the values only (the labels are already right), all nine rows fit without scrolling, *Copy all* is the one on the right, and the tool is asked once — after that only *Refresh* goes out
+- **The swatch cannot leave the screen** — it is measured where it actually landed and pulled back inside, rather than trusting arithmetic about a label that has not been laid out yet
+- **System info wears the plain monitor again**
+
 ### New in 1.4.26
 - **Reset to default works** — it erased everything and then reloaded the page, but the page is only handed its settings once, when the window is built. So the reload brought the old settings back, wrote them over the new ones, and left the panel shut against the screen edge. It now repaints in place
 - **The eyedropper picks the colour you clicked** — two faults: the pixel is read from a `COLORREF`, which stores blue first, so red and blue came back swapped; and the click was looked for by polling, which could miss the press between two ticks. It now reads the channels right and takes the click from the hook that saw it. Right-click is left alone so menus still open and close

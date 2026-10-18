@@ -213,12 +213,10 @@ pub fn key_code(_name: &str) -> Option<u8> {
     None
 }
 
-pub fn keys_down(_codes: &[u8]) -> bool {
-    false
-}
-
-pub fn key_is_down(_vk: u8) -> bool {
-    true
+// an empty combination is every combination, which is what "hold nothing" means; anything
+// else cannot be read here without spawning a process every tick, so it never fires
+pub fn keys_down(codes: &[u8]) -> bool {
+    codes.is_empty()
 }
 
 /* ---------------- system info ---------------- */

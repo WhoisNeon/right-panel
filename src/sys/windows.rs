@@ -4,7 +4,7 @@ use std::{
     ffi::c_void,
     fs,
     path::{Path, PathBuf},
-    sync::atomic::{AtomicBool, AtomicIsize, Ordering},
+    sync::atomic::{AtomicIsize, Ordering},
     thread,
     time::Duration,
 };
@@ -83,7 +83,9 @@ pub fn system_info() -> serde_json::Value {
     // "installed" is the memory on the boards; "usable" is what the system can actually hand out,
     // which is always a little less. Windows reports both the same way, so it is asked the same way.
     let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
-    let usable = unsafe { GlobalMemoryStatusEx(&mut mem) } as u64 / 1024 / 1024 / 1024;
+    // the call returns whether it worked; the memory itself is what it wrote into the struct
+    unsafe { GlobalMemoryStatusEx(&mut mem) };
+    let usable = mem.ullTotalPhys / 1024 / 1024 / 1024;
     let mut physical: u64 = 0;      // kilobytes, as the API wants it
     unsafe { GetPhysicallyInstalledSystemMemory(&mut physical) };
     let installed = physical / 1024 / 1024;   // kilobytes to gigabytes: two divides, not one
@@ -459,96 +461,33 @@ pub fn screenshot() {
     });
 }
 
-/* While the eyedropper is up, a click is meant for the panel alone. Without this the click that
-   picks the colour also presses whatever button happens to be under the pointer, which is how you
-   end up closing a dialog you were only trying to sample. A low-level mouse hook is the one thing
-   Windows offers that can refuse input to every other process, and it only fires on a thread that
-   pumps messages — so the grab thread does that instead of sleeping. */
-type HookProc = unsafe extern "system" fn(i32, isize, isize) -> isize;
-
-#[repr(C)]
-struct Msg {
-    hwnd: *mut core::ffi::c_void,
-    message: u32,
-    wparam: isize,
-    lparam: isize,
-    time: u32,
-    pt: POINT,
-}
-
-#[link(name = "user32")]
-unsafe extern "system" {
-    fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
-    fn SetWindowsHookExW(id: i32, cb: HookProc, hmod: *mut core::ffi::c_void, tid: u32) -> *mut core::ffi::c_void;
-    fn UnhookWindowsHookEx(hhk: *mut core::ffi::c_void) -> i32;
-    fn PeekMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, remove: u32) -> i32;
-    fn DispatchMessageW(msg: *const Msg) -> isize;
-    fn CallNextHookEx(hhk: *mut core::ffi::c_void, code: i32, wparam: isize, lparam: isize) -> isize;
-}
-
-const WH_MOUSE_LL: i32 = 14;
-const WM_LBUTTONDOWN: i32 = 0x201;
-const WM_LBUTTONUP: i32 = 0x202;
-const WM_RBUTTONDOWN: i32 = 0x204;
-const WM_RBUTTONUP: i32 = 0x205;
-const PM_REMOVE: u32 = 1;
-
-/// Whether the grab has been clicked. The hook is the one thing that sees every click, so it is
-/// also the one that decides — polling afterwards can miss the press between two ticks, which is
-/// how a click that visibly landed picked nothing.
-static PICKED: AtomicBool = AtomicBool::new(false);
-
-/// Swallows the left button while a grab is up, so the click that picks the colour cannot also
-/// press whatever was under the pointer. Right-click is left alone: it is how a menu is opened
-/// and closed again, and losing it would make the grab feel like the mouse had broken.
-unsafe extern "system" fn eat_mouse(code: i32, wparam: isize, _lparam: isize) -> isize {
-    if code < 0 {
-        return unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, 0) };   // not ours to judge
-    }
-    match wparam as i32 {
-        WM_LBUTTONDOWN => {
-            PICKED.store(true, Ordering::Relaxed);
-            1   // swallowed: this one belongs to the panel
-        }
-        WM_LBUTTONUP => 1,
-        _ => unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, 0) },
-    }
-}
-
-/// Runs whatever the hook wants to see, then hands the thread back. Without this the hook is
-/// installed but never called: Windows delivers it as a message to the thread that set it.
-unsafe fn pump_mouse_messages() {
-    let mut msg = Msg { hwnd: std::ptr::null_mut(), message: 0, wparam: 0, lparam: 0, time: 0, pt: POINT { x: 0, y: 0 } };
-    while PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, PM_REMOVE) != 0 {
-        DispatchMessageW(&msg);
-    }
-}
+/* The eyedropper used to hang a low-level mouse hook off its thread to keep the picking click
+   from reaching the program underneath. It worked, but it changed how the pointer felt for as
+   long as the grab was up, which is worse than the click it saved. It is gone; see pick_color. */
 
 /// Screen eyedropper: waits for the next click, returns the pixel color.
 /// `look` is called with the colour under the pointer, and where the pointer is, while it moves;
 /// `done` gets the chosen colour, or None if the grab was called off.
+///
+/// The press is found by polling, not by a low-level mouse hook. A hook is the only thing Windows
+/// offers that can keep a click from reaching another program, and it has to be serviced on a
+/// thread that pumps messages — which changed how the pointer felt for as long as the grab was
+/// up. Reading the key state costs nothing and leaves the mouse alone. The trade is that the
+/// click that picks the colour also reaches whatever was under the pointer.
 pub fn pick_color(
     look: impl Fn(String, i32, i32) + Send + 'static,
     done: impl FnOnce(Option<String>) + Send + 'static,
 ) {
     thread::spawn(move || unsafe {
-        // let go of whatever button started the grab before the hook goes up, or that very press
-        // is the one that picks
+        // let go of whatever button started the grab, or that very press is the one that picks
         while GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
-            pump_mouse_messages();
             thread::sleep(Duration::from_millis(10));
         }
-        PICKED.store(false, Ordering::Relaxed);
-        // a hook is told which module it lives in; leaving that null is refused on some builds,
-        // and then the click passes straight through to whatever was under the pointer
-        let hook = SetWindowsHookExW(WH_MOUSE_LL, eat_mouse, GetModuleHandleW(std::ptr::null()), 0);
         let mut last = String::new();
         let mut last_y = i32::MIN;
         loop {
-            pump_mouse_messages();
             thread::sleep(Duration::from_millis(16));
             if GetAsyncKeyState(VK_ESCAPE as i32) < 0 {
-                if !hook.is_null() { UnhookWindowsHookEx(hook); }
                 return done(None);
             }
             let mut p = POINT { x: 0, y: 0 };
@@ -563,8 +502,7 @@ pub fn pick_color(
                 last_y = p.y;
                 look(hex.clone(), p.x, p.y);
             }
-            if PICKED.load(Ordering::Relaxed) {
-                if !hook.is_null() { UnhookWindowsHookEx(hook); }
+            if GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
                 return done(Some(hex));
             }
         }

@@ -48,7 +48,7 @@ static OPEN_MOD: AtomicU8 = AtomicU8::new(0);
 /// What the panel bound to a key: tool id -> the virtual key codes that combination means.
 static BINDS: Mutex<Vec<(String, Vec<u8>)>> = Mutex::new(Vec::new());
 /// The key the edge hover needs, as one virtual key code, or 0 for none.
-static OPEN_KEYS: AtomicU8 = AtomicU8::new(0);
+static OPEN_HOLD: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 static EDGE_SHARED: AtomicBool = AtomicBool::new(false);
 /// Recent clipboard images, newest last. Thumbnails go to the UI; the pixels stay here.
 static IMAGES: Mutex<Vec<(u64, u32, u32, Vec<u8>)>> = Mutex::new(Vec::new());
@@ -263,8 +263,10 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
             let shared = EDGE_SHARED.load(Ordering::Relaxed);
             dwell = if shared && in_band && (0..=3).contains(&dist) { dwell + 1 } else { 0 };
             let at_edge = if shared { dwell > 25 } else { moved && (0..=1).contains(&dist) };
-            let hold_key = OPEN_KEYS.load(Ordering::Relaxed);
-            if at_edge && in_band && (!dragging || held > 30) && (hold_key == 0 || sys::key_is_down(hold_key)) {
+            // the whole combination has to be held, not just its first key: an empty list is every
+            // combination there is, which is what "no key needed" means
+            let hold = OPEN_HOLD.lock().unwrap().clone();
+            if at_edge && in_band && (!dragging || held > 30) && sys::keys_down(&hold) {
                 dwell = 0;
                 sys::remember_foreground();
                 OPEN.store(true, Ordering::Relaxed);
@@ -945,11 +947,9 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                             }
                         }
                         *BINDS.lock().unwrap() = out;
-                        OPEN_KEYS.store(
-                            m["openKeys"].as_array().and_then(|a| a.first())
-                                .and_then(|v| v.as_str()).and_then(sys::key_code).unwrap_or(0),
-                            Ordering::Relaxed,
-                        );
+                        // every key of the combination, not just the first one: holding Ctrl
+                        // alone was enough for a Ctrl + Shift + Space that was never satisfied
+                        *OPEN_HOLD.lock().unwrap() = key_codes(&m["openKeys"]).unwrap_or_default();
                         // the tray's tick still speaks the old three-way language
                         let open_key = m["openKeys"].as_array().and_then(|a| a.first()).and_then(|v| v.as_str());
                         OPEN_MOD.store(

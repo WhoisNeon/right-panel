@@ -151,8 +151,10 @@
      or the field's background sits inside a second box instead of on the panel */
   #ncOut .engrows { display: flex; gap: 6px; align-items: stretch; background: none; padding: 0; border: 0; }
   #ncOut .engrows textarea { flex: 1 1 auto; width: 100%; min-width: 0; }
-  /* a field you can click is a field that says so; these copy as a side effect, so they do not */
-  #ncOut textarea[readonly] { cursor: default; }
+  /* An output box is clickable — it copies itself — so it says so: the pointer, and the same lift
+     the System info and Network rows give when the pointer is over them. */
+  #ncOut textarea[readonly], #ttRes { cursor: pointer; }
+  #ncOut textarea[readonly]:hover, #ttRes:hover { background: var(--soft2); }
   /* System info and Network: a long processor, adapter or connection name gets an ellipsis, never
      a second line, and the rows are close enough together that the whole answer is on the screen
      without scrolling */
@@ -161,17 +163,16 @@
   #siList .set > b, #netList .set > b { flex: 1 1 auto; min-width: 0; font-weight: 500; text-align: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #siList .set[data-si], #netList .set[data-net] { cursor: pointer; }
   #siList .set[data-si]:hover, #netList .set[data-net]:hover { background: var(--soft2); border-radius: 12px; }
-  /* the skeleton that stands in while the two lookups are still out */
+  /* The loading state is the value half of each row only: the labels are already right, so they
+     stay, and the list is the height it will be once the answer lands. */
   #netList .set.skel { cursor: default; }
   #netList .set.skel:hover { background: none; }
-  #netList .set.skel > span { background: var(--soft2); height: 11px; border-radius: 6px; width: 74px; }
   #netList .set.skel > b > i { display: block; height: 11px; border-radius: 6px; background: var(--soft2);
     width: 58%; margin-left: auto; animation: skel 1.1s ease-in-out infinite; }
   @keyframes skel { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
-  /* network: the address is the headline, the flag sits beside it */
-  .nethero { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
-  .nethero img { width: 30px; height: 30px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
-  .nethero .netip { font-family: Consolas, monospace; font-size: 15px; }
+  /* the country's flag sits beside its name, the way the row is read */
+  #netList .rowflag { width: 17px; height: 17px; border-radius: 50%; margin-left: 6px; vertical-align: -3px;
+    box-shadow: 0 0 0 1px var(--line); }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -326,7 +327,12 @@
   .qrbox .empt { color: #666; font-size: 12px; text-align: center; }
   /* calendar: a month grid with both calendars on every cell, so a date never needs converting by hand */
   .calnav { display: flex; align-items: center; gap: 6px; }
-  .calnav h5 { flex: 1; margin: 0; text-align: center; font-size: 13px; font-weight: 600; }
+  .calnav h5 { flex: 1; margin: 0; text-align: center; font-size: 13px; font-weight: 600; line-height: 1.25; }
+  /* the same date in the calendar that is not showing, so you can see where you are in both */
+  .calnav h5 small { display: block; font-size: 10px; font-weight: 500; color: var(--muted); }
+  /* the Iranian week runs Saturday to Friday and is read right to left; the Gregorian one is
+     left to right. The grid is reversed rather than the text, so the digits still read normally. */
+  #calGrid.rtl, #calDow.rtl { direction: rtl; }
   .caldow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
   .caldow span { font-family: Arad, sans-serif; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; padding: 2px 0; }
   .calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -397,6 +403,8 @@
   .opts.open { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
   .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .opts button:hover, .opts button.on { background: var(--inv-ink); color: var(--inv); }
+  /* Every settings tab is given the height of the tallest one, so moving between them does not
+     resize the panel under the pointer — a fixed guess went stale the moment a row was added. */
   .spage { display: none; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .spage.on { display: flex; animation: rise .4s cubic-bezier(.2,.8,.2,1) both; }
   /* switching tabs slides the new page in from the side you moved toward */
@@ -588,7 +596,7 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Text tools</h4></div>
     <textarea class="field" dir="auto" id="ttIn" rows="2" aria-label="Text to transform" placeholder="Type or paste text here…"></textarea>
     <div class="grid3" id="textTools"></div>
-    <div class="ttout"><textarea class="field" dir="auto" id="ttRes" readonly rows="2" placeholder="result appears here"></textarea><button class="btn primary" id="ttCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy</button></div>
+    <div class="ttout"><textarea class="field dir="auto" id="ttRes" readonly rows="2" placeholder="result appears here"></textarea></div>
   </div>
 
   <div class="panel" data-name="pass">
@@ -612,14 +620,12 @@
   </div>
 
   <div class="panel" data-name="numconv">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4><button class="link" id="ncClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button></div>
     <textarea class="field" dir="auto" id="ncIn" rows="2" aria-label="Text to convert" placeholder="Type or paste text…"></textarea>
     <div class="ncout" id="ncOut">
-      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncEn" readonly rows="2" aria-label="English digits"></textarea></div></div></div>
-      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits"></textarea></div></div></div>
-      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits"></textarea></div></div></div>
-      <div class="hint">Click an output to copy it.</div>
-      <button class="btn" id="ncClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button>
+      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field dir="auto" id="ncEn" readonly rows="2" aria-label="English digits"></textarea></div></div></div>
+      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits"></textarea></div></div></div>
+      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits"></textarea></div></div></div>
     </div>
   </div>
 
@@ -662,9 +668,8 @@
 
   <div class="panel" data-name="net">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Network</h4></div>
-    <div class="nethero"><img id="netFlag" alt="" hidden><span class="netip" id="netIp">…</span></div>
     <div class="list" id="netList"></div>
-    <div class="row"><button class="btn white" id="netCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button><button class="btn" id="netRefresh"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></svg>Refresh</button></div>
+    <div class="row"><button class="btn" id="netRefresh"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></svg>Refresh</button><button class="btn white" id="netCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button></div>
   </div>
 
   <div class="panel" data-name="sysinfo">
@@ -680,7 +685,7 @@
 
   <div class="panel" data-name="cal">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Calendar</h4><button class="link" id="calToday">Today</button></div>
-    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
+    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle">—<small id="calSub"></small></h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
     <div class="caldow" id="calDow"></div>
     <div class="calgrid" id="calGrid"></div>
     <div class="calout"><button class="card" id="calJCard"><small>Jalali</small><span id="calGOut">—</span></button><button class="card" id="calGCard"><small>Gregorian</small><span id="calJOut">—</span></button></div>
@@ -751,7 +756,7 @@
       </div>
       <div class="item plain" id="aboutRow">Right Panel <b id="verNow"></b><small id="updLine">Click to check for updates</small></div>
       <button class="btn primary" id="updBtn" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></svg><span>Download &amp; install update</span></button>
-      <button class="btn" id="resetBtn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" /><path d="M3 3v5h5" /></svg><span>Reset to default</span></button>
+      <button class="btn" id="resetBtn"><svg id="resetIco" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" /><path d="M3 3v5h5" /></svg><span>Reset to default</span></button>
       <button class="btn" id="quitBtn"><svg viewBox="0 0 24 24"><path d="M12 2v10" /> <path d="M18.4 6.6a9 9 0 1 1-12.77.04" /></svg>Quit Right Panel</button>
     </div>
   </div>
@@ -781,7 +786,7 @@ const send = (t, o = {}) => window.ipc.postMessage(JSON.stringify({ t, ...o }));
 const init = window.__init || {};
 const OS = init.platform || 'windows';   // windows | macos | linux
 const S_DEF = { theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
-  edge: 'right', monitor: 0, speed: 1, updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] };
+  edge: 'right', monitor: 0, speed: 1, updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Asia/Tehran', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] };
 const S = Object.assign({}, S_DEF, init.settings || {});
 /* a reset puts the defaults back, and they have to go back as copies: sharing the arrays with
    S_DEF would mean the next edit is written into the defaults themselves */
@@ -817,6 +822,8 @@ const LUC = {
   pin: "<path d=\"M12 17v5\" /> <path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z\" />",
   monitor: "<rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\" /> <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\" />",
   'monitor-cog': "<path d=\"M12.5 6H13a2 2 0 0 1 2 2v.5\"/> <path d=\"M15 9h1a2 2 0 0 1 2 2v1\"/> <path d=\"M12 16.5v-1a2 2 0 0 1 2-2h1\"/> <path d=\"M9 16h1a2 2 0 0 1 2-2v-1\"/> <path d=\"M10 8.5V8a2 2 0 0 1 2-2h1\"/> <path d=\"M14 6.5h.01\"/> <rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\"/> <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\"/>",
+  'rotate-ccw': "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /><path d=\"M3 3v5h5\" />",
+  'octagon-alert': "<path d=\"M21.801 10A10 10 0 0 0 17 3.335\"/><path d=\"m11 2-1.6 1.6a2 2 0 0 1-1.4.6H4a2 2 0 0 0-2 2V8c0 .5.2 1 .6 1.4l1.6 1.6a2 2 0 0 1 .6 1.4V16a2 2 0 0 0 2 2h4a2 2 0 0 1 1.4-.6l1.6-1.6a2 2 0 0 1 1.4-.6H20a2 2 0 0 0 2-2v-4a2 2 0 0 0-.6-1.4z\"/><path d=\"M12 8v4\"/><path d=\"M12 16h.01\"/>",
   'monitor-off': "<path d=\"M12 17v4\" /> <path d=\"M17 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 1.184-1.826\" /> <path d=\"m2 2 20 20\" /> <path d=\"M8 21h8\" /> <path d=\"M8.656 3H20a2 2 0 0 1 2 2v10a2 2 0 0 1-.293 1.042\" />",
   lock: "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\" /> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\" />",
   activity: "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />",
@@ -893,7 +900,7 @@ const W = {
   cal: { name: 'Calendar', icon: I(LUC['calendar']), kind: 'panel' },
   qr: { name: 'QR code', icon: I(LUC['qr-code']), kind: 'panel' },
   mon: { os: ['windows'], name: 'Performance', icon: I(LUC['gauge']), kind: 'panel' },
-  sysinfo: { name: 'System info', icon: I(LUC['monitor-cog']), kind: 'panel' },
+  sysinfo: { name: 'System info', icon: I(LUC['monitor']), kind: 'panel' },
   net: { name: 'Network', icon: I(LUC['wifi']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
@@ -1182,7 +1189,8 @@ function setPanel(name, fromMore = false) {
   markActive();
   if (name === 'more') renderTiles();
   if (name === 'emoji') setTimeout(() => $('#emojiSearch').focus({ preventScroll: true }), 60);
-  if (name === 'calc') { calcClear(); calcDraw(); }
+  // opening the calculator shows what was last in it; CE and C are what clear it
+  if (name === 'calc') calcDraw();
   if (name === 'unit') setTimeout(() => $('#unitIn').focus(), 60);
   if (name === 'numconv') setTimeout(() => $('#ncIn').focus(), 60);
   if (name === 'search') setTimeout(() => $('#searchIn').focus(), 60);
@@ -1192,11 +1200,13 @@ function setPanel(name, fromMore = false) {
   else send('metersStop');
   if (name === 'qr') setTimeout(() => $('#qrIn').focus(), 60);
   if (name === 'sysinfo') send('sysinfo');
-  if (name === 'net') loadNet();
+  // the network is asked for once, when the tool is first opened, and after that only when
+  // Refresh is pressed: a lookup on every visit is two requests for an answer that rarely moved
+  if (name === 'net' && !netRows.length) loadNet();
   if (name === 'cal') setTimeout(() => $('#calY').focus({ preventScroll: true }), 60);
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
-  if (name === 'settings') { renderWidgets(); moveTpill(); }   // the pill can only be measured once the panel is visible
+  if (name === 'settings') { renderWidgets(); moveTpill(); equaliseSettings(); }   // the pill can only be measured once the panel is visible
   reportHit();
 }
 const anchorOf = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
@@ -1249,10 +1259,15 @@ tabUi.addEventListener('click', e => {
   // real toggle, so double-clicking a tool still shuts it.
   const keep = hoverOpened;
   hoverOpened = false;
+  hoverLock = performance.now() + 260;   // let the dock settle before the pointer can change it again
   setPanel(keep ? id : panel === id && !sub ? null : id);
 });
+let hoverLock = 0;
 tabUi.addEventListener('mouseover', e => {
   const t = e.target.closest('.tool'); if (!t) return;
+  // A click that opened something leaves the dock moving under a still pointer, and the tool it
+  // passes over asks for its own panel — which is how More opened for a moment and shut again.
+  if (performance.now() < hoverLock) return;
   const id = t.dataset.w;
   // while dragging, the More button still opens its panel — that is the only way the tiles become
   // a drop target, so a tool can be dragged out of the dock and into More
@@ -1396,6 +1411,23 @@ $('.spage[data-p=widgets]').addEventListener('click', e => {
   else if ('rm' in b.dataset) { S.apps = S.apps.filter(x => x.id !== id); S.dock = S.dock.filter(x => x !== id); S.more = S.more.filter(x => x !== id); save(); renderAll(); }
 });
 const tpill = $('#tpill');
+/* The settings pages are all made as tall as the tallest of them. A page that is hidden measures
+   nothing, so they are all shown for the measurement and then put back as they were. */
+function equaliseSettings() {
+  const panel = $('.panel[data-name=settings]');
+  if (!panel || !panel.classList.contains('on')) return;
+  const pages = $$('.spage', panel), was = pages.map(p => p.classList.contains('on'));
+  // Each page is measured on its own: with them all showing at once they are stretched by the
+  // flex layout and none of them reports what it actually needs.
+  const heights = pages.map(p => {
+    pages.forEach(q => { q.classList.remove('on'); q.style.minHeight = ''; });
+    p.classList.add('on');
+    return p.scrollHeight;
+  });
+  const tall = Math.ceil(Math.max(...heights)) + 2;
+  pages.forEach(p => p.style.minHeight = tall + 'px');
+  pages.forEach((p, i) => p.classList.toggle('on', was[i]));
+}
 function moveTpill() {
   const b = $$('#stabs button').find(x => x.classList.contains('on')); if (!b) return;
   tpill.style.width = b.offsetWidth + 'px';
@@ -1412,6 +1444,8 @@ $('#stabs').addEventListener('click', e => {
   const page = $(`.spage[data-p="${p}"]`);
   void page.offsetWidth;                       // let the browser see the "before" frame, or the slide is skipped
   page.classList.add(to > from ? 'from-r' : 'from-l');
+  flyTop = null;        // the new page is a different height: re-anchor rather than keep the old top
+  equaliseSettings();
 });
 $('#addApp').onclick = () => send('addApp');
 
@@ -2394,12 +2428,20 @@ app.picking = (hex, x, y) => {
   // The panel is a strip and cannot paint outside itself, so the swatch rides inside it: offset
   // from the pointer so the thing being sampled stays visible, and clamped so the hex label — which
   // sits on whichever side has room — can never run off the edge of the window.
-  const hexW = $('#pickHex').offsetWidth || 64;
+  const lab = $('#pickHex');
+  const hexW = lab.offsetWidth || 64;
   const inset = DIR < 0
     ? Math.min(Math.max(x - 18, hexW + 46), innerWidth - 34)      // label to the left of the swatch
     : Math.max(4, Math.min(x + 18, innerWidth - hexW - 42));      // label to the right of it
   const top = Math.max(4, Math.min(y + 22, innerHeight - 44));
   pickHint.style.transform = `translate(${Math.round(inset)}px, ${Math.round(top)}px)`;
+  /* Arithmetic about a label that has not been laid out yet is arithmetic about nothing. So the
+     thing is measured where it actually landed, and pulled back inside if it did. */
+  const sw = pickHint.getBoundingClientRect(), lr = lab.getBoundingClientRect();
+  const over = Math.max(lr.right, sw.right) - innerWidth + 6;
+  const under = 6 - Math.min(lr.left, sw.left);
+  const shift = Math.max(0, over) + Math.min(0, under);
+  if (shift) pickHint.style.transform = `translate(${Math.round(inset - shift)}px, ${Math.round(top)}px)`;
 };
 app.picked = hex => {
   pickHint.hidden = true;
@@ -3053,52 +3095,60 @@ app.hotkey = id => {
    Two lookups, both to services that answer a plain request with JSON. Offline, or if either
    one refuses, the tool says so rather than showing half an answer. */
 let netRows = [], netIp = '';
-const NET_FIELDS = 8;   // the rows below, and so the shape of the skeleton that stands in for them
+/* The labels never change, so they are written once and only the values wait. Loading shows the
+   value half of each row as a bar, which keeps every name on screen and the list the same height
+   it will be once the answer lands. */
+const NET_ROWS = ['IP address', 'Country', 'Region', 'City', 'Postal code', 'Coordinates', 'Time zone', 'ISP', 'Org'];
 const NET_FLAG = cc => `https://raw.githubusercontent.com/HatScripts/circle-flags/gh-pages/flags/${String(cc).toLowerCase()}.svg`;
 async function fetchText(url) {
   const r = await fetch(url, { cache: 'no-store' });
   if (!r.ok) throw new Error(url);
   return (await r.text()).trim();
 }
+function netDraw() {
+  $('#netList').innerHTML = NET_ROWS.map((k, i) => {
+    const v = netRows[i] ? netRows[i][1] : '';
+    const bar = v ? '' : '<i></i>';
+    // the country carries its flag beside the name, which is where it belongs
+    const flag = (v && i === 1 && netFlag) ? `<img class="rowflag" src="${NET_FLAG(netFlag)}" alt="">` : '';
+    return `<div class="set${v ? '' : ' skel'}"${v ? ` data-net="${i}"` : ''}><span>${esc(k)}</span><b>${bar}${esc(v)}${flag}</b></div>`;
+  }).join('');
+}
+let netFlag = '';
 async function loadNet() {
-  // a skeleton rather than a line of words: the shape of the answer is known before it arrives,
-  // so the panel does not jump when it does. One row per field the tool has, not per row it
-  // happens to hold — the previous answer's rows are not there to count.
-  $('#netList').innerHTML = Array.from({ length: NET_FIELDS }, () =>
-    '<div class="set skel"><span>&nbsp;</span><b><i></i></b></div>').join('');
+  netFlag = '';
+  netRows = [];
+  netDraw();          // the skeleton: labels in place, values still bars
   try {
     const ip = await fetchText('https://api.ipify.org/');
     netIp = ip;
-    $('#netIp').textContent = ip;
     const g = await (await fetch('https://ipwho.is/' + encodeURIComponent(ip), { cache: 'no-store' })).json();
     if (!g || g.success === false) throw new Error('geo');
-    const flag = $('#netFlag');
-    if (g.country_code) { flag.src = NET_FLAG(g.country_code); flag.hidden = false; } else flag.hidden = true;
+    netFlag = g.country_code || '';
     netRows = [
-      ['IP address', ip],
-      ['Country', g.country || '—'],
-      ['Region', g.region || '—'],
-      ['City', g.city || '—'],
-      ['Postal code', g.postal || '—'],
-      ['Coordinates', g.latitude !== undefined ? `${g.latitude}, ${g.longitude}` : '—'],
-      ['Time zone', g.timezone?.id || '—'],
-      ['Connection', [g.connection?.isp, g.connection?.org].filter(Boolean).join(' · ') || '—'],
+      ip,
+      g.country || '—',
+      g.region || '—',
+      g.city || '—',
+      g.postal || '—',
+      g.latitude !== undefined ? `${g.latitude}, ${g.longitude}` : '—',
+      g.timezone?.id || '—',
+      g.connection?.isp || '—',
+      g.connection?.org || '—',
     ];
   } catch {
     netRows = [];
-    $('#netFlag').hidden = true;
-    $('#netIp').textContent = '—';
-    $('#netList').innerHTML = '<div class="empty">Could not reach the lookup services</div>';
+    netDraw();
+    $('#netList').insertAdjacentHTML('afterbegin', '<div class="empty">Could not reach the lookup services</div>');
     return;
   }
-  $('#netList').innerHTML = netRows.map(([k, v], i) =>
-    `<div class="set" data-net="${i}"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+  netDraw();
 }
 $('#netList').onclick = e => {
   const i = e.target.closest('[data-net]')?.dataset.net;
-  if (i !== undefined) copy(netRows[+i][1], 'Copied');
+  if (i !== undefined) copy(netRows[+i], 'Copied');
 };
-$('#netCopy').onclick = () => netRows.length && copy(netRows.map(([k, v]) => `${k}: ${v}`).join('\n'), 'Network info copied');
+$('#netCopy').onclick = () => netRows.length && copy(NET_ROWS.map((k, i) => `${k}: ${netRows[i]}`).join('\n'), 'Network info copied');
 $('#netRefresh').onclick = loadNet;
 
 /* ---- system info: read fresh each time it is opened, every line its own copy ---- */
@@ -3174,10 +3224,19 @@ const calMonths = () => calSys === 'jalali' ? JMONTHS : GMONTHS;
 function drawCal() {
   const greg = calSys === 'gregorian';
   const t = calCur || (calCur = jalaliToday());
-  $('#calDow').innerHTML = (greg ? GDAYS : JDAYS).map(d => `<span>${d}</span>`).join('');
+  const dow = $('#calDow'), grid = $('#calGrid');
+  dow.innerHTML = (greg ? GDAYS : JDAYS).map(d => `<span>${d}</span>`).join('');
+  // Saturday belongs on the right in the Iranian week, so that grid reads the other way
+  dow.classList.toggle('rtl', !greg);
+  grid.classList.toggle('rtl', !greg);
   const first = toGregorian(t.y, t.m, 1);
-  // the Iranian week opens on Saturday, the Gregorian one on Monday
-  const firstDow = greg ? (first.d + 6) % 7 : (first.d + 5) % 7;
+  /* The grid is drawn in Jalali days whichever calendar is showing, so where the month opens has
+     to come from the weekday its first day falls on. It used to come from the day of the month
+     instead, which put every column out and moved "today" to the wrong weekday.
+     (gDay + 1) is the weekday with Sunday as 0: from there the Gregorian header counts from
+     Monday and the Iranian one from Saturday, which is also the end it is drawn from. */
+  const jdn = gDay(first.y, first.m, first.d);
+  const firstDow = greg ? jmod(jdn, 7) : jmod(jdn + 2, 7);
   const len = jalaliMonthLen(t.y, t.m), today = jalaliToday();
   let cells = '';
   for (let i = 0; i < 42; i++) {
@@ -3188,11 +3247,16 @@ function drawCal() {
     const isSel = calSel && calSel.y === t.y && calSel.m === t.m && calSel.d === jd;
     /* only the Jalali number is Persian: in the Gregorian grid that is the small one under the day,
    and in the Jalali grid it is the big one */
-cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${greg ? gd.d : faNum(jd)}</b><small>${greg ? faNum(jd) : gd.d}</small></button>`;
+    cells += `<button class="calday${isToday ? ' today' : ''}${isSel ? ' on' : ''}" data-d="${jd}"${isSel ? ' aria-current="date"' : ''}><b>${greg ? gd.d : faNum(jd)}</b><small>${greg ? faNum(jd) : gd.d}</small></button>`;
   }
-  $('#calGrid').innerHTML = cells;
-  const cur = greg ? { y: first.y, m: first.m } : { y: t.y, m: t.m };
-  $('#calTitle').textContent = `${calMonths()[cur.m - 1]} ${cur.y}`;
+  grid.innerHTML = cells;
+  /* The name is the month on screen. The Gregorian grid is drawn from a Jalali month, whose first
+     day can fall in the Gregorian month before it — so the name follows the day being looked at,
+     which is the one picked, or the first of the page. */
+  const shown = calSel && calSel.y === t.y && calSel.m === t.m ? calSel : t;
+  const sg = toGregorian(shown.y, shown.m, shown.d);
+  $('#calTitle').childNodes[0].nodeValue = greg ? `${GMONTHS[sg.m - 1]} ${sg.y}` : `${JMONTHS[t.m - 1]} ${t.y}`;
+  $('#calSub').textContent = greg ? `${JMONTHS[shown.m - 1]} ${shown.y}` : `${GMONTHS[sg.m - 1]} ${sg.y}`;
   const onToday = calSel && calSel.y === today.y && calSel.m === today.m && calSel.d === today.d;
   $('#calToday').classList.toggle('on', !!onToday);
 }
@@ -3400,8 +3464,11 @@ function calcDraw() {
 function calcFit(box) {
   const sp = box.firstElementChild;
   sp.style.fontSize = ''; sp.style.transform = '';
+  // a box that is not laid out yet measures nothing, and "fits in nothing" reads as "shrink to
+  // the floor and slide the whole thing out of sight"; better to leave it and measure next frame
+  if (!sp.clientWidth) { requestAnimationFrame(() => calcFit(box)); return; }
   const base = parseFloat(getComputedStyle(box).fontSize);
-  const over = sp.scrollWidth / Math.max(1, sp.clientWidth);
+  const over = sp.scrollWidth / sp.clientWidth;
   if (over > 1) sp.style.fontSize = Math.max(base * .45, base / over) + 'px';
   const rest = sp.scrollWidth - sp.clientWidth;
   if (rest > 0) sp.style.transform = `translateX(${-rest}px)`;
@@ -3464,7 +3531,8 @@ $('#calcKeys').onclick = e => {
 // itself, because that is the one you paste into something that will do its own grouping
 $('#calcOut').onclick = e => {
   const shown = $('#calcOut').textContent.trim();
-  copy(e.ctrlKey ? shown.replace(/,/g, '') : shown);
+  if (e.ctrlKey) copy(shown.replace(/,/g, ''), 'Copied without commas');
+  else copy(shown);
 };
 /* typing goes through the same keys; Escape is left alone so it still closes the panel */
 addEventListener('keydown', e => {
@@ -3557,7 +3625,8 @@ $('#textTools').onclick = e => {
   res.value = '';
   send('transform', { mode: m, paste: false, text: ttInput.value.trim() ? ttInput.value : null, want: 'text' });
 };
-$('#ttCopy').onclick = () => { const v = $('#ttRes').value; if (v) copy(v); else toast('Nothing to copy yet'); };
+// the result box copies itself, like the Num Convert outputs
+$('#ttRes').onclick = () => { const v = $('#ttRes').value; if (v) copy(v); };
 
 /* ---- password ---- */
 const PW_SETS = { upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ', lower: 'abcdefghijkmnopqrstuvwxyz', digit: '23456789', symbol: '!@#$%&*-_+=?' };
@@ -3737,16 +3806,24 @@ $('#quitBtn').onclick = () => send('quit');
    brought the old settings back and wrote them over the new ones, and left the panel in a state
    where the edge hover no longer opened it. */
 let resetArmed = 0;
+const RESET_LABEL = 'Reset to default', RESET_ARMED = 'Tap again to erase everything';
+/* The button has to say what it will do next, and it has to say it again once it has done it —
+   the second tap used to leave it reading "tap again" over an already-reset panel. */
+function resetLabel(armed) {
+  const b = $('#resetBtn');
+  b.querySelector('span').textContent = armed ? RESET_ARMED : RESET_LABEL;
+  $('#resetIco').innerHTML = I(LUC[armed ? 'octagon-alert' : 'rotate-ccw']);
+  b.classList.toggle('armed', !!armed);
+}
 $('#resetBtn').onclick = () => {
-  const b = $('#resetBtn'), label = b.querySelector('span');
   if (!resetArmed) {
     resetArmed = 1;
-    label.textContent = 'Tap again to erase everything';
-    b.classList.add('armed');
-    setTimeout(() => { resetArmed = 0; label.textContent = 'Reset to default'; b.classList.remove('armed'); }, 4000);
+    resetLabel(true);
+    setTimeout(() => { if (resetArmed) { resetArmed = 0; resetLabel(false); } }, 4000);
     return;
   }
   resetArmed = 0;
+  resetLabel(false);
   for (const k of Object.keys(S)) delete S[k];
   Object.assign(S, defaults());
   normalize();
