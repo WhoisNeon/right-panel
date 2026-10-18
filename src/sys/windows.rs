@@ -13,7 +13,7 @@ use crate::util;
 use windows_sys::Win32::{
     System::Com::CoTaskMemFree,
     Foundation::{CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE, HWND, POINT},
-    Graphics::Gdi::{GetDC, GetPixel, ReleaseDC, BI_BITFIELDS},
+    Graphics::Gdi::{GetDC, GetSystemMetrics, ReleaseDC, BI_BITFIELDS},
     System::{
         DataExchange::{CloseClipboard, EmptyClipboard, GetClipboardData, GetClipboardSequenceNumber, OpenClipboard, SetClipboardData},
         Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE},
@@ -85,13 +85,15 @@ pub fn system_info() -> serde_json::Value {
     let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
     // the call returns whether it worked; the memory itself is what it wrote into the struct
     unsafe { GlobalMemoryStatusEx(&mut mem) };
-    // One decimal, because that is what the meters say: "16 GB (15 GB usable)" next to
+    // One decimal, because that is what the meters say: "16 GB (15.8 GB usable)" next to
     // "11.3 of 15.8 GB" in the same panel is the same machine giving two answers.
-    let gb = |kb: u64| (kb as f64 / 1024.0 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
-    let usable = gb(mem.ullTotalPhys / 1024);
+    // This takes BYTES. One of these APIs answers in kilobytes and the other in bytes, and the
+    // divide that turns one into the other is where the number used to go missing.
+    let gb = |bytes: u64| (bytes as f64 / 1024.0 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
+    let usable = gb(mem.ullTotalPhys);
     let mut physical: u64 = 0;      // kilobytes, as the API wants it
     unsafe { GetPhysicallyInstalledSystemMemory(&mut physical) };
-    let installed = gb(physical);
+    let installed = gb(physical * 1024);
     let arch = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITECTURE").unwrap_or_default();
     let wow = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITEW6432").is_some();
     let bits = if wow { 32 } else { 64 };
@@ -466,17 +468,192 @@ pub fn screenshot() {
 
 /* The eyedropper used to hang a low-level mouse hook off its thread to keep the picking click
    from reaching the program underneath. It worked, but it changed how the pointer felt for as
-   long as the grab was up, which is worse than the click it saved. It is gone; see pick_color. */
+   long as the grab was up, which is worse than the click it saved. In its place there is now an
+   ordinary transparent window over the desktop, which takes clicks because it is in front. */
+
+/// The overlay's window, so the grab thread can put it away when it is done.
+static SHIELD: AtomicIsize = AtomicIsize::new(0);
+
+type WndProc = unsafe extern "system" fn(isize, u32, isize, isize) -> isize;
+
+#[repr(C)]
+struct WndClass {
+    size: u32,
+    style: u32,
+    wndproc: WndProc,
+    cls_extra: i32,
+    win_extra: i32,
+    instance: *mut core::ffi::c_void,
+    icon: *mut core::ffi::c_void,
+    cursor: *mut core::ffi::c_void,
+    background: *mut core::ffi::c_void,
+    menu_name: *const u16,
+    class_name: *const u16,
+    icon_small: *mut core::ffi::c_void,
+}
+
+#[repr(C)]
+struct Msg {
+    hwnd: *mut core::ffi::c_void,
+    message: u32,
+    wparam: isize,
+    lparam: isize,
+    time: u32,
+    pt: POINT,
+}
+
+#[link(name = "user32")]
+unsafe extern "system" {
+    fn RegisterClassExW(c: *const WndClass) -> u16;
+    fn UnregisterClassW(name: *const u16, inst: *mut core::ffi::c_void) -> i32;
+    fn CreateWindowExW(ex: u32, class: *const u16, title: *const u16, style: u32,
+                       x: i32, y: i32, w: i32, h: i32, parent: *mut core::ffi::c_void,
+                       menu: *mut core::ffi::c_void, inst: *mut core::ffi::c_void, param: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    fn SetLayeredWindowAttributes(hwnd: *mut core::ffi::c_void, key: u32, alpha: u8, flags: u32) -> i32;
+    fn ShowWindow(hwnd: *mut core::ffi::c_void, cmd: i32) -> i32;
+    fn DestroyWindow(hwnd: *mut core::ffi::c_void) -> i32;
+    fn DefWindowProcW(hwnd: *mut core::ffi::c_void, msg: u32, w: isize, l: isize) -> isize;
+    fn PostMessageW(hwnd: *mut core::ffi::c_void, msg: u32, w: isize, l: isize) -> i32;
+    fn PostQuitMessage(code: i32);
+    fn GetMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, flags: u32) -> i32;
+    fn TranslateMessage(msg: *const Msg) -> i32;
+    fn DispatchMessageW(msg: *const Msg) -> isize;
+    fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
+}
+
+const WM_CLOSE: u32 = 0x0010;
+const WM_DESTROY: u32 = 0x0002;
+const WS_POPUP: u32 = 0x8000_0000;
+const WS_EX_LAYERED: u32 = 0x0008_0000;
+const WS_EX_TOOLWINDOW: u32 = 0x0000_0080;
+const WS_EX_TOPMOST: u32 = 0x0000_0008;
+const WS_EX_NOACTIVATE: u32 = 0x0800_0000;
+const LWA_ALPHA: u32 = 0x0002;
+const SW_SHOWNOACTIVATE: u32 = 4;
+const SM_XVIRTUALSCREEN: i32 = 76;
+const SM_YVIRTUALSCREEN: i32 = 77;
+const SM_CXVIRTUALSCREEN: i32 = 78;
+const SM_CYVIRTUALSCREEN: i32 = 79;
+
+unsafe extern "system" fn shield_wndproc(hwnd: isize, msg: u32, w: isize, l: isize) -> isize {
+    match msg {
+        WM_CLOSE => {
+            unsafe { DestroyWindow(hwnd as *mut core::ffi::c_void) };
+            0
+        }
+        WM_DESTROY => {
+            unsafe { PostQuitMessage(0) };
+            0
+        }
+        _ => unsafe { DefWindowProcW(hwnd as *mut core::ffi::c_void, msg, w, l) },
+    }
+}
+
+/// A window the size of every screen, invisible but in front, so that while the eyedropper is up
+/// a click lands here and nowhere else. Nothing is drawn — zero alpha — so the colour under the
+/// pointer is still the colour on screen. It never takes focus.
+///
+/// It gets a thread of its own, because a window needs a message loop to stay alive and the
+/// thread running the grab is busy watching the pointer.
+fn block_mouse() {
+    thread::spawn(|| unsafe {
+        let class: Vec<u16> = "RightPanelShield\0".encode_utf16().collect();
+        let inst = GetModuleHandleW(std::ptr::null());
+        let wc = WndClass {
+            size: std::mem::size_of::<WndClass>() as u32,
+            style: 0,
+            wndproc: shield_wndproc,
+            cls_extra: 0,
+            win_extra: 0,
+            instance: inst,
+            icon: std::ptr::null_mut(),
+            cursor: std::ptr::null_mut(),
+            background: std::ptr::null_mut(),
+            menu_name: std::ptr::null(),
+            class_name: class.as_ptr(),
+            icon_small: std::ptr::null_mut(),
+        };
+        let atom = RegisterClassExW(&wc);
+        if atom == 0 { return; }
+        let (x, y) = (GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
+        let (w, h) = (GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
+        let hwnd = CreateWindowExW(WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE,
+            class.as_ptr(), std::ptr::null(), WS_POPUP, x, y, w, h,
+            std::ptr::null_mut(), std::ptr::null_mut(), inst, std::ptr::null_mut());
+        if hwnd.is_null() { return; }
+        SHIELD.store(hwnd as isize, Ordering::Relaxed);
+        SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
+        ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+        let mut msg: Msg = std::mem::zeroed();
+        loop {
+            let got = GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0, 0);
+            if got <= 0 { break; }
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+        DestroyWindow(hwnd);
+        UnregisterClassW(class.as_ptr(), inst);
+        SHIELD.store(0, Ordering::Relaxed);
+    });
+    // the window takes a moment to appear; wait for it rather than race the user's click
+    for _ in 0..50 {
+        if SHIELD.load(Ordering::Relaxed) != 0 { return; }
+        thread::sleep(Duration::from_millis(10));
+    }
+}
+
+/// Takes the overlay down and waits for its thread to let go of it, so that the click which ends
+/// the grab is not swallowed by the overlay on its way out.
+fn release_mouse() {
+    let hwnd = SHIELD.load(Ordering::Relaxed);
+    if hwnd == 0 { return; }
+    unsafe { PostMessageW(hwnd as *mut core::ffi::c_void, WM_CLOSE, 0, 0) };
+    for _ in 0..50 {
+        if SHIELD.load(Ordering::Relaxed) == 0 { return; }
+        thread::sleep(Duration::from_millis(10));
+    }
+}
+
+/// The pixel under the pointer as `#rrggbb`.
+///
+/// GetPixel hands back a COLORREF, and the colour it hands back does not always arrive in the
+/// order COLORREF is documented to be — from the desktop DC it came back as if red were in the low
+/// byte, which swapped every sample. The bitmaps a DC owns are read instead, through GetDIBits,
+/// which for 32bpp BI_RGB is documented as BGRA and does not vary.
+fn pixel_at(x: i32, y: i32) -> Option<String> {
+    unsafe {
+        let screen = GetDC(std::ptr::null_mut());
+        if screen.is_null() { return None; }
+        let mem = CreateCompatibleDC(screen);
+        if mem.is_null() { ReleaseDC(std::ptr::null_mut(), screen); return None; }
+        let mut bi: BITMAPINFO = std::mem::zeroed();
+        bi.bmiHeader = BITMAPINFOHEADER {
+            biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+            biWidth: 1,
+            biHeight: -1,     // negative height: the row asked for is row zero
+            biPlanes: 1,
+            biBitCount: 32,
+            biCompression: BI_RGB,
+            ..std::mem::zeroed()
+        };
+        let mut px = [0u8; 4];
+        let got = GetDIBits(mem, screen, x, y, 1, 1, px.as_mut_ptr() as *mut _, &mut bi, DIB_RGB_COLORS);
+        DeleteDC(mem);
+        ReleaseDC(std::ptr::null_mut(), screen);
+        if got == 0 { return None; }
+        Some(format!("#{:02x}{:02x}{:02x}", px[2], px[1], px[0]))   // BGRA
+    }
+}
 
 /// Screen eyedropper: waits for the next click, returns the pixel color.
 /// `look` is called with the colour under the pointer, and where the pointer is, while it moves;
 /// `done` gets the chosen colour, or None if the grab was called off.
 ///
-/// The press is found by polling, not by a low-level mouse hook. A hook is the only thing Windows
-/// offers that can keep a click from reaching another program, and it has to be serviced on a
-/// thread that pumps messages — which changed how the pointer felt for as long as the grab was
-/// up. Reading the key state costs nothing and leaves the mouse alone. The trade is that the
-/// click that picks the colour also reaches whatever was under the pointer.
+/// While the grab is up a full-screen transparent window sits over the desktop and takes the
+/// clicks, so sampling a button does not also press it. It draws nothing — a layered window at
+/// zero alpha — so the pixel being sampled is still the pixel on screen. It is deliberately not
+/// a low-level mouse hook: a hook runs on every mouse event in the system and changed how the
+/// pointer felt, whereas this is just a window in front.
 pub fn pick_color(
     look: impl Fn(String, i32, i32) + Send + 'static,
     done: impl FnOnce(Option<String>) + Send + 'static,
@@ -486,26 +663,25 @@ pub fn pick_color(
         while GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
             thread::sleep(Duration::from_millis(10));
         }
+        block_mouse();
         let mut last = String::new();
         let mut last_y = i32::MIN;
         loop {
             thread::sleep(Duration::from_millis(16));
             if GetAsyncKeyState(VK_ESCAPE as i32) < 0 {
+                release_mouse();
                 return done(None);
             }
             let mut p = POINT { x: 0, y: 0 };
             GetCursorPos(&mut p);
-            let dc = GetDC(std::ptr::null_mut());
-            let c = GetPixel(dc, p.x, p.y);
-            ReleaseDC(std::ptr::null_mut(), dc);
-            // GetPixel hands back COLORREF, which is 0x00BBGGRR — blue in the high byte
-            let hex = format!("#{:02x}{:02x}{:02x}", (c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff);
+            let Some(hex) = pixel_at(p.x, p.y) else { continue };
             if hex != last || p.y != last_y {
                 last = hex.clone();
                 last_y = p.y;
                 look(hex.clone(), p.x, p.y);
             }
             if GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
+                release_mouse();
                 return done(Some(hex));
             }
         }

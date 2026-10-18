@@ -467,8 +467,6 @@
   #pickHint { position: fixed; z-index: 95; left: 0; top: 0; width: 46px; height: 46px; border-radius: 13px;
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0006, 0 10px 26px -8px rgba(0,0,0,.7); pointer-events: none; }
   #pickHint[hidden] { display: none; }
-  #pickHint::after { content: ""; position: absolute; inset: 7px; border-radius: 7px;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.28), inset 0 -6px 12px -8px rgba(0,0,0,.7); }
   #pickHint i { position: absolute; left: 54px; top: 50%; transform: translateY(-50%);
     font-family: Consolas, monospace; font-style: normal; font-size: 13px; font-weight: 600; color: #fff;
     background: #000c; border-radius: 9px; padding: 5px 9px; white-space: nowrap; letter-spacing: .02em; }
@@ -1423,21 +1421,27 @@ $('.spage[data-p=widgets]').addEventListener('click', e => {
   else if ('rm' in b.dataset) { S.apps = S.apps.filter(x => x.id !== id); S.dock = S.dock.filter(x => x !== id); S.more = S.more.filter(x => x !== id); save(); renderAll(); }
 });
 const tpill = $('#tpill');
-/* The settings pages are all made as tall as the tallest of them. A page that is hidden measures
-   nothing, so they are all shown for the measurement and then put back as they were. */
+/* The settings pages are all made as tall as the tallest of them, so moving between them does not
+   resize the panel under the pointer. A page that is hidden measures nothing, so they are shown
+   one at a time for the measurement and then put back as they were.
+
+   Tallest, but never taller than the room the panel actually has: a page pushed past that stops
+   being able to scroll and simply runs off the bottom. What is left over scrolls inside the page,
+   which is what the Keybinds list has to do. */
 function equaliseSettings() {
   const panel = $('.panel[data-name=settings]');
   if (!panel || !panel.classList.contains('on')) return;
   const pages = $$('.spage', panel), was = pages.map(p => p.classList.contains('on'));
-  // Each page is measured on its own: with them all showing at once they are stretched by the
-  // flex layout and none of them reports what it actually needs.
   const heights = pages.map(p => {
     pages.forEach(q => { q.classList.remove('on'); q.style.minHeight = ''; });
     p.classList.add('on');
     return p.scrollHeight;
   });
-  const tall = Math.ceil(Math.max(...heights)) + 2;
-  pages.forEach(p => p.style.minHeight = tall + 'px');
+  // the room the panel has: the flyout is capped to the screen less the margins it keeps, and the
+  // page has to fit inside that, or it can grow past the edge and stop scrolling
+  const room = Math.max(200, innerHeight - 150);
+  const tall = Math.min(Math.ceil(Math.max(...heights)) + 2, room);
+  pages.forEach(p => { p.style.minHeight = tall + 'px'; p.style.maxHeight = room + 'px'; });
   pages.forEach((p, i) => p.classList.toggle('on', was[i]));
 }
 function moveTpill() {
