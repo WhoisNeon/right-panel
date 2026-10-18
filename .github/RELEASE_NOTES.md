@@ -10,7 +10,7 @@ Everything below is a direct link to a file published with **v1.4.28**.
 | **Linux** *(beta)* | [RightPanel-linux-amd64.deb](https://github.com/WhoisNeon/right-panel/releases/download/v1.4.28/RightPanel-linux-amd64.deb) · [RightPanel-linux-x64.tar.gz](https://github.com/WhoisNeon/right-panel/releases/download/v1.4.28/RightPanel-linux-x64.tar.gz) (X11 + WebKitGTK 4.1) |
 
 Every release keeps its own files — see [all releases](https://github.com/WhoisNeon/right-panel/releases).
-For what changed in every earlier version, see the [full changelog](../blob/main/docs/CHANGELOG.md).
+For what changed in every earlier version, see the [full changelog](https://github.com/WhoisNeon/right-panel/blob/main/docs/CHANGELOG.md).
 
 ### New in 1.4.28
 - **The panel stops going dead** — with the invisible part of the strip let clicks through, a stale measurement could leave the window refusing every click while still on screen, and quitting the app was the only way out. Input is now given back whenever the panel opens, and given back again on its own if the pointer sits outside for five seconds
