@@ -580,8 +580,11 @@ fn block_mouse() {
             class_name: class.as_ptr(),
             icon_small: std::ptr::null_mut(),
         };
-        let atom = RegisterClassExW(&wc);
-        if atom == 0 { return; }
+        /* Registering again is refused when the class is still there from a previous grab, and
+           giving up on that left the desktop with nothing in the way — the picking click went
+           straight through. A refusal here means the class is already registered, which is
+           exactly what is wanted, so it is not a reason to stop. */
+        RegisterClassExW(&wc);
         let (x, y) = (GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
         let (w, h) = (GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
         let hwnd = CreateWindowExW(WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE,
@@ -589,7 +592,10 @@ fn block_mouse() {
             std::ptr::null_mut(), std::ptr::null_mut(), inst, std::ptr::null_mut());
         if hwnd.is_null() { return; }
         SHIELD.store(hwnd as isize, Ordering::Relaxed);
-        SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
+        /* One, not zero. A layered window with global alpha of zero is not reliably hit-tested —
+           clicks go through it as if it were not there, which is the whole thing this window
+           exists to prevent. At 1/255 it is invisible and it holds the click. */
+        SetLayeredWindowAttributes(hwnd, 0, 1, LWA_ALPHA);
         ShowWindow(hwnd, SW_SHOWNOACTIVATE);
         /* A window that is up and never taken down would stop every click on the whole screen
            until the app is killed, so it is given a lifetime of its own. The loop is timed rather
