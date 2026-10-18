@@ -84,9 +84,9 @@ pub fn system_info() -> serde_json::Value {
     // which is always a little less. Windows reports both the same way, so it is asked the same way.
     let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
     let usable = unsafe { GlobalMemoryStatusEx(&mut mem) } as u64 / 1024 / 1024 / 1024;
-    let mut physical: usize = 0;      // kilobytes, as the API wants it
+    let mut physical: u64 = 0;      // kilobytes, as the API wants it
     unsafe { GetPhysicallyInstalledSystemMemory(&mut physical) };
-    let installed = physical as u64 / 1024;
+    let installed = physical / 1024;
     let arch = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITECTURE").unwrap_or_default();
     let wow = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITEW6432").is_some();
     let bits = if wow { 32 } else { 64 };
@@ -213,18 +213,18 @@ pub fn key_code(name: &str) -> Option<u8> {
             let b = other.as_bytes();
             match b.len() {
                 1 => match b[0] {
-                    c @ b'A'..=b'Z' => c as i32,
-                    c @ b'0'..=b'9' => c as i32,
-                    c if c.is_ascii_lowercase() => c.to_ascii_uppercase() as i32,
+                    c @ b'A'..=b'Z' => c as u16,
+                    c @ b'0'..=b'9' => c as u16,
+                    c if c.is_ascii_lowercase() => c.to_ascii_uppercase() as u16,
                     _ => return None,
                 },
                 // F1..F12 are not contiguous: F10 sits nine past F1
                 2 if b[0].to_ascii_uppercase() == b'F' => match b[1] {
-                    d @ b'1'..=b'9' => VK_F1 + (d - b'1') as i32,
+                    d @ b'1'..=b'9' => VK_F1 + (d - b'1') as u16,
                     _ => return None,
                 },
                 3 if b[0].to_ascii_uppercase() == b'F' && b[1] == b'1' => match b[2] {
-                    d @ b'0'..=b'2' => VK_F1 + 9 + (d - b'0') as i32,
+                    d @ b'0'..=b'2' => VK_F1 + 9 + (d - b'0') as u16,
                     _ => return None,
                 },
                 _ => return None,
@@ -491,11 +491,11 @@ const PM_REMOVE: u32 = 1;
 
 unsafe extern "system" fn eat_mouse(code: i32, wparam: isize, lparam: isize) -> isize {
     if code < 0 {
-        return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);   // not ours to judge
+        return unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam) };   // not ours to judge
     }
     match wparam as i32 {
         WM_LBUTTONDOWN | WM_LBUTTONUP | WM_RBUTTONDOWN | WM_RBUTTONUP => 1,   // swallowed
-        _ => CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam),
+        _ => unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam) },
     }
 }
 

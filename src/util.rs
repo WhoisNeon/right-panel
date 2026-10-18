@@ -145,7 +145,7 @@ pub fn qr_jpg(w: usize, bits: &[bool], quiet: u32) -> Option<Vec<u8>> {
     let (_, _, px) = qr_bitmap(w, bits, 4, quiet);
     let side = w as u16 + (quiet as u16) * 2;
     let mut buf = Vec::new();
-    let mut enc = jpeg_encoder::Encoder::new(&mut buf, 90);
+    let enc = jpeg_encoder::Encoder::new(&mut buf, 90);
     enc.encode(&px, side, side, jpeg_encoder::ColorType::Rgba).ok()?;
     Some(buf)
 }
