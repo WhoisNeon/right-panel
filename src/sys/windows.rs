@@ -13,7 +13,7 @@ use crate::util;
 use windows_sys::Win32::{
     System::Com::CoTaskMemFree,
     Foundation::{CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE, HWND, POINT},
-    Graphics::Gdi::{GetDC, GetSystemMetrics, ReleaseDC, BI_BITFIELDS},
+    Graphics::Gdi::{GetDC, ReleaseDC, BI_BITFIELDS},
     System::{
         DataExchange::{CloseClipboard, EmptyClipboard, GetClipboardData, GetClipboardSequenceNumber, OpenClipboard, SetClipboardData},
         Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE},
@@ -32,8 +32,8 @@ use windows_sys::Win32::{
         VK_OEM_PERIOD, VK_OEM_PLUS,
     },
     UI::WindowsAndMessaging::{
-        GetCursorPos, GetForegroundWindow, GetWindowTextW, PostMessageW, SetForegroundWindow, SetWindowPos, HWND_NOTOPMOST,
-        HWND_TOPMOST, MB_ICONASTERISK, SC_MONITORPOWER, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_SYSCOMMAND,
+        GetCursorPos, GetForegroundWindow, GetSystemMetrics, GetWindowTextW, PostMessageW, SetForegroundWindow, SetWindowPos,
+        HWND_NOTOPMOST, HWND_TOPMOST, MB_ICONASTERISK, SC_MONITORPOWER, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_SYSCOMMAND,
     },
 };
 
@@ -513,12 +513,17 @@ unsafe extern "system" {
     fn ShowWindow(hwnd: *mut core::ffi::c_void, cmd: i32) -> i32;
     fn DestroyWindow(hwnd: *mut core::ffi::c_void) -> i32;
     fn DefWindowProcW(hwnd: *mut core::ffi::c_void, msg: u32, w: isize, l: isize) -> isize;
-    fn PostMessageW(hwnd: *mut core::ffi::c_void, msg: u32, w: isize, l: isize) -> i32;
     fn PostQuitMessage(code: i32);
     fn GetMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, flags: u32) -> i32;
     fn TranslateMessage(msg: *const Msg) -> i32;
     fn DispatchMessageW(msg: *const Msg) -> isize;
     fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
+    fn CreateDIBSection(dc: *mut core::ffi::c_void, info: *mut BITMAPINFO, usage: u32,
+                        bits: *mut *mut core::ffi::c_void, section: *mut core::ffi::c_void, offset: u32) -> *mut core::ffi::c_void;
+    fn SelectObject(dc: *mut core::ffi::c_void, obj: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
+    fn BitBlt(dst: *mut core::ffi::c_void, dx: i32, dy: i32, w: i32, h: i32,
+              src: *mut core::ffi::c_void, sx: i32, sy: i32, rop: u32) -> i32;
+    fn GdiFlush() -> i32;
 }
 
 const WM_CLOSE: u32 = 0x0010;
@@ -529,7 +534,8 @@ const WS_EX_TOOLWINDOW: u32 = 0x0000_0080;
 const WS_EX_TOPMOST: u32 = 0x0000_0008;
 const WS_EX_NOACTIVATE: u32 = 0x0800_0000;
 const LWA_ALPHA: u32 = 0x0002;
-const SW_SHOWNOACTIVATE: u32 = 4;
+const SRCCOPY: u32 = 0x00CC_0020;
+const SW_SHOWNOACTIVATE: i32 = 4;
 const SM_XVIRTUALSCREEN: i32 = 76;
 const SM_YVIRTUALSCREEN: i32 = 77;
 const SM_CXVIRTUALSCREEN: i32 = 78;
@@ -616,10 +622,10 @@ fn release_mouse() {
 
 /// The pixel under the pointer as `#rrggbb`.
 ///
-/// GetPixel hands back a COLORREF, and the colour it hands back does not always arrive in the
-/// order COLORREF is documented to be — from the desktop DC it came back as if red were in the low
-/// byte, which swapped every sample. The bitmaps a DC owns are read instead, through GetDIBits,
-/// which for 32bpp BI_RGB is documented as BGRA and does not vary.
+/// GetPixel hands back a COLORREF, and the colour did not always arrive in the order COLORREF is
+/// documented to be — from the desktop DC it came back as if red were in the low byte, which
+/// swapped every sample. So the pixel is copied into a 32bpp DIB of our own and read out of that:
+/// 32bpp BI_RGB is blue, green, red, alpha, and that does not vary by anything.
 fn pixel_at(x: i32, y: i32) -> Option<String> {
     unsafe {
         let screen = GetDC(std::ptr::null_mut());
@@ -636,11 +642,22 @@ fn pixel_at(x: i32, y: i32) -> Option<String> {
             biCompression: BI_RGB,
             ..std::mem::zeroed()
         };
-        let mut px = [0u8; 4];
-        let got = GetDIBits(mem, screen, x, y, 1, 1, px.as_mut_ptr() as *mut _, &mut bi, DIB_RGB_COLORS);
+        let mut bits: *mut core::ffi::c_void = std::ptr::null_mut();
+        let bmp = CreateDIBSection(mem, &mut bi, DIB_RGB_COLORS, &mut bits, std::ptr::null_mut(), 0);
+        if bmp.is_null() || bits.is_null() {
+            DeleteDC(mem);
+            ReleaseDC(std::ptr::null_mut(), screen);
+            return None;
+        }
+        let old = SelectObject(mem, bmp);
+        let copied = BitBlt(mem, 0, 0, 1, 1, screen, x, y, SRCCOPY) != 0;
+        GdiFlush();
+        let px: [u8; 4] = if copied { *(bits as *const [u8; 4]) } else { [0; 4] };
+        SelectObject(mem, old);
+        DeleteObject(bmp);
         DeleteDC(mem);
         ReleaseDC(std::ptr::null_mut(), screen);
-        if got == 0 { return None; }
+        if !copied { return None; }
         Some(format!("#{:02x}{:02x}{:02x}", px[2], px[1], px[0]))   // BGRA
     }
 }
