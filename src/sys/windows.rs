@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
     sync::atomic::{AtomicIsize, Ordering},
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crate::util;
@@ -514,7 +514,7 @@ unsafe extern "system" {
     fn DestroyWindow(hwnd: *mut core::ffi::c_void) -> i32;
     fn DefWindowProcW(hwnd: *mut core::ffi::c_void, msg: u32, w: isize, l: isize) -> isize;
     fn PostQuitMessage(code: i32);
-    fn GetMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, flags: u32) -> i32;
+    fn PeekMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, remove: u32) -> i32;
     fn TranslateMessage(msg: *const Msg) -> i32;
     fn DispatchMessageW(msg: *const Msg) -> isize;
     fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
@@ -535,6 +535,7 @@ const WS_EX_TOPMOST: u32 = 0x0000_0008;
 const WS_EX_NOACTIVATE: u32 = 0x0800_0000;
 const LWA_ALPHA: u32 = 0x0002;
 const SRCCOPY: u32 = 0x00CC_0020;
+const PM_REMOVE: u32 = 0x0001;
 const SW_SHOWNOACTIVATE: i32 = 4;
 const SM_XVIRTUALSCREEN: i32 = 76;
 const SM_YVIRTUALSCREEN: i32 = 77;
@@ -590,12 +591,18 @@ fn block_mouse() {
         SHIELD.store(hwnd as isize, Ordering::Relaxed);
         SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
         ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+        /* A window that is up and never taken down would stop every click on the whole screen
+           until the app is killed, so it is given a lifetime of its own. The loop is timed rather
+           than blocking in GetMessageW for that reason: it has to notice the deadline. */
+        let deadline = Instant::now() + Duration::from_secs(90);
         let mut msg: Msg = std::mem::zeroed();
-        loop {
-            let got = GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0, 0);
-            if got <= 0 { break; }
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
+        while SHIELD.load(Ordering::Relaxed) != 0 {
+            while PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, PM_REMOVE) != 0 {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+            if SHIELD.load(Ordering::Relaxed) == 0 || Instant::now() >= deadline { break; }
+            thread::sleep(Duration::from_millis(25));
         }
         DestroyWindow(hwnd);
         UnregisterClassW(class.as_ptr(), inst);
