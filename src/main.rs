@@ -222,6 +222,7 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
         let mut last = (i32::MIN, i32::MIN);
         let mut held = 0u32;
         let mut dwell = 0u32;
+        let mut since_change = 0u32;
         loop {
             thread::sleep(Duration::from_millis(12));
             if OPEN.load(Ordering::Relaxed) || PICKING.load(Ordering::Relaxed) {
@@ -229,19 +230,31 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
                 // With the panel up, the strip it lives in is wider than the panel itself. Clicks
                 // outside what is drawn have to reach whatever is behind it, or the whole screen
                 // edge is dead — so the boundary is followed as the panel slides and resizes.
+                // The one thing never to do is leave it stuck: with input off and the pointer
+                // outside a box that is no longer where the panel is, the panel is on screen and
+                // cannot be touched, and only quitting the app brings it back.
                 if OPEN.load(Ordering::Relaxed) {
-                    if let Some((hx, hy, hw, hh)) = *HIT.lock().unwrap() {
-                        let sc = f64::from_bits(SCALE_BITS.load(Ordering::Relaxed));
-                        let (ox, oy) = (PANEL_X.load(Ordering::Relaxed), PANEL_Y.load(Ordering::Relaxed));
-                        let x0 = ox + (hx as f64 * sc) as i32;
-                        let y0 = oy + (hy as f64 * sc) as i32;
-                        let w0 = (hw as f64 * sc) as i32;
-                        let h0 = (hh as f64 * sc) as i32;
-                        let Some((px, py)) = sys::cursor_pos() else { continue };
-                        let outside = px < x0 || px >= x0 + w0 || py < y0 || py >= y0 + h0;
-                        if outside != HIT_THROUGH.load(Ordering::Relaxed) {
-                            HIT_THROUGH.store(outside, Ordering::Relaxed);
-                            let _ = proxy.send_event(Ev::Passthrough(outside));
+                    let Some((hx, hy, hw, hh)) = *HIT.lock().unwrap() else { continue };
+                    let sc = f64::from_bits(SCALE_BITS.load(Ordering::Relaxed));
+                    let (ox, oy) = (PANEL_X.load(Ordering::Relaxed), PANEL_Y.load(Ordering::Relaxed));
+                    let x0 = ox + (hx as f64 * sc) as i32;
+                    let y0 = oy + (hy as f64 * sc) as i32;
+                    let w0 = (hw as f64 * sc) as i32;
+                    let h0 = (hh as f64 * sc) as i32;
+                    let Some((px, py)) = sys::cursor_pos() else { continue };
+                    let outside = px < x0 || px >= x0 + w0 || py < y0 || py >= y0 + h0;
+                    if outside != HIT_THROUGH.load(Ordering::Relaxed) {
+                        HIT_THROUGH.store(outside, Ordering::Relaxed);
+                        since_change = 0;
+                        let _ = proxy.send_event(Ev::Passthrough(outside));
+                    } else if outside {
+                        // a pointer that has not moved for this long, with the panel refusing every
+                        // click: the box has gone stale, so give the input back and start again
+                        since_change += 1;
+                        if since_change > 400 {
+                            HIT_THROUGH.store(false, Ordering::Relaxed);
+                            since_change = 0;
+                            let _ = proxy.send_event(Ev::Passthrough(false));
                         }
                     }
                 }
@@ -831,6 +844,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
             }
             Event::UserEvent(Ev::Open) => {
                 set_passthrough(&window, false);
+                HIT_THROUGH.store(false, Ordering::Relaxed);
                 grab_keyboard(&window, &webview);
                 let _ = webview.evaluate_script("app.open()");
             }
@@ -838,6 +852,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                 sys::remember_foreground();
                 OPEN.store(true, Ordering::Relaxed);
                 set_passthrough(&window, false);
+                HIT_THROUGH.store(false, Ordering::Relaxed);
                 grab_keyboard(&window, &webview);
                 let _ = webview.evaluate_script(&format!("app.show('{panel}')"));
             }

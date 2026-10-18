@@ -85,10 +85,13 @@ pub fn system_info() -> serde_json::Value {
     let mut mem = MEMORYSTATUSEX { dwLength: std::mem::size_of::<MEMORYSTATUSEX>() as u32, ..unsafe { std::mem::zeroed() } };
     // the call returns whether it worked; the memory itself is what it wrote into the struct
     unsafe { GlobalMemoryStatusEx(&mut mem) };
-    let usable = mem.ullTotalPhys / 1024 / 1024 / 1024;
+    // One decimal, because that is what the meters say: "16 GB (15 GB usable)" next to
+    // "11.3 of 15.8 GB" in the same panel is the same machine giving two answers.
+    let gb = |kb: u64| (kb as f64 / 1024.0 / 1024.0 / 1024.0 * 10.0).round() / 10.0;
+    let usable = gb(mem.ullTotalPhys / 1024);
     let mut physical: u64 = 0;      // kilobytes, as the API wants it
     unsafe { GetPhysicallyInstalledSystemMemory(&mut physical) };
-    let installed = physical / 1024 / 1024;   // kilobytes to gigabytes: two divides, not one
+    let installed = gb(physical);
     let arch = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITECTURE").unwrap_or_default();
     let wow = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITEW6432").is_some();
     let bits = if wow { 32 } else { 64 };

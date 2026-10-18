@@ -159,6 +159,9 @@
      a second line, and the rows are close enough together that the whole answer is on the screen
      without scrolling */
   #siList .set, #netList .set { gap: 10px; padding: 7px 12px; }
+  /* the whole answer fits: nine short rows, so the list takes the room the panel has rather than
+     stopping at a fixed 300px and putting a scrollbar in front of them */
+  #netList { max-height: none; }
   #siList .set > span, #netList .set > span { flex: none; white-space: nowrap; }
   #siList .set > b, #netList .set > b { flex: 1 1 auto; min-width: 0; font-weight: 500; text-align: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #siList .set[data-si], #netList .set[data-net] { cursor: pointer; }
@@ -237,8 +240,8 @@
      with the minus sign or the digits. */
   .display { display: flex; justify-content: flex-end; align-items: center; font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 0px 6px; min-height: 40px; cursor: pointer; overflow: hidden; line-height: 1; }
   /* The value is allowed to shrink into its box; calcFit() then takes it down in size until the
-     whole number is on screen, because a line that simply overflows loses its last digits. */
-  .display > span { display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-align: right; }
+     whole number is on screen, never below 16px, and scrolls to its end if it still cannot. */
+  .display > span { display: block; flex: 0 1 auto; min-width: 0; overflow-x: hidden; overflow-y: hidden; white-space: nowrap; text-align: right; }
   .display.line { font-size: 16px; font-weight: 400; color: var(--muted); min-height: 15px; cursor: default; }
   .display.err { font-size: 13px; font-weight: 500; color: var(--muted); }
   .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
@@ -279,7 +282,7 @@
   .zone .x { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; flex: none; }
   .zone .x svg { width: 12px; height: 12px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
   /* last, so the cross in a two-to-a-row row is centred rather than nudged up by the line-height */
-  .zone.slim .x { width: 20px; height: 20px; margin: 0; display: grid; place-items: center; }
+  .zone.slim .x { width: 20px; height: 20px; margin: 0; padding: 0; display: grid; place-items: center; }
   .zone.slim .x svg { margin: 0; display: block; width: 11px; height: 11px; }
   .zone .x:hover { background: var(--soft2); color: var(--ink); }
 
@@ -336,6 +339,12 @@
   .caldow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
   .caldow span { font-family: Arad, sans-serif; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); text-align: center; padding: 2px 0; }
   .calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  /* A six-week month makes the panel taller than the window allows. The days are the only part
+     that can give way: everything below them — the two date cards and the boxes — has to stay
+     where it is, or they get pushed off the bottom of the panel. */
+  .panel[data-name=cal] .calgrid { min-height: 0; overflow-y: auto; }
+  .panel[data-name=cal] > * { flex: none; }
+  .panel[data-name=cal] .calgrid { flex: 0 1 auto; }
   .calday { border: 0; background: none; color: var(--ink); border-radius: 10px; padding: 4px 0 5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; font: inherit; }
   .calday b { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .calday small { font-size: 9px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -452,16 +461,19 @@
   .theme.on { color: var(--ink); }
   .theme.on i { box-shadow: 0 0 0 2px var(--liquid), 0 0 0 4px var(--inv); }
 
-  /* the eye dropper's swatch: it sits by the pointer, so the panel is not in the way and the
-     colour under the pointer is the thing you aim with */
-  #pickHint { position: fixed; z-index: 95; left: 0; top: 0; width: 30px; height: 30px; border-radius: 8px;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0006, 0 8px 20px -6px rgba(0,0,0,.6); pointer-events: none; }
+  /* The eyedropper's swatch: it sits in one of two fixed spots by the panel edge and stays there,
+     so it never covers the thing being sampled and never chases the pointer. Big enough to read
+     the colour off at a glance, with the hex on a chip beside it. */
+  #pickHint { position: fixed; z-index: 95; left: 0; top: 0; width: 46px; height: 46px; border-radius: 13px;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0006, 0 10px 26px -8px rgba(0,0,0,.7); pointer-events: none; }
   #pickHint[hidden] { display: none; }
-  #pickHint i { position: absolute; left: 38px; top: 50%; transform: translateY(-50%);
-    font-family: Consolas, monospace; font-style: normal; font-size: 11px; color: #fff;
-    background: #000a; border-radius: 6px; padding: 3px 7px; white-space: nowrap; }
+  #pickHint::after { content: ""; position: absolute; inset: 7px; border-radius: 7px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.28), inset 0 -6px 12px -8px rgba(0,0,0,.7); }
+  #pickHint i { position: absolute; left: 54px; top: 50%; transform: translateY(-50%);
+    font-family: Consolas, monospace; font-style: normal; font-size: 13px; font-weight: 600; color: #fff;
+    background: #000c; border-radius: 9px; padding: 5px 9px; white-space: nowrap; letter-spacing: .02em; }
   /* on a left-edge panel the label would run off the right of the window, so it turns around */
-  body.left #pickHint i { left: auto; right: 38px; }
+  body.left #pickHint i { left: auto; right: 54px; }
 
   /* custom color picker — the panel draws its own, so no native color dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
@@ -1011,7 +1023,7 @@ const pillY = new Spring(0, 420, 26), pillS = new Spring(0, 380, 22);
 let isOpen = false, panel = null, sub = false, anchorY = innerHeight / 2, mx = -1, outT, openedAt = -1e9, closedAt = -1e9, sticky = false, hoverY = null, flyTop = null;
 
 const app = window.app = {
-  open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); setTimeout(reportHit, 0); },
+  open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); hitLast = ''; setTimeout(reportHit, 0); },
   close() {
     if (!isOpen) return; isOpen = false; sticky = false; closedAt = performance.now(); setPanel(null); mx = -1; hoverY = null;
     hideTip(); closePicker();          // the picker is fixed to the screen, not the panel, so it has to go with it
@@ -2417,31 +2429,38 @@ $$('.fmt').forEach(b => b.onclick = () => { copy(fmts()[b.dataset.f]); pushRecen
 $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () => pushRecentColor(color));
 const startPick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
 $('#eyedrop').onclick = startPick;
-/* the eye dropper is a native grab, so the panel is out of the way while it runs: it puts a
-   swatch of whatever is under the pointer next to it, which is the only way to aim at a shade
-   you cannot name yet */
+/* the eye dropper is a native grab, so the panel is out of the way while it runs: it shows a
+   swatch of whatever is under the pointer, which is the only way to aim at a shade you cannot
+   name yet */
 const pickHint = $('#pickHint');
-app.picking = (hex, x, y) => {
+/* Two fixed spots against the panel edge, and the swatch moves between them rather than
+   following the pointer. Chasing the pointer put it under the pointer, which is the one place
+   the colour being sampled cannot be. */
+const PICK_SIZE = 46, PICK_GAP = 14, PICK_NEAR = 120;
+const pickSpot = n => {
+  const x = DIR < 0 ? PICK_GAP : innerWidth - PICK_SIZE - PICK_GAP;
+  const y = Math.round(Math.max(PICK_GAP, Math.min(innerHeight - PICK_SIZE - PICK_GAP,
+    (innerHeight - PICK_SIZE) * (n === 0 ? 0.34 : 0.62))));
+  return { x, y };
+};
+app.picking = (hex, px, py) => {
   pickHint.hidden = false;
   pickHint.style.background = hex;
-  $('#pickHex').textContent = hex.toUpperCase();
-  // The panel is a strip and cannot paint outside itself, so the swatch rides inside it: offset
-  // from the pointer so the thing being sampled stays visible, and clamped so the hex label — which
-  // sits on whichever side has room — can never run off the edge of the window.
   const lab = $('#pickHex');
-  const hexW = lab.offsetWidth || 64;
-  const inset = DIR < 0
-    ? Math.min(Math.max(x - 18, hexW + 46), innerWidth - 34)      // label to the left of the swatch
-    : Math.max(4, Math.min(x + 18, innerWidth - hexW - 42));      // label to the right of it
-  const top = Math.max(4, Math.min(y + 22, innerHeight - 44));
-  pickHint.style.transform = `translate(${Math.round(inset)}px, ${Math.round(top)}px)`;
-  /* Arithmetic about a label that has not been laid out yet is arithmetic about nothing. So the
-     thing is measured where it actually landed, and pulled back inside if it did. */
-  const sw = pickHint.getBoundingClientRect(), lr = lab.getBoundingClientRect();
-  const over = Math.max(lr.right, sw.right) - innerWidth + 6;
-  const under = 6 - Math.min(lr.left, sw.left);
-  const shift = Math.max(0, over) + Math.min(0, under);
-  if (shift) pickHint.style.transform = `translate(${Math.round(inset - shift)}px, ${Math.round(top)}px)`;
+  lab.textContent = hex.toUpperCase();
+  // whichever spot the pointer is not on
+  const a = pickSpot(0);
+  const near = Math.abs(px - (a.x + PICK_SIZE / 2)) < PICK_NEAR && Math.abs(py - (a.y + PICK_SIZE / 2)) < PICK_NEAR;
+  const s = near ? pickSpot(1) : a;
+  pickHint.style.transform = `translate(${s.x}px, ${s.y}px)`;
+  /* The label turns to whichever side has room, and is measured rather than assumed: arithmetic
+     about a chip that has not been laid out yet is arithmetic about nothing. */
+  const labW = lab.offsetWidth || 64;
+  if (DIR < 0) {
+    pickHint.style.transform = `translate(${Math.min(innerWidth - PICK_SIZE - 4, Math.max(labW + PICK_GAP + 54, s.x))}px, ${s.y}px)`;
+  } else {
+    pickHint.style.transform = `translate(${Math.max(4, Math.min(s.x, innerWidth - labW - PICK_GAP - 58))}px, ${s.y}px)`;
+  }
 };
 app.picked = hex => {
   pickHint.hidden = true;
@@ -3107,7 +3126,7 @@ async function fetchText(url) {
 }
 function netDraw() {
   $('#netList').innerHTML = NET_ROWS.map((k, i) => {
-    const v = netRows[i] ? netRows[i][1] : '';
+    const v = netRows[i] || '';
     const bar = v ? '' : '<i></i>';
     // the country carries its flag beside the name, which is where it belongs
     const flag = (v && i === 1 && netFlag) ? `<img class="rowflag" src="${NET_FLAG(netFlag)}" alt="">` : '';
@@ -3458,20 +3477,23 @@ function calcDraw() {
   line.innerHTML = cLineL && !cErr ? esc(cLineL) + `<i>${I(OP_ICON[cLineOp])}</i>` + (cLineR !== '' ? esc(cLineR) + ' =' : '') : '';
 }
 /* A long value has to end in view, and a nowrap line that overflows is cut on the right —
-   which is exactly the end that matters. So the text is made smaller until it fits, and if it
-   still does not, it is slid along to show its end. Measuring keeps the digits upright and in
-   order, which a mirrored line would not. */
+   which is exactly the end that matters. So the text is made smaller until it fits, down to a
+   floor below which a number stops being readable. It is never slid along: a transform on the
+   display's own span was measured into the panel's hit box and left the panel refusing clicks.
+   Past the floor the box is simply scrolled to its end, which shows the same digits. */
+const CALC_MIN_PX = 16;
 function calcFit(box) {
   const sp = box.firstElementChild;
-  sp.style.fontSize = ''; sp.style.transform = '';
+  sp.style.fontSize = '';
+  sp.scrollLeft = sp.scrollWidth;
   // a box that is not laid out yet measures nothing, and "fits in nothing" reads as "shrink to
-  // the floor and slide the whole thing out of sight"; better to leave it and measure next frame
+  // the floor and hide the number"; better to leave it and measure next frame
   if (!sp.clientWidth) { requestAnimationFrame(() => calcFit(box)); return; }
   const base = parseFloat(getComputedStyle(box).fontSize);
+  const floor = Math.max(CALC_MIN_PX, base * .45);
   const over = sp.scrollWidth / sp.clientWidth;
-  if (over > 1) sp.style.fontSize = Math.max(base * .45, base / over) + 'px';
-  const rest = sp.scrollWidth - sp.clientWidth;
-  if (rest > 0) sp.style.transform = `translateX(${-rest}px)`;
+  if (over > 1) sp.style.fontSize = Math.max(floor, base / over) + 'px';
+  sp.scrollLeft = sp.scrollWidth;   // still too long at the floor: show the end of it
 }
 /* a new calculation forgets the expression line; a new operand keeps it */
 function calcStart() { if (cRepeat) { cRepeat = null; cLineL = ''; cLineOp = null; cLineR = ''; } cFresh = false; }
