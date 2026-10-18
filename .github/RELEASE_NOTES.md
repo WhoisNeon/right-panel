@@ -9,6 +9,25 @@
 
 *Every release keeps its own files too — see [all releases](https://github.com/WhoisNeon/right-panel/releases).*
 
+### New in 1.4.26
+- **Reset to default works** — it erased everything and then reloaded the page, but the page is only handed its settings once, when the window is built. So the reload brought the old settings back, wrote them over the new ones, and left the panel shut against the screen edge. It now repaints in place
+- **The eyedropper picks the colour you clicked** — two faults: the pixel is read from a `COLORREF`, which stores blue first, so red and blue came back swapped; and the click was looked for by polling, which could miss the press between two ticks. It now reads the channels right and takes the click from the hook that saw it. Right-click is left alone so menus still open and close
+- **Memory reads gigabytes** — it said `16384 GB`, because kilobytes were divided once instead of twice. It now says `16 GB (15.8 GB usable)`
+- **Only the panel takes clicks** — the window is a fixed strip, wider than the dock and taller than the panel, and the invisible rest of it swallowed every click beside the panel. The panel now reports the shape that is actually drawn on, and the rest of the strip lets clicks through
+- **The calculator keeps its last digits** — a long value was cut off at the right, which is the end that matters. It now shrinks to fit, and slides along if it still cannot
+- **Ctrl copies the number plain** — a click on the result copies it with its thousands separators, which is what you see; hold Ctrl and it copies the digits on their own. No label, it is simply what Ctrl does
+- **Snippets insert the placeholder where your caret is** — it used to replace the whole line. Now it goes in where you are, and only the spaces around it are decided: `date:` becomes `date: {{date}} `, `date: ` does not pick up a second gap, and text you have already written stays
+- **The date converter works in Jalali** — the check that told a Jalali year from a Gregorian one had the inequality the wrong way round, so every year it was asked about was thrown away. Typing `1403 05 12` now gives `2024-08-02`
+- **The QR buttons copy instead of saving files** — *PNG · JPG · SVG* each with a copy mark. The two image ones put the picture on the clipboard and SVG puts the markup there, which is what a vector editor wants. Windows has no JPEG flavour of clipboard image, so JPG hands over the same picture PNG does
+- **More opens on the first click** — a press that landed while the dock was still springing used to be lost with the click. What was pressed is now remembered by name, so it survives the dock re-rendering itself mid-press
+- **The Network tool** — the country is a name again (`Germany`, not `Germany · DE`); *Copy all* moved to the bottom beside a new *Refresh*, and Copy all is white; the rows are close enough together to fit on screen; and while the two lookups are out you get a skeleton of eight rows instead of a line of words
+- **System info** — same tighter rows, same single-line values, and a `monitor-cog` rather than a plain monitor
+- **The keybind list is quieter** — no hints, rows are not grab cursors, a long combination is cut at ten characters (`Shift + Ct…`) and said in full on hover, and the eyedropper has a key of its own under Color
+- **Hold to open works with Space** — it was written as a bare space, which was trimmed away to nothing, so the panel read it as "no key needed" and opened on its own
+- **Num Convert** — no "Click to copy" tooltip, the default cursor, and the outputs sit on the same background as the Generate tool
+- **The zone picker is taller** — ten rows on screen at once instead of nine
+- **The month heading has no tooltip** on it
+
 ### New in 1.4.25
 - **Keybinds are now real bindings** — the tab used to be a list to read; now every tool has a key of your choosing. Click the chip, press the combination, and it is yours. Press Esc to clear one. *Hold to open* moved here out of General: no more fixed Ctrl/Shift/Space dropdown, you press the key you want at the screen edge
 - **New tool: Network** — your public address from ipify, the place it says it is from ipwho.is, and the country's circle flag. Sits just before System info and the meters; click any line to copy it

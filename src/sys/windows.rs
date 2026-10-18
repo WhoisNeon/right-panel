@@ -86,7 +86,7 @@ pub fn system_info() -> serde_json::Value {
     let usable = unsafe { GlobalMemoryStatusEx(&mut mem) } as u64 / 1024 / 1024 / 1024;
     let mut physical: u64 = 0;      // kilobytes, as the API wants it
     unsafe { GetPhysicallyInstalledSystemMemory(&mut physical) };
-    let installed = physical / 1024;
+    let installed = physical / 1024 / 1024;   // kilobytes to gigabytes: two divides, not one
     let arch = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITECTURE").unwrap_or_default();
     let wow = reg_string("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", "PROCESSOR_ARCHITEW6432").is_some();
     let bits = if wow { 32 } else { 64 };
@@ -177,6 +177,9 @@ pub fn left_down() -> bool {
 /// A single virtual key code from the panel's binding list: modifiers keep their own codes, a
 /// letter or digit is the key's own, everything else is its named code.
 pub fn key_code(name: &str) -> Option<u8> {
+    // Space is written as a bare space, so it has to be matched before the trim below would
+    // swallow it and leave nothing to look up — which read as "hold no key at all".
+    if matches!(name, " " | "Space" | "Spacebar") { return Some(VK_SPACE as u8); }
     let n = name.trim();
     let code = match n {
         "Control" | "Ctrl" => VK_CONTROL,
@@ -475,6 +478,7 @@ struct Msg {
 
 #[link(name = "user32")]
 unsafe extern "system" {
+    fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
     fn SetWindowsHookExW(id: i32, cb: HookProc, hmod: *mut core::ffi::c_void, tid: u32) -> *mut core::ffi::c_void;
     fn UnhookWindowsHookEx(hhk: *mut core::ffi::c_void) -> i32;
     fn PeekMessageW(msg: *mut Msg, hwnd: *mut core::ffi::c_void, lo: u32, hi: u32, remove: u32) -> i32;
@@ -489,13 +493,27 @@ const WM_RBUTTONDOWN: i32 = 0x204;
 const WM_RBUTTONUP: i32 = 0x205;
 const PM_REMOVE: u32 = 1;
 
-unsafe extern "system" fn eat_mouse(code: i32, wparam: isize, lparam: isize) -> isize {
+/// Where the grab was clicked. The hook is the one thing that sees every click, so it is also the
+/// one that decides — polling afterwards can miss the press between two ticks, which is how a click
+/// that visibly landed picked nothing.
+static PICK_AT: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+
+/// Swallows the left button while a grab is up, so the click that picks the colour cannot also
+/// press whatever was under the pointer. Right-click is left alone: it is how a menu is opened
+/// and closed again, and losing it would make the grab feel like the mouse had broken.
+unsafe extern "system" fn eat_mouse(code: i32, wparam: isize, _lparam: isize) -> isize {
     if code < 0 {
-        return unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam) };   // not ours to judge
+        return unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, 0) };   // not ours to judge
     }
     match wparam as i32 {
-        WM_LBUTTONDOWN | WM_LBUTTONUP | WM_RBUTTONDOWN | WM_RBUTTONUP => 1,   // swallowed
-        _ => unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam) },
+        WM_LBUTTONDOWN => {
+            let mut p = POINT { x: 0, y: 0 };
+            unsafe { GetCursorPos(&mut p) };
+            *PICK_AT.lock().unwrap() = Some((p.x, p.y));
+            1   // swallowed: this one belongs to the panel
+        }
+        WM_LBUTTONUP => 1,
+        _ => unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, 0) },
     }
 }
 
@@ -516,17 +534,21 @@ pub fn pick_color(
     done: impl FnOnce(Option<String>) + Send + 'static,
 ) {
     thread::spawn(move || unsafe {
-        // let go of whatever button started the grab before the hook goes up
+        // let go of whatever button started the grab before the hook goes up, or that very press
+        // is the one that picks
         while GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
             pump_mouse_messages();
             thread::sleep(Duration::from_millis(10));
         }
-        let hook = SetWindowsHookExW(WH_MOUSE_LL, eat_mouse, std::ptr::null_mut(), 0);
+        *PICK_AT.lock().unwrap() = None;
+        // a hook is told which module it lives in; leaving that null is refused on some builds,
+        // and then the click passes straight through to whatever was under the pointer
+        let hook = SetWindowsHookExW(WH_MOUSE_LL, eat_mouse, GetModuleHandleW(std::ptr::null()), 0);
         let mut last = String::new();
-        let mut last_y = (0i32, 0i32);
+        let mut last_y = i32::MIN;
         loop {
             pump_mouse_messages();
-            thread::sleep(Duration::from_millis(20));
+            thread::sleep(Duration::from_millis(16));
             if GetAsyncKeyState(VK_ESCAPE as i32) < 0 {
                 if !hook.is_null() { UnhookWindowsHookEx(hook); }
                 return done(None);
@@ -536,14 +558,14 @@ pub fn pick_color(
             let dc = GetDC(std::ptr::null_mut());
             let c = GetPixel(dc, p.x, p.y);
             ReleaseDC(std::ptr::null_mut(), dc);
-            let hex = format!("#{:02x}{:02x}{:02x}", c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
-            if hex != last || p.y != last_y.0 {
+            // GetPixel hands back COLORREF, which is 0x00BBGGRR — blue in the high byte
+            let hex = format!("#{:02x}{:02x}{:02x}", (c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff);
+            if hex != last || p.y != last_y {
                 last = hex.clone();
-                last_y.0 = p.y;
+                last_y = p.y;
                 look(hex.clone(), p.x, p.y);
             }
-            if GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
-                // the press is seen here before the hook ever sees it, so the hook is already down
+            if PICK_AT.lock().unwrap().is_some() {
                 if !hook.is_null() { UnhookWindowsHookEx(hook); }
                 return done(Some(hex));
             }

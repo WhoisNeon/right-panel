@@ -59,6 +59,13 @@ static LAST_IMAGE: AtomicU64 = AtomicU64::new(0);
 static METERS_ON: AtomicBool = AtomicBool::new(false);
 static METERS: Mutex<Option<sys::Meters>> = Mutex::new(None);
 
+/// The part of the window something is actually drawn on, in CSS pixels measured from the
+/// window's own top-left, reported by the panel as it grows and shrinks. The window is a fixed
+/// strip wider than the dock and taller than the panel, and every pixel of the difference that
+/// still takes a click is a click the user cannot make anywhere behind it.
+static HIT: Mutex<Option<(i32, i32, i32, i32)>> = Mutex::new(None);
+static HIT_THROUGH: AtomicBool = AtomicBool::new(false);
+
 enum Ev {
     Script(String),
     Ipc(String),
@@ -66,6 +73,8 @@ enum Ev {
     /// open the panel from the tray, optionally straight into a widget
     Show(&'static str),
     Menu(String),
+    /// stop or start taking clicks, for the part of the window nothing is drawn on
+    Passthrough(bool),
 }
 
 /* ---------------- clipboard ---------------- */
@@ -217,6 +226,25 @@ fn spawn_edge_watch(proxy: EventLoopProxy<Ev>) {
             thread::sleep(Duration::from_millis(12));
             if OPEN.load(Ordering::Relaxed) || PICKING.load(Ordering::Relaxed) {
                 near = false;
+                // With the panel up, the strip it lives in is wider than the panel itself. Clicks
+                // outside what is drawn have to reach whatever is behind it, or the whole screen
+                // edge is dead — so the boundary is followed as the panel slides and resizes.
+                if OPEN.load(Ordering::Relaxed) {
+                    if let Some((hx, hy, hw, hh)) = *HIT.lock().unwrap() {
+                        let sc = f64::from_bits(SCALE_BITS.load(Ordering::Relaxed));
+                        let (ox, oy) = (PANEL_X.load(Ordering::Relaxed), PANEL_Y.load(Ordering::Relaxed));
+                        let x0 = ox + (hx as f64 * sc) as i32;
+                        let y0 = oy + (hy as f64 * sc) as i32;
+                        let w0 = (hw as f64 * sc) as i32;
+                        let h0 = (hh as f64 * sc) as i32;
+                        let Some((px, py)) = sys::cursor_pos() else { continue };
+                        let outside = px < x0 || px >= x0 + w0 || py < y0 || py >= y0 + h0;
+                        if outside != HIT_THROUGH.load(Ordering::Relaxed) {
+                            HIT_THROUGH.store(outside, Ordering::Relaxed);
+                            let _ = proxy.send_event(Ev::Passthrough(outside));
+                        }
+                    }
+                }
                 continue;
             }
             let Some((px, py)) = sys::cursor_pos() else { continue };
@@ -811,6 +839,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                 grab_keyboard(&window, &webview);
                 let _ = webview.evaluate_script(&format!("app.show('{panel}')"));
             }
+            Event::UserEvent(Ev::Passthrough(on)) => set_passthrough(&window, on),
             Event::UserEvent(Ev::Menu(id)) => match id.as_str() {
                 "open" => {
                     let _ = proxy.send_event(Ev::Show(""));
@@ -890,15 +919,21 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                             t.set_open_mod(mod_code(&st["openMod"]));   // the tray's ticks follow the panel's choice
                         }
                         let _ = fs::write(&settings_path, st.to_string());
-                        // the panel asks for this before it reloads itself (Reset to default):
-                        // without the ack the reload can beat the write and leave half a file
-                        let _ = webview.evaluate_script("app.saved()");
                     }
                     // the page has just loaded, or loaded again. It starts closed, so the native
                     // side has to agree: left open, the edge hover is ignored and the panel looks dead.
                     "ready" => {
                         set_passthrough(&window, true);
+                        HIT_THROUGH.store(false, Ordering::Relaxed);
                         OPEN.store(false, Ordering::Relaxed);
+                    }
+                    // where the panel can actually be clicked, so the rest of the strip lets go
+                    "hit" => {
+                        let r = (m["x"].as_i64().unwrap_or(0), m["y"].as_i64().unwrap_or(0),
+                                 m["w"].as_i64().unwrap_or(0), m["h"].as_i64().unwrap_or(0));
+                        *HIT.lock().unwrap() = if r.2 <= 0 || r.3 <= 0 { None } else {
+                            Some((r.0 as i32, r.1 as i32, r.2 as i32, r.3 as i32))
+                        };
                     }
                     "binds" => {
                         // the panel's bindings: one combination opens a tool, one key is the
@@ -1026,26 +1061,19 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         };
                         let _ = webview.evaluate_script(&format!("app.qrSize({info})"));
                     }
-                    "qrSave" => {
-                        let format = m["format"].as_str().unwrap_or("png").to_string();
-                        let out = match util::qr(&s("text")) {
-                            Some((w, bits)) => match format.as_str() {
-                                "svg" => Some((util::qr_svg(w, &bits, 2, (w as u32 + 4) * 8).into_bytes(), "svg".to_string())),
-                                "jpg" => util::qr_jpg(w, &bits, 2).map(|d| (d, "jpg".to_string())),
-                                _ => {
-                                    let (side, _, px) = util::qr_bitmap(w, &bits, 8, 2);
-                                    Some((util::png(side, side, &px), "png".to_string()))
-                                }
-                            },
-                            None => None,
-                        };
-                        let msg = match out {
-                            Some((data, ext)) => {
-                                let path = sys::data_dir().join(format!("qr-code.{ext}"));
-                                match fs::write(&path, data) {
-                                    Ok(()) => format!("Saved qr-code.{ext} to {}", path.display()),
-                                    Err(e) => format!("Could not write the file: {e}"),
-                                }
+                    // The three buttons put the code on the clipboard rather than writing a file: an image for the
+                    // two raster ones, the markup itself for SVG, which is what a vector editor
+                    // pastes in. Windows has no JPEG flavour of clipboard image, so JPG hands over
+                    // the same picture the PNG one does.
+                    "qrCopy" => {
+                        let msg = match util::qr(&s("text")) {
+                            Some((w, bits)) if m["format"].as_str() == Some("svg") => {
+                                let svg = util::qr_svg(w, &bits, 2, (w as u32 + 4) * 8);
+                                if set_clip(&svg) { "SVG copied".to_string() } else { "Could not copy".into() }
+                            }
+                            Some((w, bits)) => {
+                                let (side, _, px) = util::qr_bitmap(w, &bits, 8, 2);
+                                if sys::set_clip_image(side, side, &px) { "Image copied".to_string() } else { "Could not copy".into() }
                             }
                             None => "Could not encode that text".to_string(),
                         };

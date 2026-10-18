@@ -109,6 +109,9 @@
   .btn svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .btn:hover { background: var(--soft2); }
   .btn.primary { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
+  /* a fixed white rather than a theme colour, so Copy all reads as the same button whatever the
+     panel is wearing; the ink is dark on purpose, that is what makes it white */
+  .btn.white { background: #fff; color: #111; font-weight: 600; }
   .btn.armed { background: #ff453a; color: #fff; font-weight: 600; }
   .btn.iconbtn { flex: none; display: grid; place-items: center; padding: 9px 11px; }
   .btn.iconbtn svg { width: 16px; height: 16px; display: block; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
@@ -143,22 +146,32 @@
   /* the snippet list takes whatever room is left, so it still scrolls with the placeholder
      fold open — without this it cannot shrink below its content and the panel just clips */
   #snipList { flex: 1 1 auto; max-height: none; min-height: 60px; }
-  /* num convert: the outputs are the point of the tool, so each one is full width under a
-     header, and the Arabic digits start folded away */
-  #ncOut .engrows { display: flex; gap: 6px; align-items: stretch; }
+  /* num convert: the outputs are the point of the tool, so each one is full width under a header.
+     The wrapper is there only to hold the collapsible open; it must not draw anything of its own,
+     or the field's background sits inside a second box instead of on the panel */
+  #ncOut .engrows { display: flex; gap: 6px; align-items: stretch; background: none; padding: 0; border: 0; }
   #ncOut .engrows textarea { flex: 1 1 auto; width: 100%; min-width: 0; }
-  /* system info: a long processor or adapter name gets an ellipsis, never a second line */
-  #siList .set { gap: 10px; }
-  #siList .set > span { flex: none; }
-  #siList .set > b { flex: 1 1 auto; min-width: 0; font-weight: 500; text-align: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #siList .set[data-si] { cursor: pointer; }
-  #siList .set[data-si]:hover { background: var(--soft2); border-radius: 12px; }
+  /* a field you can click is a field that says so; these copy as a side effect, so they do not */
+  #ncOut textarea[readonly] { cursor: default; }
+  /* System info and Network: a long processor, adapter or connection name gets an ellipsis, never
+     a second line, and the rows are close enough together that the whole answer is on the screen
+     without scrolling */
+  #siList .set, #netList .set { gap: 10px; padding: 7px 12px; }
+  #siList .set > span, #netList .set > span { flex: none; white-space: nowrap; }
+  #siList .set > b, #netList .set > b { flex: 1 1 auto; min-width: 0; font-weight: 500; text-align: end; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #siList .set[data-si], #netList .set[data-net] { cursor: pointer; }
+  #siList .set[data-si]:hover, #netList .set[data-net]:hover { background: var(--soft2); border-radius: 12px; }
+  /* the skeleton that stands in while the two lookups are still out */
+  #netList .set.skel { cursor: default; }
+  #netList .set.skel:hover { background: none; }
+  #netList .set.skel > span { background: var(--soft2); height: 11px; border-radius: 6px; width: 74px; }
+  #netList .set.skel > b > i { display: block; height: 11px; border-radius: 6px; background: var(--soft2);
+    width: 58%; margin-left: auto; animation: skel 1.1s ease-in-out infinite; }
+  @keyframes skel { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
   /* network: the address is the headline, the flag sits beside it */
   .nethero { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
   .nethero img { width: 30px; height: 30px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
   .nethero .netip { font-family: Consolas, monospace; font-size: 15px; }
-  #netList .set { cursor: pointer; }
-  #netList .set:hover { background: var(--soft2); border-radius: 12px; }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -222,7 +235,9 @@
      whatever runs past the left edge is what gets clipped — no direction:rtl, no bidi quirks
      with the minus sign or the digits. */
   .display { display: flex; justify-content: flex-end; align-items: center; font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; padding: 0px 6px; min-height: 40px; cursor: pointer; overflow: hidden; line-height: 1; }
-  .display > span { display: block; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+  /* The value is allowed to shrink into its box; calcFit() then takes it down in size until the
+     whole number is on screen, because a line that simply overflows loses its last digits. */
+  .display > span { display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-align: right; }
   .display.line { font-size: 16px; font-weight: 400; color: var(--muted); min-height: 15px; cursor: default; }
   .display.err { font-size: 13px; font-weight: 500; color: var(--muted); }
   .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
@@ -345,10 +360,15 @@
   .set > .pick { flex: none; }
   /* keybinds: the key is a thing you press, so it is shown as one */
   .kbd { flex: none; font-family: Consolas, monospace; font-size: 11px; background: var(--soft2); color: var(--ink); border-radius: 7px; padding: 4px 8px; white-space: nowrap; }
-  /* a bound key reads like a key: monospaced, on a chip, click to re-record */
+  /* a bound key reads like a key: monospaced, on a chip, click to re-record. Ten characters is
+     what fits the column without squeezing the tool name; anything longer says the same thing in
+     a tooltip rather than in a chip that pushes the row wide */
   .bind { font-family: Consolas, monospace; font-size: 11px; background: var(--soft2); color: var(--ink);
-    border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; min-width: 76px; white-space: nowrap; }
+    border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; min-width: 76px; max-width: 10ch;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bind.listening { background: var(--inv); color: var(--inv-ink); }
+  /* the rows here are read, not dragged, so they say nothing about grabbing */
+  #bindTools .wrow { cursor: default; }
   #bindTools .wn { flex: 1; min-width: 0; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--inv-ink); transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
@@ -595,9 +615,9 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Num Convert</h4></div>
     <textarea class="field" dir="auto" id="ncIn" rows="2" aria-label="Text to convert" placeholder="Type or paste text…"></textarea>
     <div class="ncout" id="ncOut">
-      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncEn" readonly rows="2" aria-label="English digits" data-tip="Click to copy"></textarea></div></div></div>
-      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits" data-tip="Click to copy"></textarea></div></div></div>
-      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits" data-tip="Click to copy"></textarea></div></div></div>
+      <div class="engsec" data-g="ncEn"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>English</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncEn" readonly rows="2" aria-label="English digits"></textarea></div></div></div>
+      <div class="engsec" data-g="ncFa"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Farsi</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncFa" readonly rows="2" aria-label="Farsi digits"></textarea></div></div></div>
+      <div class="engsec" data-g="ncAr"><button class="engh" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg><span>Arabic</span></button><div class="engbody"><div class="engrows"><textarea class="field" dir="auto" id="ncAr" readonly rows="2" aria-label="Arabic digits"></textarea></div></div></div>
       <div class="hint">Click an output to copy it.</div>
       <button class="btn" id="ncClear"><svg viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>Clear</button>
     </div>
@@ -637,13 +657,14 @@
     <input class="field" dir="auto" id="qrIn" aria-label="Text to encode" placeholder="Text, a link, a Wi-Fi password…">
     <div class="qrbox" id="qrBox"></div>
     <div class="hint" id="qrSize">—</div>
-    <div class="row"><button class="btn" data-qr="png">PNG</button><button class="btn" data-qr="jpg">JPG</button><button class="btn" data-qr="svg">SVG</button></div>
+    <div class="row"><button class="btn" data-qr="png"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>PNG</button><button class="btn" data-qr="jpg"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>JPG</button><button class="btn" data-qr="svg"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>SVG</button></div>
   </div>
 
   <div class="panel" data-name="net">
-    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Network</h4><button class="link" id="netCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button></div>
+    <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Network</h4></div>
     <div class="nethero"><img id="netFlag" alt="" hidden><span class="netip" id="netIp">…</span></div>
     <div class="list" id="netList"></div>
+    <div class="row"><button class="btn white" id="netCopy"><svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>Copy all</button><button class="btn" id="netRefresh"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></svg>Refresh</button></div>
   </div>
 
   <div class="panel" data-name="sysinfo">
@@ -659,7 +680,7 @@
 
   <div class="panel" data-name="cal">
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Calendar</h4><button class="link" id="calToday">Today</button></div>
-    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle" data-tip="Click to switch between Gregorian and Jalali">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
+    <div class="calnav"><button class="btn iconbtn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg></button><h5 id="calTitle">—</h5><button class="btn iconbtn" id="calNext" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button></div>
     <div class="caldow" id="calDow"></div>
     <div class="calgrid" id="calGrid"></div>
     <div class="calout"><button class="card" id="calJCard"><small>Jalali</small><span id="calGOut">—</span></button><button class="card" id="calGCard"><small>Gregorian</small><span id="calJOut">—</span></button></div>
@@ -675,7 +696,7 @@
     <div class="head"><button class="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></svg></button><h4>Time zones</h4></div>
     <input class="field" dir="auto" id="zoneQ" aria-label="Search time zones" placeholder="City or Area/City, e.g. Asia/Tehran">
     <!-- the whole list is there, the box is what is short: about five rows, then it scrolls -->
-    <div class="list scroll" id="zoneList" style="max-height:196px"></div>
+    <div class="list scroll" id="zoneList" style="max-height:452px"></div>
   </div>
 
   <div class="panel" data-name="settings">
@@ -700,10 +721,9 @@
     </div>
     <div class="spage" data-p="keys">
       <div class="wsec"><span>The panel</span></div>
-      <div class="set"><span>Hold to open<small class="hint">The key held at the screen edge</small></span><button class="bind" id="bindOpen">None</button></div>
+      <div class="set"><span>Hold to open</span><button class="bind" id="bindOpen">None</button></div>
       <div class="wsec"><span>Open a tool</span></div>
       <div class="wlist" id="bindTools"></div>
-      <div class="hint">Click a key, then press the combination you want. Esc clears the one being recorded.</div>
     </div>
     <div class="spage" data-p="general">
       <div class="engsec" data-g="genPanel">
@@ -763,6 +783,9 @@ const OS = init.platform || 'windows';   // windows | macos | linux
 const S_DEF = { theme: 'midnight', accent: '#000000', startup: false, magnify: true, recentEmoji: [], recentColors: [], themes: [],
   edge: 'right', monitor: 0, speed: 1, updates: true, lastCheck: 0, hidden: [], apps: [], snippets: [], pins: [], engine: 'Google', hour24: true, zones: ['UTC', 'Europe/London', 'America/New_York', 'Asia/Tokyo'] };
 const S = Object.assign({}, S_DEF, init.settings || {});
+/* a reset puts the defaults back, and they have to go back as copies: sharing the arrays with
+   S_DEF would mean the next edit is written into the defaults themselves */
+const defaults = () => JSON.parse(JSON.stringify(S_DEF));
 const save = () => send('settings', { settings: S });
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -793,6 +816,7 @@ const LUC = {
   sun: "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />",
   pin: "<path d=\"M12 17v5\" /> <path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z\" />",
   monitor: "<rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\" /> <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\" />",
+  'monitor-cog': "<path d=\"M12.5 6H13a2 2 0 0 1 2 2v.5\"/> <path d=\"M15 9h1a2 2 0 0 1 2 2v1\"/> <path d=\"M12 16.5v-1a2 2 0 0 1 2-2h1\"/> <path d=\"M9 16h1a2 2 0 0 1 2-2v-1\"/> <path d=\"M10 8.5V8a2 2 0 0 1 2-2h1\"/> <path d=\"M14 6.5h.01\"/> <rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\"/> <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\"/>",
   'monitor-off': "<path d=\"M12 17v4\" /> <path d=\"M17 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 1.184-1.826\" /> <path d=\"m2 2 20 20\" /> <path d=\"M8 21h8\" /> <path d=\"M8.656 3H20a2 2 0 0 1 2 2v10a2 2 0 0 1-.293 1.042\" />",
   lock: "<rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\" /> <path d=\"M7 11V7a5 5 0 0 1 10 0v4\" />",
   activity: "<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />",
@@ -869,7 +893,7 @@ const W = {
   cal: { name: 'Calendar', icon: I(LUC['calendar']), kind: 'panel' },
   qr: { name: 'QR code', icon: I(LUC['qr-code']), kind: 'panel' },
   mon: { os: ['windows'], name: 'Performance', icon: I(LUC['gauge']), kind: 'panel' },
-  sysinfo: { name: 'System info', icon: I(LUC['monitor']), kind: 'panel' },
+  sysinfo: { name: 'System info', icon: I(LUC['monitor-cog']), kind: 'panel' },
   net: { name: 'Network', icon: I(LUC['wifi']), kind: 'panel' },
   awake: { name: 'Keep awake', icon: I(LUC['sun']), kind: 'action', run: () => toggleAwake() },
   pinwin: { os: ['windows'], name: 'Pin window', icon: I(LUC['pin']), kind: 'action', run: () => togglePin() },
@@ -980,7 +1004,7 @@ const pillY = new Spring(0, 420, 26), pillS = new Spring(0, 380, 22);
 let isOpen = false, panel = null, sub = false, anchorY = innerHeight / 2, mx = -1, outT, openedAt = -1e9, closedAt = -1e9, sticky = false, hoverY = null, flyTop = null;
 
 const app = window.app = {
-  open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); },
+  open() { if (isOpen) return; isOpen = true; openedAt = performance.now(); setTimeout(reportHit, 0); },
   close() {
     if (!isOpen) return; isOpen = false; sticky = false; closedAt = performance.now(); setPanel(null); mx = -1; hoverY = null;
     hideTip(); closePicker();          // the picker is fixed to the screen, not the panel, so it has to go with it
@@ -1107,6 +1131,7 @@ function frame(now) {
   // first frame from collapsing to nothing
   flyUi.style.transform = `translate(${(1 - gs) * 40 * DIR}px, ${Y - flyH / 2}px) scale(${Math.min(1, Math.max(.05, gs * stX))}, ${Math.max(.1, (.25 + .75 * gs) * stY)})`;
   flyUi.style.borderRadius = `${22 + (1 - clamp(gs)) * 60}px`;
+  reportHit();
 
   requestAnimationFrame(frame);
 }
@@ -1172,8 +1197,28 @@ function setPanel(name, fromMore = false) {
   if (name === 'clock') renderZones();
   if (name === 'folders') renderFolders();
   if (name === 'settings') { renderWidgets(); moveTpill(); }   // the pill can only be measured once the panel is visible
+  reportHit();
 }
 const anchorOf = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+/* The window is a fixed strip, wider than the dock and taller than the panel, and every pixel of
+   that difference that still takes a click is a click the user cannot make anywhere behind it.
+   So the shape that can actually be pressed is measured and sent over — only when it changes,
+   which is when the panel slides, opens or resizes. The frame loop calls it so the box follows
+   the animation; opening and closing call it directly so it is right even if a frame is missed. */
+let hitLast = '';
+function reportHit() {
+  const d = tabUi.getBoundingClientRect();
+  const shown = flyUi.style.visibility === 'visible';
+  const f = shown ? flyUi.getBoundingClientRect() : null;
+  const l = f ? Math.min(d.left, f.left) : d.left;
+  const t = f ? Math.min(d.top, f.top) : d.top;
+  const r = f ? Math.max(d.right, f.right) : d.right;
+  const b = f ? Math.max(d.bottom, f.bottom) : d.bottom;
+  const key = `${Math.round(l)},${Math.round(t)},${Math.round(r - l)},${Math.round(b - t)}`;
+  if (key === hitLast) return;
+  hitLast = key;
+  send('hit', { x: l, y: t, w: r - l, h: b - t });
+}
 const dockEl = id => $(`#tabUi .tool[data-w="${id}"]`);
 // open any widget by id, wherever it lives
 function openWidget(id) {
@@ -1187,11 +1232,14 @@ function openWidget(id) {
 function press(el) { if (el._p) { el._p.v = 1; el._p.vel = 0; } }
 tabUi.addEventListener('mousedown', e => { const t = e.target.closest('.tool'); if (t) press(t); });
 tabUi.addEventListener('click', e => {
-  // while the dock is still springing, the click can land on the flyout rather than on the tool;
-  // what was pressed is the tool the pointer was after, so it is used when no tool is under it
-  const t = e.target.closest('.tool') || (!dragMoved && pressedEl?.isConnected ? pressedEl : null);
+  // While the dock is still springing, a press that started on a tool can end on the flyout
+  // behind it, and the browser then fires the click with no tool under it at all. What was
+  // pressed is the tool the pointer was after, so it is looked up again by name — the dock may
+  // have been re-rendered in between, which is exactly what an opening dock does.
+  const t = e.target.closest('.tool')
+    || (!dragMoved && pressedW ? tabUi.querySelector(`.tool[data-w="${pressedW}"]`) : null);
   if (!t || dragMoved) return;
-  pressedEl = null;
+  pressedW = null;
   const id = t.dataset.w, w = info(id);
   if (w.kind === 'app') { setTimeout(() => { app.close(); send('launch', { path: w.app.path }); }, 160); return; }
   if (w.kind === 'action') { w.run(); return; }
@@ -1295,10 +1343,11 @@ function dropDrag(e) {
   setTimeout(() => { dragMoved = false; if (lastPt && !inside(lastPt.x, lastPt.y)) maybeClose(); }, 60);
 }
 // The dock springs into place when it opens. A press that starts while it is still moving can end
-// on the flyout behind it, and the browser then fires no click at all — which is why More would
-// sometimes do nothing. What was pressed is remembered here and used if the click finds no tool.
-let pressedEl = null;
-addEventListener('mousedown', e => { const el = e.target.closest('[data-w]'); if (el && e.button === 0) { pressedEl = el; beginDrag(el, e); } });
+// on the flyout behind it, and the browser then fires no click on the tool at all — which is why
+// More would sometimes do nothing and the first click had to be repeated. The tool pressed is
+// remembered by name, not by node, because the dock re-renders itself as it settles.
+let pressedW = null;
+addEventListener('mousedown', e => { const el = e.target.closest('[data-w]'); if (el && e.button === 0) { pressedW = el.dataset.w; beginDrag(el, e); } });
 
 // files dragged in from the file manager
 app.dropHint = on => $('#dropHint').classList.toggle('on', !!on);
@@ -2332,7 +2381,8 @@ function renderRecent() { $('#recentColors').innerHTML = S.recentColors.length ?
 [$('#palette'), $('#recentColors')].forEach(el => el.addEventListener('click', e => { const c = e.target.dataset.c; if (c) { setColor(c); copy(color.toUpperCase()); } }));
 $$('.fmt').forEach(b => b.onclick = () => { copy(fmts()[b.dataset.f]); pushRecentColor(color); });
 $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () => pushRecentColor(color));
-$('#eyedrop').onclick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
+const startPick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
+$('#eyedrop').onclick = startPick;
 /* the eye dropper is a native grab, so the panel is out of the way while it runs: it puts a
    swatch of whatever is under the pointer next to it, which is the only way to aim at a shade
    you cannot name yet */
@@ -2781,20 +2831,20 @@ function renderSnips() {
 $('#snipIn').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.value.trim()) { S.snippets.unshift(e.target.value.trim()); e.target.value = ''; save(); renderSnips(); } });
 $('#snipClear').onclick = () => { S.snippets = []; save(); renderSnips(); };
 /* the chips drop their placeholder into the box, so the names are discoverable without a tooltip */
-/* A placeholder dropped into an empty box gets a space after it, so the next word you type is
-   not glued to it. Dropped after "date:" it gets one before as well, because there is nothing
-   after the colon to do that job. "date: " already has the gap, so it only gets the trailing
-   one. */
-function padPlaceholder(before, name) {
+/* The placeholder goes in where the caret is, and only the spaces around it are decided: one after
+   it so the next word is not glued to it, and one before it when there is nothing already
+   separating it from what is on the left. So "date:" becomes "date: {{date}} ", and "date: "
+   becomes "date: {{date}} " rather than picking up a second gap. */
+function padPlaceholder(before, caret, name) {
   const token = `{{${name}}}`;
-  const tail = ' ';
-  return before === '' || /\s$/.test(before)
-    ? { text: token + tail, caret: token.length }
-    : { text: ' ' + token + tail, caret: token.length + 1 };
+  const left = before.slice(0, caret), right = before.slice(caret);
+  const lead = left === '' || /\s$/.test(left) ? '' : ' ';
+  const tail = /^\s/.test(right) ? '' : ' ';
+  return { text: left + lead + token + tail + right, caret: left.length + lead.length + token.length };
 }
 $('#snipPhChips').onclick = e => {
   const p = e.target.closest('[data-ph]')?.dataset.ph; if (!p) return;
-  const i = $('#snipIn'), { text, caret } = padPlaceholder(i.value, p);
+  const i = $('#snipIn'), { text, caret } = padPlaceholder(i.value, i.selectionStart, p);
   i.value = text; i.focus(); i.setSelectionRange(caret, caret);
 };
 $('#snipList').onclick = e => {
@@ -2925,7 +2975,7 @@ $('.panel[data-name=qr]').addEventListener('click', e => {
   const f = e.target.closest('[data-qr]')?.dataset.qr;
   if (!f) return;
   if (!qrW) return toast('Type something first');
-  send('qrSave', { text: qrText, format: f });
+  send('qrCopy', { text: qrText, format: f });
 });
 app.qrSaved = msg => toast(msg);
 app.qrSize = v => {
@@ -2941,15 +2991,25 @@ send('qr', { text: '' });
 const KEY_MODS = ['Control', 'Alt', 'Shift', 'Meta'];
 const KEY_PRETTY = { ' ': 'Space', Control: 'Ctrl', Alt: 'Alt', Shift: 'Shift', Meta: 'Win', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Escape: 'Esc' };
 const bindLabel = keys => keys && keys.length ? keys.map(k => KEY_PRETTY[k] || k).join(' + ') : 'None';
+/* ten characters is what the chip has room for; a longer combination is cut there and said in
+   full on hover, so the row keeps its width whatever is bound to it */
+const bindShort = keys => { const s = bindLabel(keys); return s.length > 10 ? s.slice(0, 10) + '…' : s; };
+const EYE = { id: 'eyedrop', icon: I(LUC['pipette']), name: 'Eyedropper' };
 function renderBinds() {
   const open = $('#bindOpen');
-  open.textContent = bindLabel(S.openKeys);
+  const oLabel = bindLabel(S.openKeys);
+  open.textContent = bindShort(S.openKeys);
+  open.dataset.tip = oLabel;
   open.classList.toggle('listening', listening === 'open');
   const ids = Object.keys(W).filter(id => W[id].kind !== 'app' && id !== 'settings');
-  $('#bindTools').innerHTML = ids.map(id => {
+  // the eyedropper is a button inside the Color tool rather than a tool of its own, but it is
+  // something you reach for often enough to want a key for; it sits right under Color
+  const rows = ids.flatMap(id => id === 'color' ? [{ id, icon: W[id].icon, name: W[id].name }, EYE] : [{ id, icon: W[id].icon, name: W[id].name }]);
+  $('#bindTools').innerHTML = rows.map(({ id, icon, name }) => {
     const keys = (S.binds || {})[id];
-    return `<div class="wrow" data-bind="${id}"><span class="wi">${W[id].icon}</span><span class="wn">${esc(W[id].name)}</span>`
-      + `<span class="wacts"><button class="bind${listening === id ? ' listening' : ''}" data-k="${id}">${esc(bindLabel(keys))}</button>`
+    const label = bindLabel(keys);
+    return `<div class="wrow" data-bind="${id}"><span class="wi">${icon}</span><span class="wn">${esc(name)}</span>`
+      + `<span class="wacts"><button class="bind${listening === id ? ' listening' : ''}" data-k="${id}" data-tip="${esc(label)}">${esc(bindShort(keys))}</button>`
       + `<span data-un="${id}" aria-label="Remove binding"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></span></span></div>`;
   }).join('');
 }
@@ -2983,6 +3043,7 @@ pushBinds();   // the saved bindings go to the native side at start-up, not only
 /* the native side saw one of the bound combinations: it has already brought the panel up, so all
    that is left is to open the tool in it */
 app.hotkey = id => {
+  if (id === 'eyedrop') return startPick();
   const w = info(id); if (!w) return;
   if (w.kind === 'action') { app.close(); w.run(); }
   else setTimeout(() => openWidget(id), 90);
@@ -2992,6 +3053,7 @@ app.hotkey = id => {
    Two lookups, both to services that answer a plain request with JSON. Offline, or if either
    one refuses, the tool says so rather than showing half an answer. */
 let netRows = [], netIp = '';
+const NET_FIELDS = 8;   // the rows below, and so the shape of the skeleton that stands in for them
 const NET_FLAG = cc => `https://raw.githubusercontent.com/HatScripts/circle-flags/gh-pages/flags/${String(cc).toLowerCase()}.svg`;
 async function fetchText(url) {
   const r = await fetch(url, { cache: 'no-store' });
@@ -2999,7 +3061,11 @@ async function fetchText(url) {
   return (await r.text()).trim();
 }
 async function loadNet() {
-  $('#netList').innerHTML = '<div class="empty">Asking…</div>';
+  // a skeleton rather than a line of words: the shape of the answer is known before it arrives,
+  // so the panel does not jump when it does. One row per field the tool has, not per row it
+  // happens to hold — the previous answer's rows are not there to count.
+  $('#netList').innerHTML = Array.from({ length: NET_FIELDS }, () =>
+    '<div class="set skel"><span>&nbsp;</span><b><i></i></b></div>').join('');
   try {
     const ip = await fetchText('https://api.ipify.org/');
     netIp = ip;
@@ -3010,7 +3076,7 @@ async function loadNet() {
     if (g.country_code) { flag.src = NET_FLAG(g.country_code); flag.hidden = false; } else flag.hidden = true;
     netRows = [
       ['IP address', ip],
-      ['Country', [g.country, g.country_code].filter(Boolean).join(' · ') || '—'],
+      ['Country', g.country || '—'],
       ['Region', g.region || '—'],
       ['City', g.city || '—'],
       ['Postal code', g.postal || '—'],
@@ -3033,6 +3099,7 @@ $('#netList').onclick = e => {
   if (i !== undefined) copy(netRows[+i][1], 'Copied');
 };
 $('#netCopy').onclick = () => netRows.length && copy(netRows.map(([k, v]) => `${k}: ${v}`).join('\n'), 'Network info copied');
+$('#netRefresh').onclick = loadNet;
 
 /* ---- system info: read fresh each time it is opened, every line its own copy ---- */
 let sysRows = [];
@@ -3200,7 +3267,10 @@ function calRead() {
     if (m < 1 || m > 12 || d < 1 || d > daysInGregorianMonth(y, m)) return null;
     return { j: toJalali(y, m, d), g: { y, m, d } };
   }
-  if (y > 1300 || m < 1 || m > 12 || d < 1 || d > jalaliMonthLen(y, m)) return null;   // a Jalali year is nowhere near 1300+
+  // a Jalali year is nowhere near a Gregorian one, which is what tells the two apart in a box
+  // that does not say which calendar it is in; 1300 is below every year anyone types and 1499 is
+  // the last one the calendar has
+  if (y < 1300 || y > 1499 || m < 1 || m > 12 || d < 1 || d > jalaliMonthLen(y, m)) return null;
   return { j: { y, m, d }, g: toGregorian(y, m, d) };
 }
 const daysInGregorianMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
@@ -3319,8 +3389,22 @@ function calcDraw() {
   // pressing backspace never has to delete a comma
   out.firstElementChild.textContent = cErr || cgroup(cEntry);
   out.classList.toggle('err', !!cErr);
+  calcFit(out);
   const line = $('#calcLine').firstElementChild;
   line.innerHTML = cLineL && !cErr ? esc(cLineL) + `<i>${I(OP_ICON[cLineOp])}</i>` + (cLineR !== '' ? esc(cLineR) + ' =' : '') : '';
+}
+/* A long value has to end in view, and a nowrap line that overflows is cut on the right —
+   which is exactly the end that matters. So the text is made smaller until it fits, and if it
+   still does not, it is slid along to show its end. Measuring keeps the digits upright and in
+   order, which a mirrored line would not. */
+function calcFit(box) {
+  const sp = box.firstElementChild;
+  sp.style.fontSize = ''; sp.style.transform = '';
+  const base = parseFloat(getComputedStyle(box).fontSize);
+  const over = sp.scrollWidth / Math.max(1, sp.clientWidth);
+  if (over > 1) sp.style.fontSize = Math.max(base * .45, base / over) + 'px';
+  const rest = sp.scrollWidth - sp.clientWidth;
+  if (rest > 0) sp.style.transform = `translateX(${-rest}px)`;
 }
 /* a new calculation forgets the expression line; a new operand keeps it */
 function calcStart() { if (cRepeat) { cRepeat = null; cLineL = ''; cLineOp = null; cLineR = ''; } cFresh = false; }
@@ -3376,7 +3460,12 @@ $('#calcKeys').onclick = e => {
   const k = e.target.closest('[data-k]')?.dataset.k; if (k === undefined) return;
   calcType(k); calcDraw();
 };
-$('#calcOut').onclick = () => copy($('#calcOut').textContent.trim());
+// a plain click copies what is on screen, separators and all; holding Ctrl copies the number
+// itself, because that is the one you paste into something that will do its own grouping
+$('#calcOut').onclick = e => {
+  const shown = $('#calcOut').textContent.trim();
+  copy(e.ctrlKey ? shown.replace(/,/g, '') : shown);
+};
 /* typing goes through the same keys; Escape is left alone so it still closes the panel */
 addEventListener('keydown', e => {
   if (panel !== 'calc' || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -3642,11 +3731,12 @@ app.quitForUpdate = () => { toast('Installing update…'); setTimeout(() => send
 if (S.updates !== false && Date.now() - (S.lastCheck || 0) > 864e5) setTimeout(() => checkUpdates(false), 8000);
 $('#quitBtn').onclick = () => send('quit');
 /* Reset throws away the dock, the themes, the snippets and the zones, so it takes two taps: a
-   native confirm() is a separate window on Linux and steals focus off the panel. The reload is
-   what repaints every control from the defaults — and it waits for the native side to say the
-   settings are on disk, because reloading early is what used to leave a half-written file. */
-let resetArmed = 0, resetWanted = false;
-app.saved = () => { if (resetWanted) { resetWanted = false; location.reload(); } };
+   native confirm() is a separate window on Linux and steals focus off the panel.
+   It repaints in place rather than reloading the page. A reload was how every control used to be
+   repainted, but the page's settings are handed to it once when the window is built — so a reload
+   brought the old settings back and wrote them over the new ones, and left the panel in a state
+   where the edge hover no longer opened it. */
+let resetArmed = 0;
 $('#resetBtn').onclick = () => {
   const b = $('#resetBtn'), label = b.querySelector('span');
   if (!resetArmed) {
@@ -3658,9 +3748,13 @@ $('#resetBtn').onclick = () => {
   }
   resetArmed = 0;
   for (const k of Object.keys(S)) delete S[k];
-  Object.assign(S, S_DEF);
-  resetWanted = true;
+  Object.assign(S, defaults());
+  normalize();
+  applyTheme(); drawFolds(); renderAll();
+  renderBinds(); pushBinds();
+  renderSnips(); renderClips(); renderThemes(); renderZones(); renderEngines();
   save();
+  toast('Back to defaults');
 };
 
 applyTheme();

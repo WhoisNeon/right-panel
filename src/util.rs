@@ -140,16 +140,6 @@ pub fn qr_svg(w: usize, bits: &[bool], quiet: u32, side: u32) -> String {
     )
 }
 
-/// A QR matrix as a baseline JPEG. Black on white compresses to almost nothing.
-pub fn qr_jpg(w: usize, bits: &[bool], quiet: u32) -> Option<Vec<u8>> {
-    let (_, _, px) = qr_bitmap(w, bits, 4, quiet);
-    let side = w as u16 + (quiet as u16) * 2;
-    let mut buf = Vec::new();
-    let enc = jpeg_encoder::Encoder::new(&mut buf, 90);
-    enc.encode(&px, side, side, jpeg_encoder::ColorType::Rgba).ok()?;
-    Some(buf)
-}
-
 /// Nearest-neighbour downscale so the UI can show a small preview.
 pub fn thumbnail(w: u32, h: u32, rgba: &[u8], max: u32) -> (u32, u32, Vec<u8>) {
     if w <= max && h <= max {
