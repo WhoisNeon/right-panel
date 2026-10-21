@@ -518,6 +518,7 @@ unsafe extern "system" {
     fn TranslateMessage(msg: *const Msg) -> i32;
     fn DispatchMessageW(msg: *const Msg) -> isize;
     fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
+    fn LoadCursorW(inst: *mut core::ffi::c_void, name: *const u16) -> *mut core::ffi::c_void;
     fn CreateDIBSection(dc: *mut core::ffi::c_void, info: *mut BITMAPINFO, usage: u32,
                         bits: *mut *mut core::ffi::c_void, section: *mut core::ffi::c_void, offset: u32) -> *mut core::ffi::c_void;
     fn SelectObject(dc: *mut core::ffi::c_void, obj: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
@@ -528,6 +529,8 @@ unsafe extern "system" {
 
 const WM_CLOSE: u32 = 0x0010;
 const WM_DESTROY: u32 = 0x0002;
+/// MAKEINTRESOURCE(32515): the stock crosshair, which is not a LoadImage id but an atom.
+const IDC_CROSS: *const u16 = 32515 as *const u16;
 const WS_POPUP: u32 = 0x8000_0000;
 const WS_EX_LAYERED: u32 = 0x0008_0000;
 const WS_EX_TOOLWINDOW: u32 = 0x0000_0080;
@@ -557,11 +560,15 @@ unsafe extern "system" fn shield_wndproc(hwnd: isize, msg: u32, w: isize, l: isi
 }
 
 /// A window the size of every screen, invisible but in front, so that while the eyedropper is up
-/// a click lands here and nowhere else. Nothing is drawn — zero alpha — so the colour under the
-/// pointer is still the colour on screen. It never takes focus.
+/// a click lands here and nowhere else. Nothing is drawn — zero alpha — so the color under the
+/// pointer is still the color on screen. It never takes focus.
 ///
 /// It gets a thread of its own, because a window needs a message loop to stay alive and the
 /// thread running the grab is busy watching the pointer.
+///
+/// The class carries the crosshair. With no cursor of its own a window keeps whatever the last
+/// one left there, and Windows reads a class with none as the app-start cursor — which is the
+/// hourglass the grab used to show. `DefWindowProc` is what puts a class cursor up on WM_SETCURSOR.
 fn block_mouse() {
     thread::spawn(|| unsafe {
         let class: Vec<u16> = "RightPanelShield\0".encode_utf16().collect();
@@ -574,7 +581,7 @@ fn block_mouse() {
             win_extra: 0,
             instance: inst,
             icon: std::ptr::null_mut(),
-            cursor: std::ptr::null_mut(),
+            cursor: LoadCursorW(std::ptr::null_mut(), IDC_CROSS),
             background: std::ptr::null_mut(),
             menu_name: std::ptr::null(),
             class_name: class.as_ptr(),
@@ -635,7 +642,7 @@ fn release_mouse() {
 
 /// The pixel under the pointer as `#rrggbb`.
 ///
-/// GetPixel hands back a COLORREF, and the colour did not always arrive in the order COLORREF is
+/// GetPixel hands back a COLORREF, and the color did not always arrive in the order COLORREF is
 /// documented to be — from the desktop DC it came back as if red were in the low byte, which
 /// swapped every sample. So the pixel is copied into a 32bpp DIB of our own and read out of that:
 /// 32bpp BI_RGB is blue, green, red, alpha, and that does not vary by anything.
@@ -676,8 +683,8 @@ fn pixel_at(x: i32, y: i32) -> Option<String> {
 }
 
 /// Screen eyedropper: waits for the next click, returns the pixel color.
-/// `look` is called with the colour under the pointer, and where the pointer is, while it moves;
-/// `done` gets the chosen colour, or None if the grab was called off.
+/// `look` is called with the color under the pointer, and where the pointer is, while it moves;
+/// `done` gets the chosen color, or None if the grab was called off.
 ///
 /// While the grab is up a full-screen transparent window sits over the desktop and takes the
 /// clicks, so sampling a button does not also press it. It draws nothing — a layered window at

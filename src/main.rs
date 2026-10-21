@@ -6,7 +6,7 @@ use std::{
     collections::HashSet,
     fs,
     sync::{
-        atomic::{AtomicBool, AtomicI32, AtomicU64, AtomicU8, Ordering},
+        atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering},
         Mutex,
     },
     thread,
@@ -43,8 +43,6 @@ static EDGE_X: AtomicI32 = AtomicI32::new(0);
 static ON_LEFT: AtomicBool = AtomicBool::new(false);
 /// Another monitor continues past the panel's edge, so the pointer can cross it on the way over.
 static SCALE_BITS: AtomicU64 = AtomicU64::new(0x3FF0_0000_0000_0000); // 1.0
-/// Which key must be held for the panel to open at the screen edge: 0 any, 1 Ctrl, 2 Shift, 3 Space.
-static OPEN_MOD: AtomicU8 = AtomicU8::new(0);
 /// What the panel bound to a key: tool id -> the virtual key codes that combination means.
 static BINDS: Mutex<Vec<(String, Vec<u8>)>> = Mutex::new(Vec::new());
 /// The key the edge hover needs, as one virtual key code, or 0 for none.
@@ -564,38 +562,31 @@ mod tray {
     use super::{util, Ev};
     use tao::event_loop::EventLoopProxy;
     use tray_icon::{
-        menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu},
+        menu::{CheckMenuItem, Menu, MenuEvent, MenuItem, PredefinedMenuItem},
         Icon, MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent,
     };
 
     pub struct Tray {
         _icon: TrayIcon,
         startup: CheckMenuItem,
-        openmod: Vec<CheckMenuItem>,
     }
 
-    /* the same four choices the panel's Settings page offers, in the same order */
-    const MODS: [(&str, &str); 4] = [("none", "No key"), ("ctrl", "Ctrl"), ("shift", "Shift"), ("space", "Space")];
-
     impl Tray {
-        pub fn new(proxy: &EventLoopProxy<Ev>, startup_on: bool, open_mod: u8) -> Option<Tray> {
+        pub fn new(proxy: &EventLoopProxy<Ev>, startup_on: bool) -> Option<Tray> {
             let login = if cfg!(windows) { "Start with Windows" } else { "Open at login" };
             let startup = CheckMenuItem::with_id("startup", login, true, startup_on, None);
-            let openmod: Vec<CheckMenuItem> = MODS.iter().enumerate()
-                .map(|(i, (id, label))| CheckMenuItem::with_id(format!("openmod-{id}"), *label, true, i as u8 == open_mod, None))
-                .collect();
-            /* reading the modifier key needs OS APIs we only have on Windows */
-            let sub = Submenu::new("Hold key to open", cfg!(windows));
-            for m in &openmod { let _ = sub.append(m); }
+            /* the hold-to-open combination is the panel's own setting now (Settings → Keybinds).
+               The tray used to mirror a four-way version of it, which could not express a
+               combination — Ctrl + Shift + Space showed up there as Ctrl. */
             let menu = Menu::new();
             let _ = menu.append_items(&[
                 &MenuItem::with_id("open", "Open Right Panel", true, None),
                 &MenuItem::with_id("settings", "Widgets && settings…", true, None),
                 &MenuItem::with_id("addapp", "Add app…", true, None),
                 &PredefinedMenuItem::separator(),
-                &sub,
                 &startup,
                 &PredefinedMenuItem::separator(),
+                &MenuItem::with_id("reset", "Reset to default", true, None),
                 &MenuItem::with_id("quit", "Quit Right Panel", true, None),
             ]);
             let icon = TrayIconBuilder::new()
@@ -615,26 +606,12 @@ mod tray {
                     let _ = tp.send_event(Ev::Show(""));
                 }
             }));
-            Some(Tray { _icon: icon, startup, openmod })
+            Some(Tray { _icon: icon, startup })
         }
 
         pub fn set_startup(&self, on: bool) {
             self.startup.set_checked(on);
         }
-
-        pub fn set_open_mod(&self, code: u8) {
-            for (i, m) in self.openmod.iter().enumerate() { m.set_checked(i as u8 == code); }
-        }
-    }
-}
-
-
-fn mod_code(v: &Value) -> u8 {
-    match v.as_str().unwrap_or("none") {
-        "ctrl" => 1,
-        "shift" => 2,
-        "space" => 3,
-        _ => 0,
     }
 }
 
@@ -680,7 +657,6 @@ fn main() {
 
     let mut settings: Value = fs::read_to_string(&settings_path).ok().and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_else(|| json!({}));
     settings["startup"] = json!(sys::startup_enabled());
-    OPEN_MOD.store(mod_code(&settings["openMod"]), Ordering::Relaxed);
     let notes_json = dir.join("notes.json");
     let notes: Value = fs::read_to_string(&notes_json)
         .ok()
@@ -834,7 +810,7 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
         match event {
             // macOS needs the tray created once the app is running
             Event::NewEvents(StartCause::Init) => {
-                tray = tray::Tray::new(&proxy, sys::startup_enabled(), OPEN_MOD.load(Ordering::Relaxed));
+                tray = tray::Tray::new(&proxy, sys::startup_enabled());
                 if !OPEN.load(Ordering::Relaxed) {
                     set_passthrough(&window, true);
                 }
@@ -873,12 +849,12 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     }
                     let _ = webview.evaluate_script(&format!("app.syncStartup({on})"));
                 }
-                other if other.starts_with("openmod-") => {
-                    let v = &other["openmod-".len()..];
-                    let code = mod_code(&Value::String(v.to_string()));
-                    OPEN_MOD.store(code, Ordering::Relaxed);
-                    if let Some(t) = &tray { t.set_open_mod(code); }
-                    let _ = webview.evaluate_script(&format!("app.syncOpenMod('{v}')"));
+                /* The panel owns the defaults and the write, so resetting is one call into the
+                   page — the same two-tap path its own button takes, so a stray click on a
+                   tray menu cannot erase the dock, the themes and the snippets. */
+                "reset" => {
+                    let _ = proxy.send_event(Ev::Show("settings"));
+                    let _ = proxy.send_event(Ev::Script("app.armReset()".into()));
                 }
                 "quit" => *flow = ControlFlow::Exit,
                 _ => {}
@@ -926,14 +902,12 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                     }
                     "settings" => {
                         let st = &m["settings"];
-                        OPEN_MOD.store(mod_code(&st["openMod"]), Ordering::Relaxed);
                         let want = st["startup"].as_bool().unwrap_or(false);
                         if want != sys::startup_enabled() {
                             sys::set_startup(want);
                         }
                         if let Some(t) = &tray {
                             t.set_startup(want);
-                            t.set_open_mod(mod_code(&st["openMod"]));   // the tray's ticks follow the panel's choice
                         }
                         let _ = fs::write(&settings_path, st.to_string());
                     }
@@ -965,17 +939,6 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                         // every key of the combination, not just the first one: holding Ctrl
                         // alone was enough for a Ctrl + Shift + Space that was never satisfied
                         *OPEN_HOLD.lock().unwrap() = key_codes(&m["openKeys"]).unwrap_or_default();
-                        // the tray's tick still speaks the old three-way language
-                        let open_key = m["openKeys"].as_array().and_then(|a| a.first()).and_then(|v| v.as_str());
-                        OPEN_MOD.store(
-                            match open_key {
-                                Some("Control") | Some("Ctrl") => 1,
-                                Some("Shift") => 2,
-                                Some(" ") | Some("Space") => 3,
-                                _ => 0,
-                            },
-                            Ordering::Relaxed,
-                        );
                     }
                     "sysinfo" => {
                         let _ = webview.evaluate_script(&format!("app.sysinfo({})", sys::system_info()));

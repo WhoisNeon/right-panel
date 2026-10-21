@@ -109,7 +109,7 @@
   .btn svg { width: 14px; height: 14px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .btn:hover { background: var(--soft2); }
   .btn.primary { background: var(--inv); color: var(--inv-ink); font-weight: 600; }
-  /* a fixed white rather than a theme colour, so Copy all reads as the same button whatever the
+  /* a fixed white rather than a theme color, so Copy all reads as the same button whatever the
      panel is wearing; the ink is dark on purpose, that is what makes it white */
   .btn.white { background: #fff; color: #111; font-weight: 600; }
   .btn.armed { background: #ff453a; color: #fff; font-weight: 600; }
@@ -178,12 +178,6 @@
   /* the country's flag sits beside its name, the way the row is read */
   #netList .rowflag { width: 17px; height: 17px; border-radius: 50%; margin-left: 6px; vertical-align: -3px;
     box-shadow: 0 0 0 1px var(--line); }
-  /* the domain's way out: a small button that goes there, kept out of the way of the ellipsis */
-  #netList .rowopen { flex: none; margin-left: 6px; width: 22px; height: 22px; padding: 0; display: inline-grid;
-    place-items: center; border: 0; border-radius: 7px; background: var(--soft2); color: var(--muted); cursor: pointer;
-    vertical-align: -5px; }
-  #netList .rowopen:hover { color: var(--ink); }
-  #netList .rowopen svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .item { position: relative; text-align: left; border: 0; background: var(--soft); border-radius: 12px; padding: 9px 54px 9px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); flex: none; min-width: 0; }
   .item:hover { background: var(--soft2); z-index: 1; }
   .item small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
@@ -474,7 +468,7 @@
 
   /* The eyedropper's swatch: it sits in one of two fixed spots by the panel edge and stays there,
      so it never covers the thing being sampled and never chases the pointer. Big enough to read
-     the colour off at a glance, with the hex on a chip beside it. */
+     the color off at a glance, with the hex on a chip beside it. */
   #pickHint { position: fixed; z-index: 95; left: 0; top: 0; width: 46px; height: 46px; border-radius: 13px;
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0006, 0 10px 26px -8px rgba(0,0,0,.7); pointer-events: none; }
   #pickHint[hidden] { display: none; }
@@ -1143,13 +1137,19 @@ function frame(now) {
   const g = grow.step(dt), gv = grow.vel, gs = Math.max(0, g);
   const flyH = flyUi.offsetHeight;
   if (panel) {
-    // the top is what the eye tracks: a height change (a Settings tab) may only move the bottom edge, so the
-    // panel is capped to the room below its top and scrolls inside rather than pushing the top up the screen
-    if (flyTop === null) {
-      flyTop = clamp(fy.v - flyH / 2, 10, Math.max(10, innerHeight - flyH - 10));
-      flyUi.style.maxHeight = Math.max(80, innerHeight - flyTop - 10) + 'px';
-    }
-    fy.t = flyTop + flyH / 2;
+    /* The top is what the eye tracks: a new panel is anchored where it was asked for, and a tab
+       switch only moves the bottom edge. flyTop is the top the panel *wants* and it is never
+       written back from the clamped value — doing that let a tall page ratchet the panel upwards
+       a little more on every switch, and it never came back down. Only the frame's own top is
+       clamped, and only when the page really does not fit above the bottom of the screen. */
+    if (flyTop === null) flyTop = clamp(fy.v - flyH / 2, 10, Math.max(10, innerHeight - flyH - 10));
+    /* A page that does not fit is pulled up by half of what overflows, not pushed down to the
+       very edge: it keeps the top and the bottom equally reachable, and a page that fits later
+       goes back to where it was. */
+    const over = flyTop + flyH + 10 - innerHeight;
+    const top = Math.max(10, flyTop - Math.max(0, over) / 2);
+    flyUi.style.maxHeight = Math.max(80, innerHeight - top - 10) + 'px';
+    fy.t = top + flyH / 2;
   }
   const Y = fy.step(dt);
   const stX = 1 + clamp(gv * .04, -.15, .15), stY = 1 - clamp(gv * .025, -.1, .1);
@@ -1433,32 +1433,18 @@ $('.spage[data-p=widgets]').addEventListener('click', e => {
   else if ('rm' in b.dataset) { S.apps = S.apps.filter(x => x.id !== id); S.dock = S.dock.filter(x => x !== id); S.more = S.more.filter(x => x !== id); save(); renderAll(); }
 });
 const tpill = $('#tpill');
-/* The settings pages are all made as tall as the tallest of them, so moving between them does not
-   resize the panel under the pointer. A page that is hidden measures nothing, so they are shown
-   one at a time for the measurement and then put back as they were.
-
-   Tallest, but never taller than the room the panel actually has: a page pushed past that stops
-   being able to scroll and simply runs off the bottom. What is left over scrolls inside the page,
-   which is what the Keybinds list has to do. */
+/* Each settings page is as tall as its own content, so the panel changes height as the tabs do —
+   that is the point of the tabs being pages rather than one long scroll. The only limit is the
+   room the panel has: the flyout is capped to the screen less the margins it keeps, so a page
+   that does not fit scrolls inside instead of growing past the edge and losing its scrollbar.
+   Nothing is pinned to the height of another page; a floor under all of them was what kept a
+   three-line page inside the tall box the Theme page needed. */
 function equaliseSettings() {
   const panel = $('.panel[data-name=settings]');
   if (!panel || !panel.classList.contains('on')) return;
-  const pages = $$('.spage', panel), was = pages.map(p => p.classList.contains('on'));
-  const heights = pages.map(p => {
-    pages.forEach(q => { q.classList.remove('on'); q.style.minHeight = ''; });
-    p.classList.add('on');
-    return p.scrollHeight;
-  });
-  /* The room the panel has: the flyout is capped to the screen less the margins it keeps, and a
-     page has to fit inside that or it grows past the edge and stops being able to scroll.
-
-     Each page is then left to its own content, with one floor under all of them — the shortest
-     page. Pinning every page to the tallest made the panel the same height whatever was on it,
-     so a page with three lines of content sat in a tall box with most of it empty. */
+  const pages = $$('.spage', panel);
   const room = Math.max(200, innerHeight - 150);
-  const floor = Math.min(Math.ceil(Math.min(...heights)) + 2, room);
-  pages.forEach(p => { p.style.minHeight = floor + 'px'; p.style.maxHeight = room + 'px'; });
-  pages.forEach((p, i) => p.classList.toggle('on', was[i]));
+  pages.forEach(p => { p.style.minHeight = ''; p.style.maxHeight = room + 'px'; });
 }
 function moveTpill() {
   const b = $$('#stabs button').find(x => x.classList.contains('on')); if (!b) return;
@@ -1476,7 +1462,10 @@ $('#stabs').addEventListener('click', e => {
   const page = $(`.spage[data-p="${p}"]`);
   void page.offsetWidth;                       // let the browser see the "before" frame, or the slide is skipped
   page.classList.add(to > from ? 'from-r' : 'from-l');
-  flyTop = null;        // the new page is a different height: re-anchor rather than keep the old top
+  /* The top is kept. Re-anchoring here used to throw it away and let the frame loop re-derive it
+     from the spring's current position — which has not settled yet — so every tab switch walked
+     the panel further up the screen. A page that does not fit now pushes the top up from inside
+     the frame loop, by exactly as much as it needs. */
   equaliseSettings();
 });
 $('#addApp').onclick = () => send('addApp');
@@ -2443,9 +2432,9 @@ function setColor(hex) {
 function pushRecentColor(hex) { S.recentColors = [hex, ...S.recentColors.filter(c => c !== hex)].slice(0, 16); save(); renderRecent(); }
 const PALETTE = ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#78716c','#64748b','#111827','#374151','#9ca3af','#e5e7eb','#ffffff'];
 $('#palette').innerHTML = PALETTE.map(c => `<button class="spring" style="background:${c}" data-c="${c}"></button>`).join('');
-/* Recents are stored the way the panel keeps a colour — rrggbb, no hash — because that is what
+/* Recents are stored the way the panel keeps a color — rrggbb, no hash — because that is what
    setColor and the copy button want. A CSS background needs the hash, and without it the rule is
-   silently dropped and every swatch came out the colour of nothing. */
+   silently dropped and every swatch came out the color of nothing. */
 function renderRecent() {
   const swatch = c => {
     const hex = '#' + String(c).replace('#', '');
@@ -2466,7 +2455,7 @@ $('#eyedrop').onclick = startPick;
 const pickHint = $('#pickHint');
 /* Two fixed spots against the panel edge, and the swatch moves between them rather than
    following the pointer. Chasing the pointer put it under the pointer, which is the one place
-   the colour being sampled cannot be. */
+   the color being sampled cannot be. */
 const PICK_SIZE = 46, PICK_GAP = 14, PICK_NEAR = 120;
 const pickSpot = n => {
   const x = DIR < 0 ? PICK_GAP : innerWidth - PICK_SIZE - PICK_GAP;
@@ -3106,29 +3095,43 @@ function renderBinds() {
   }).join('');
 }
 let listening = null;
+/* A modifier pressed on its own is a whole binding — Ctrl alone is what the old tray offered,
+   and it is a perfectly good key to hold. It cannot be committed on keydown: Ctrl is also the
+   start of Ctrl + Q, and binding it then would make every combination Ctrl. So it waits for the
+   keyup, and only counts if no other key was pressed while it was held. */
+let heldMod = null;
 const pushBinds = () => send('binds', { binds: S.binds || {}, openKeys: S.openKeys || [] });
+function commitBind(keys, clear) {
+  if (clear) { if (listening === 'open') S.openKeys = []; else delete (S.binds ||= {})[listening]; }
+  else if (listening === 'open') S.openKeys = keys;
+  else (S.binds ||= {})[listening] = keys;
+  listening = null; heldMod = null;
+  save(); renderBinds(); pushBinds();
+}
 function bindKey(e) {
   e.preventDefault();
   e.stopPropagation();
+  if (e.key === 'CapsLock') return;
+  if (KEY_MODS.includes(e.key)) { heldMod = e.key; return; }   // maybe the first half of a combination
+  heldMod = null;
   const mods = KEY_MODS.filter(k => e.getModifierState && e.getModifierState(k));
-  if (['Control', 'Alt', 'Shift', 'Meta', 'CapsLock'].includes(e.key)) return;   // still choosing
   const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
-  if (listening) {
-    S.binds = S.binds || {};
-    if (e.key === 'Escape') { if (listening === 'open') S.openKeys = []; else delete S.binds[listening]; }
-    else if (listening === 'open') S.openKeys = [...mods, key];
-    else S.binds[listening] = [...mods, key];
-    listening = null; save(); renderBinds(); pushBinds();
-  }
+  commitBind(e.key === 'Escape' ? null : [...mods, key], e.key === 'Escape');
 }
 addEventListener('keydown', e => { if (listening) bindKey(e); }, true);
+addEventListener('keyup', e => {
+  if (!listening || !heldMod || e.key !== heldMod) return;
+  e.preventDefault();
+  e.stopPropagation();
+  commitBind([heldMod], false);
+}, true);
 addEventListener('keydown', e => { if (!listening && e.key === 'Escape') app.close(); });
-$('#bindOpen').onclick = () => { listening = 'open'; renderBinds(); };
+$('#bindOpen').onclick = () => { listening = 'open'; heldMod = null; renderBinds(); };
 $('#bindTools').onclick = e => {
   const un = e.target.closest('[data-un]');
   if (un) { delete (S.binds ||= {})[un.dataset.un]; save(); renderBinds(); pushBinds(); return; }
   const k = e.target.closest('[data-k]');
-  if (k) { listening = k.dataset.k; renderBinds(); }
+  if (k) { listening = k.dataset.k; heldMod = null; renderBinds(); }
 };
 renderBinds();
 pushBinds();   // the saved bindings go to the native side at start-up, not only when one changes
@@ -3149,7 +3152,6 @@ let netRows = [], netIp = '';
    value half of each row as a bar, which keeps every name on screen and the list the same height
    it will be once the answer lands. */
 const NET_ROWS = ['IP address', 'Country', 'Region', 'City', 'Postal code', 'Coordinates', 'Time zone', 'ASN', 'ISP', 'Org', 'Domain'];
-const NET_OPEN_ROW = NET_ROWS.indexOf('Domain');   // the only row that has somewhere to go
 const NET_FLAG = cc => `https://raw.githubusercontent.com/HatScripts/circle-flags/gh-pages/flags/${String(cc).toLowerCase()}.svg`;
 async function fetchText(url) {
   const r = await fetch(url, { cache: 'no-store' });
@@ -3163,15 +3165,12 @@ function netDraw() {
     // flag or the button with it
     const val = v ? `<span class="v">${esc(v)}</span>` : '<i class="v"></i>';
     const flag = (v && i === 1 && netFlag) ? `<img class="rowflag" src="${NET_FLAG(netFlag)}" alt="">` : '';
-    const open = (v && i === NET_OPEN_ROW && netOpen)
-      ? `<button class="rowopen" data-open="${i}" aria-label="Open ${esc(netOpen)}">${I(LUC['external-link'])}</button>` : '';
-    return `<div class="set${v ? '' : ' skel'}"${v ? ` data-net="${i}"` : ''}><span>${esc(k)}</span><b>${val}${flag}${open}</b></div>`;
+    return `<div class="set${v ? '' : ' skel'}"${v ? ` data-net="${i}"` : ''}><span>${esc(k)}</span><b>${val}${flag}</b></div>`;
   }).join('');
 }
-let netFlag = '', netOpen = '';
+let netFlag = '';
 async function loadNet() {
   netFlag = '';
-  netOpen = '';
   netRows = [];
   netDraw();          // the skeleton: labels in place, values still bars
   try {
@@ -3180,7 +3179,6 @@ async function loadNet() {
     const g = await (await fetch('https://ipwho.is/' + encodeURIComponent(ip), { cache: 'no-store' })).json();
     if (!g || g.success === false) throw new Error('geo');
     netFlag = g.country_code || '';
-    netOpen = g.connection?.domain || '';
     netRows = [
       ip,
       g.country || '—',
@@ -3192,7 +3190,7 @@ async function loadNet() {
       g.connection?.asn || '—',
       g.connection?.isp || '—',
       g.connection?.org || '—',
-      netOpen,
+      g.connection?.domain || '—',
     ];
   } catch {
     netRows = [];
@@ -3203,8 +3201,6 @@ async function loadNet() {
   netDraw();
 }
 $('#netList').onclick = e => {
-  const open = e.target.closest('[data-open]');
-  if (open) { app.close(); send('open', { target: 'https://' + netOpen }); return; }
   const i = e.target.closest('[data-net]')?.dataset.net;
   if (i !== undefined) copy(netRows[+i], 'Copied');
 };
@@ -3878,7 +3874,7 @@ $('#quitBtn').onclick = () => send('quit');
    repainted, but the page's settings are handed to it once when the window is built — so a reload
    brought the old settings back and wrote them over the new ones, and left the panel in a state
    where the edge hover no longer opened it. */
-let resetArmed = 0;
+let resetArmed = 0, resetTimer = 0;
 const RESET_LABEL = 'Reset to default', RESET_ARMED = 'Tap again to erase everything';
 /* The button has to say what it will do next, and it has to say it again once it has done it —
    the second tap used to leave it reading "tap again" over an already-reset panel. */
@@ -3888,11 +3884,14 @@ function resetLabel(armed) {
   $('#resetIco').innerHTML = I(LUC[armed ? 'octagon-alert' : 'rotate-ccw']);
   b.classList.toggle('armed', !!armed);
 }
-$('#resetBtn').onclick = () => {
+function reset() {
   if (!resetArmed) {
     resetArmed = 1;
     resetLabel(true);
-    setTimeout(() => { if (resetArmed) { resetArmed = 0; resetLabel(false); } }, 4000);
+    /* the disarm is this arm's own timer, cancelled when another one starts: left running, it
+       un-armed a button that the tray had just armed a moment later */
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { if (resetArmed) { resetArmed = 0; resetLabel(false); } }, 4000);
     return;
   }
   resetArmed = 0;
@@ -3905,6 +3904,18 @@ $('#resetBtn').onclick = () => {
   renderSnips(); renderClips(); renderThemes(); renderZones(); renderEngines();
   save();
   toast('Back to defaults');
+}
+$('#resetBtn').onclick = reset;
+/* the tray's Reset calls this: it opens Settings on the General tab and arms the button there,
+   so the wipe still takes a second tap and the panel says what it is about to erase */
+app.armReset = () => {
+  setPanel('settings');
+  const tab = $('#stabs button[data-p="general"]');
+  if (tab && !tab.classList.contains('on')) tab.click();
+  clearTimeout(resetTimer);
+  resetArmed = 0;
+  resetLabel(false);
+  setTimeout(() => { if (!resetArmed) reset(); }, 320);   // let the panel finish pouring out first
 };
 
 applyTheme();
