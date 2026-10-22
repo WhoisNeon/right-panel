@@ -533,7 +533,6 @@ const WM_DESTROY: u32 = 0x0002;
 /// id but an atom, which is why the null module handle is what it is looked up with.
 const IDC_ARROW: *const u16 = 32512 as *const u16;
 
-}
 const WS_POPUP: u32 = 0x8000_0000;
 const WS_EX_LAYERED: u32 = 0x0008_0000;
 const WS_EX_TOOLWINDOW: u32 = 0x0000_0080;
