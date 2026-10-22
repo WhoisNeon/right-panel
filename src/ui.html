@@ -390,8 +390,11 @@
   /* the rows here are read, not dragged, so they say nothing about grabbing */
   #bindTools .wrow { cursor: default; }
   #bindTools .wn { flex: 1; min-width: 0; }
-  /* six rows rather than five: the page was a little too short to read a bind and the header
-     above it without scrolling, and every tool has a row here */
+  /* a row is one line of tool name and one chip: this is its height whatever its width, so it is
+     what the page is measured against below */
+  #bindTools .wrow { min-height: 34px; }
+  /* six rows, then the list scrolls: every tool has a row on this tab, and a page as long as
+     the list would push Add App's own page aside */
   #bindTools { max-height: 224px; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--inv-ink); transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
@@ -469,9 +472,9 @@
   .theme.on { color: var(--ink); }
   .theme.on i { box-shadow: 0 0 0 2px var(--liquid), 0 0 0 4px var(--inv); }
 
-  /* The eyedropper's swatch: it sits in one of two fixed spots by the panel edge and stays there,
-     so it never covers the thing being sampled and never chases the pointer. Big enough to read
-     the color off at a glance, with the hex on a chip beside it. */
+  /* The eyedropper's sample: it sits in one of two fixed spots by the panel edge and stays
+     there, so it never covers the thing being sampled and never chases the pointer. Big enough
+     to read the color off at a glance, with the hex on a chip beside it. */
   #pickHint { position: fixed; z-index: 95; left: 0; top: 0; width: 46px; height: 46px; border-radius: 13px;
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0006, 0 10px 26px -8px rgba(0,0,0,.7); pointer-events: none; }
   #pickHint[hidden] { display: none; }
@@ -480,6 +483,24 @@
     background: #000c; border-radius: 9px; padding: 5px 9px; white-space: nowrap; letter-spacing: .02em; }
   /* on a left-edge panel the label would run off the right of the window, so it turns around */
   body.left #pickHint i { left: auto; right: 54px; }
+
+  /* The loupe, while the eyedropper is up: the screen around the pointer, magnified, with the
+     pixel that will be picked marked at its centre and the hex and an outline of the color along
+     the bottom. Its position is set by app.picking, which knows where the pointer is in the panel
+     window. */
+  #pickMag { position: fixed; width: 150px; height: 150px; z-index: 99; pointer-events: none; display: block;
+    background: #000; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 0 0 2px #fffd, 0 0 0 4px #0009, 0 16px 34px -12px rgba(0,0,0,.75); }
+  #pickMag[hidden] { display: none; }
+  #pickMag img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  /* the centre cell: a dark corner inside a light one, so it reads on any color */
+  #pickMag::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+    border-radius: 2px; box-shadow: 0 0 0 1px #fff, inset 0 0 0 1px #000; z-index: 2; }
+  /* the color being picked, named, along the bottom edge of the loupe */
+  #pickMag .inchip { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin: 0 8px 8px; padding: 5px 9px; border-radius: 9px; background: #000c; color: #fff;
+    font-family: Consolas, monospace; font-size: 12px; font-weight: 600; letter-spacing: .02em; z-index: 3; }
+  #pickMag .inchip i { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 0 0 1px #fff8; }
 
   /* custom color picker — the panel draws its own, so no native color dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
@@ -790,8 +811,10 @@
 <div class="ctxmenu" id="toolMenu" hidden></div>
 <div class="tip" id="tip"></div>
 <div class="toast" id="toast"></div>
-<!-- the eye dropper's preview: it follows the pointer while the native grab is waiting for a click -->
+<!-- the eyedropper's sample: it stays in a fixed spot by the panel edge while the grab is up -->
 <div id="pickHint" hidden><i id="pickHex">#000000</i></div>
+<!-- the eyedropper's loupe: a window-sized overlay placed around the pointer, filled by Rust -->
+<div id="pickMag" hidden><img id="pickMagImg" alt=""><div class="inchip"><i id="pickMagSw"></i><span id="pickMagHex">#000000</span></div></div>
 <div class="cpick" id="cpick" hidden>
   <div class="sv" id="cpSv" aria-label="Saturation and brightness"><i></i></div>
   <div class="hue" id="cpHue" aria-label="Hue"><i></i></div>
@@ -1447,14 +1470,34 @@ const tpill = $('#tpill');
    that is the point of the tabs being pages rather than one long scroll. The only limit is the
    room the panel has: the flyout is capped to the screen less the margins it keeps, so a page
    that does not fit scrolls inside instead of growing past the edge and losing its scrollbar.
-   Nothing is pinned to the height of another page; a floor under all of them was what kept a
-   three-line page inside the tall box the Theme page needed. */
+  Nothing is pinned to the height of another page; a floor under all of them was what kept a
+   three-line page inside the tall box the Theme page needed. One exception, on purpose: Keybinds
+   is held to the height the Widgets page takes, so the two are the same box. */
+/* The Keybinds list scrolls inside its own box instead of stretching the page: the list is every
+   tool the panel has, and letting it grow would make the tab depend on how many tools exist. */
+function keyPageFloor() {
+  const keys = $('.spage[data-p=keys]'), widgets = $('.spage[data-p=widgets]');
+  if (!keys || !widgets) return;
+  keys.style.minHeight = '';
+  /* Widgets is the fixed-content tab, so its own height is the box Keybinds should fill, and a
+     tab that is off has no layout at all: the two are swapped for one measurement and put back
+     exactly as they were found, before anything can paint. Measuring both at once would split the
+     panel between them; not putting the classes back left the flyout with no page at all. */
+  const keysWas = keys.classList.contains('on'), widgetsWas = widgets.classList.contains('on');
+  keys.classList.remove('on');
+  widgets.classList.add('on');
+  const h = widgets.offsetHeight;
+  widgets.classList.toggle('on', widgetsWas);
+  keys.classList.toggle('on', keysWas);
+  if (h) keys.style.minHeight = h + 'px';
+}
 function equaliseSettings() {
   const panel = $('.panel[data-name=settings]');
   if (!panel || !panel.classList.contains('on')) return;
   const pages = $$('.spage', panel);
   const room = Math.max(200, innerHeight - 150);
   pages.forEach(p => { p.style.minHeight = ''; p.style.maxHeight = room + 'px'; });
+  keyPageFloor();
 }
 function moveTpill() {
   const b = $$('#stabs button').find(x => x.classList.contains('on')); if (!b) return;
@@ -2457,23 +2500,25 @@ function renderRecent() {
 [$('#palette'), $('#recentColors')].forEach(el => el.addEventListener('click', e => { const c = e.target.dataset.c; if (c) { setColor(c); copy(color.toUpperCase()); } }));
 $$('.fmt').forEach(b => b.onclick = () => { copy(fmts()[b.dataset.f]); pushRecentColor(color); });
 $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () => pushRecentColor(color));
-const startPick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
+const startPick = () => { app.close(); pickHint.hidden = false; pickMag.hidden = true; send('pickColor'); };
 $('#eyedrop').onclick = startPick;
 /* the eye dropper is a native grab, so the panel is out of the way while it runs: it shows a
    swatch of whatever is under the pointer, which is the only way to aim at a shade you cannot
    name yet */
 const pickHint = $('#pickHint');
+const pickMag = $('#pickMag'), pickMagImg = $('#pickMagImg'), pickMagSw = $('#pickMagSw'), pickMagHex = $('#pickMagHex');
 /* Two fixed spots against the panel edge, and the swatch moves between them rather than
    following the pointer. Chasing the pointer put it under the pointer, which is the one place
    the color being sampled cannot be. */
-const PICK_SIZE = 46, PICK_GAP = 14, PICK_NEAR = 120;
+/* the swatch is 46px; the gap it keeps from the edge and from its own label */
+const PICK_SIZE = 46, PICK_GAP = 14, PICK_NEAR = 120, LOUPE = 150;
 const pickSpot = n => {
   const x = DIR < 0 ? PICK_GAP : innerWidth - PICK_SIZE - PICK_GAP;
   const y = Math.round(Math.max(PICK_GAP, Math.min(innerHeight - PICK_SIZE - PICK_GAP,
     (innerHeight - PICK_SIZE) * (n === 0 ? 0.34 : 0.62))));
   return { x, y };
 };
-app.picking = (hex, px, py) => {
+app.picking = (hex, px, py, img) => {
   pickHint.hidden = false;
   pickHint.style.background = hex;
   const lab = $('#pickHex');
@@ -2491,11 +2536,35 @@ app.picking = (hex, px, py) => {
   } else {
     pickHint.style.transform = `translate(${Math.max(4, Math.min(s.x, innerWidth - labW - PICK_GAP - 58))}px, ${s.y}px)`;
   }
+  showLoupe(hex, px, py, img);
 };
+/* The loupe. Rust copies the 15 × 15 screen pixels around the pointer, each drawn 10 times, and
+   sends that as a 150px picture. The square in the middle of it is the pixel that will be picked:
+   that is what the dot of the ordinary cursor would cover. The pointer keeps its arrow; the loupe
+   sits beside it, on the side of the panel. */
+function showLoupe(hex, px, py, img) {
+  if (img) pickMagImg.src = img;
+  pickMagSw.style.background = hex;
+  pickMagHex.textContent = hex.toUpperCase();
+  if (!img && !pickMagImg.src) return;        // no grab on this platform: nothing to magnify
+  pickHint.hidden = true;                     // the loupe carries the color now, so drop the corner chip
+  pickMag.hidden = false;
+  /* An arrow cursor's hot spot is its top-left corner, and the loupe is placed to stand in for
+     it: beside the pointer horizontally, clear of it vertically, so the pointer's own arrow (at
+     the screen's edge, over the panel) never covers the cell being read. The window is the only
+     thing that knows how much room there is: the loupe is 150px and the window is 480 × 680. */
+  const x = DIR > 0 ? px - LOUPE - 12 : px + 12;
+  const y = py - LOUPE / 2;
+  pickMag.style.left = Math.round(clamp(x, 4, Math.max(4, innerWidth - LOUPE - 4))) + 'px';
+  pickMag.style.top = Math.round(clamp(y, 4, Math.max(4, innerHeight - LOUPE - 4))) + 'px';
+}
 app.picked = hex => {
   pickHint.hidden = true;
+  pickMag.hidden = true;
   setColor(hex); pushRecentColor(color); copy(color.toUpperCase());
 };
+/* Escape gives the screen back without a color; the overlay goes with it. */
+app.pickCancel = () => { pickHint.hidden = true; pickMag.hidden = true; };
 setColor(color); renderRecent();
 
 /* ---- custom color picker: the panel draws its own, so no native dialog leaks in ---- */
@@ -3082,6 +3151,9 @@ send('qr', { text: '' });
 const KEY_MODS = ['Control', 'Alt', 'Shift', 'Meta'];
 const KEY_PRETTY = { ' ': 'Space', Control: 'Ctrl', Alt: 'Alt', Shift: 'Shift', Meta: 'Win', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Escape: 'Esc' };
 const bindLabel = keys => keys && keys.length ? keys.map(k => KEY_PRETTY[k] || k).join(' + ') : 'None';
+/* what a binding *is*, independent of the order it was pressed in: Ctrl + Shift + K and Shift +
+   Ctrl + K are one combination, and this is how two rows are compared to each other. */
+const bindKeyOf = keys => (keys || []).slice().sort().join('|');
 /* ten characters is what the chip has room for; a longer combination is cut there and said in
    full on hover, so the row keeps its width whatever is bound to it */
 const bindShort = keys => { const s = bindLabel(keys); return s.length > 10 ? s.slice(0, 10) + '…' : s; };
@@ -3105,19 +3177,52 @@ function renderBinds() {
   }).join('');
 }
 let listening = null;
-/* A modifier pressed on its own is a whole binding — Ctrl alone is what the old tray offered,
-   and it is a perfectly good key to hold. It cannot be committed on keydown: Ctrl is also the
-   start of Ctrl + Q, and binding it then would make every combination Ctrl. So it waits for the
-   keyup, and only counts if no other key was pressed while it was held. */
-let heldMod = null;
+/* A combination belongs to one thing at a time. The bindings are watched by their own thread,
+   which fires every combination that is down, so the same key on two rows opened two tools (in
+   whatever order the map happened to be walked) and a tool sharing the hold key never opened at
+   all, because the panel comes up and the keys become the panel's. Both are refused at capture
+   time instead, and the key is handed back rather than quietly kept in two places. */
+const bindOwner = (keys, except) => {
+  const k = bindKeyOf(keys);
+  if (!k) return null;
+  if (except !== 'open' && S.openKeys && bindKeyOf(S.openKeys) === k) return 'hold';
+  return Object.keys(S.binds || {}).find(id => id !== except && bindKeyOf(S.binds[id]) === k) || null;
+};
+const holderName = (id, keys) => {
+  if (id === 'hold') return 'The hold key';
+  const row = id === 'eyedrop' ? EYE : (W[id] || {});
+  return row.name || bindLabel(keys);
+};
+/* When a combination already belongs to something else, the row that had it lets go. Two rows
+   that both keep the same key is the state this exists to prevent, and a notice that only says
+   "no" leaves the user to work out which row to clear. */
+function takeBind(keys) {
+  const owner = bindOwner(keys, listening);
+  if (!owner) return false;
+  if (owner === 'hold') S.openKeys = [];
+  else delete (S.binds ||= {})[owner];
+  toast(`${holderName(owner)} unbound from ${bindLabel(keys)}`);   // the next line says what took it
+  return true;
+}
 const pushBinds = () => send('binds', { binds: S.binds || {}, openKeys: S.openKeys || [] });
 function commitBind(keys, clear) {
   if (clear) { if (listening === 'open') S.openKeys = []; else delete (S.binds ||= {})[listening]; }
+  else if (takeBind(keys)) {
+    if (listening === 'open') S.openKeys = keys; else (S.binds ||= {})[listening] = keys;
+  }
   else if (listening === 'open') S.openKeys = keys;
   else (S.binds ||= {})[listening] = keys;
   listening = null; heldMod = null;
   save(); renderBinds(); pushBinds();
 }
+/* Starting a capture the same way every time is what makes clicking another row honest: the
+   capture follows the click rather than staying on the row that asked for it first. */
+function listenFor(id) { listening = id; heldMod = null; renderBinds(); }
+/* A modifier pressed on its own is a whole binding — Ctrl alone is what the old tray offered,
+   and it is a perfectly good key to hold. It cannot be committed on keydown: Ctrl is also the
+   start of Ctrl + Q, and binding it then would make every combination Ctrl. So it waits for the
+   keyup, and only counts if no other key was pressed while it was held. */
+let heldMod = null;
 function bindKey(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -3136,12 +3241,12 @@ addEventListener('keyup', e => {
   commitBind([heldMod], false);
 }, true);
 addEventListener('keydown', e => { if (!listening && e.key === 'Escape') app.close(); });
-$('#bindOpen').onclick = () => { listening = 'open'; heldMod = null; renderBinds(); };
+$('#bindOpen').onclick = () => { listenFor('open'); };
 $('#bindTools').onclick = e => {
   const un = e.target.closest('[data-un]');
   if (un) { delete (S.binds ||= {})[un.dataset.un]; save(); renderBinds(); pushBinds(); return; }
   const k = e.target.closest('[data-k]');
-  if (k) { listening = k.dataset.k; heldMod = null; renderBinds(); }
+  if (k) { listenFor(k.dataset.k); }
 };
 /* Reset all clears both halves of the tab: the hold key and every tool binding. A capture that
    was waiting for a key is dropped too, or the next keystroke would write a binding back into
@@ -3152,6 +3257,7 @@ $('#resetBinds').onclick = () => {
   save(); renderBinds(); pushBinds();
   toast('All keybinds reset');
 };
+window.addEventListener('load', () => { renderBinds(); equaliseSettings(); }, { once: true });   // the panel fills this list, not the markup
 renderBinds();
 pushBinds();   // the saved bindings go to the native side at start-up, not only when one changes
 /* the native side saw one of the bound combinations: it has already brought the panel up, so all

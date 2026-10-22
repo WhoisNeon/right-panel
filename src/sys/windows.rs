@@ -519,7 +519,6 @@ unsafe extern "system" {
     fn DispatchMessageW(msg: *const Msg) -> isize;
     fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
     fn LoadCursorW(inst: *mut core::ffi::c_void, name: *const u16) -> *mut core::ffi::c_void;
-    fn CreateIconIndirect(info: *const IconInfo) -> *mut core::ffi::c_void;
     fn CreateDIBSection(dc: *mut core::ffi::c_void, info: *mut BITMAPINFO, usage: u32,
                         bits: *mut *mut core::ffi::c_void, section: *mut core::ffi::c_void, offset: u32) -> *mut core::ffi::c_void;
     fn SelectObject(dc: *mut core::ffi::c_void, obj: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
@@ -530,105 +529,10 @@ unsafe extern "system" {
 
 const WM_CLOSE: u32 = 0x0010;
 const WM_DESTROY: u32 = 0x0002;
-/// MAKEINTRESOURCE(32515): the stock crosshair, which is not a LoadImage id but an atom. It is
-/// only the fallback now: the grab normally shows the magnifier below.
-const IDC_CROSS: *const u16 = 32515 as *const u16;
+/// MAKEINTRESOURCE(32506): the plain arrow, the one every window shows. It is not a LoadImage
+/// id but an atom, which is why the null module handle is what it is looked up with.
+const IDC_ARROW: *const u16 = 32512 as *const u16;
 
-/// ICONINFO: `fIcon` is FALSE for a cursor. The hotspot is what makes the center of the ring the
-/// pixel that gets sampled.
-#[repr(C)]
-struct IconInfo {
-    icon: i32,
-    hotspot_x: u32,
-    hotspot_y: u32,
-    mask: *mut core::ffi::c_void,
-    color: *mut core::ffi::c_void,
-}
-
-/// Built once and kept for the life of the process: a cursor is a GDI object, and the class is
-/// registered again for every grab.
-static MAGNIFIER: AtomicIsize = AtomicIsize::new(0);
-
-/// A small ring with a dot in the middle, hotspot at the dot. The crosshair covered the pixel
-/// underneath it; a hollow ring leaves the sample visible while still saying exactly where the
-/// click will read. Black and white rings are drawn together so it reads on either background.
-unsafe fn magnifier_cursor() -> *mut core::ffi::c_void {
-    let made = MAGNIFIER.load(Ordering::Relaxed);
-    if made != 0 { return made as *mut core::ffi::c_void; }
-    unsafe {
-        const N: i32 = 32;
-        let screen = GetDC(std::ptr::null_mut());
-        if screen.is_null() { return std::ptr::null_mut(); }
-        let mem = CreateCompatibleDC(screen);
-        ReleaseDC(std::ptr::null_mut(), screen);
-        if mem.is_null() { return std::ptr::null_mut(); }
-        let mut bi: BITMAPINFO = std::mem::zeroed();
-        bi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
-        bi.bmiHeader.biWidth = N;
-        bi.bmiHeader.biHeight = -N;          // top-down, so y runs the way the loop does
-        bi.bmiHeader.biPlanes = 1;
-        bi.bmiHeader.biBitCount = 32;
-        bi.bmiHeader.biCompression = BI_RGB;
-        let mut bits: *mut core::ffi::c_void = std::ptr::null_mut();
-        let color = CreateDIBSection(mem, &mut bi, DIB_RGB_COLORS, &mut bits, std::ptr::null_mut(), 0);
-        if color.is_null() || bits.is_null() {
-            if !color.is_null() { DeleteObject(color); }
-            DeleteDC(mem);
-            return std::ptr::null_mut();
-        }
-        let px = bits as *mut u8;
-        let mut alphas = vec![0u8; (N * N) as usize];
-        let center = 16.0f32;
-        for y in 0..N {
-            for x in 0..N {
-                let dx = x as f32 - center;
-                let dy = y as f32 - center;
-                let d = (dx * dx + dy * dy).sqrt();
-                // a band is opaque in its middle and fades over half a pixel at each edge, which
-                // is enough to keep a 32px circle from looking like a staircase
-                let band = |inner: f32, outer: f32| {
-                    ((d - inner) / 0.8 + 0.5).clamp(0.0, 1.0).min(((outer - d) / 0.8 + 0.5).clamp(0.0, 1.0))
-                };
-                let black = band(8.8, 11.2);      // the rim
-                let white = band(9.7, 10.3);      // the light line through it
-                let dot = ((1.6 - d) / 0.8).clamp(0.0, 1.0);
-                let a = (black.max(white).max(dot) * 255.0) as u8;
-                let v = if white > 0.0 { 255u8 } else { 0u8 };
-                let i = ((y * N + x) * 4) as usize;
-                *px.add(i) = v;                   // blue
-                *px.add(i + 1) = v;               // green
-                *px.add(i + 2) = v;               // red
-                *px.add(i + 3) = a;
-                alphas[(y * N + x) as usize] = a;
-            }
-        }
-        GdiFlush();
-        /* The monochrome mask is the shape a cursor falls back to when alpha is not honoured:
-           a 1 means "leave the screen alone" (transparent), zero means draw the color. */
-        let mut mask_bits = vec![0u8; (N * 4) as usize];
-        for y in 0..N {
-            for x in 0..N {
-                if alphas[(y * N + x) as usize] < 128 {
-                    mask_bits[(y * 4 + x / 8) as usize] |= 0x80u8 >> (x % 8);
-                }
-            }
-        }
-        let mask = CreateBitmap(N, N, 1, 1, mask_bits.as_ptr() as *const core::ffi::c_void);
-        if mask.is_null() {
-            DeleteObject(color);
-            DeleteDC(mem);
-            return std::ptr::null_mut();
-        }
-        let info = IconInfo { icon: 0, hotspot_x: center as u32, hotspot_y: center as u32, mask, color };
-        let cursor = CreateIconIndirect(&info);
-        DeleteObject(mask);
-        DeleteObject(color);
-        DeleteDC(mem);
-        if cursor.is_null() { std::ptr::null_mut() } else {
-            MAGNIFIER.store(cursor as isize, Ordering::Relaxed);
-            cursor
-        }
-    }
 }
 const WS_POPUP: u32 = 0x8000_0000;
 const WS_EX_LAYERED: u32 = 0x0008_0000;
@@ -665,15 +569,15 @@ unsafe extern "system" fn shield_wndproc(hwnd: isize, msg: u32, w: isize, l: isi
 /// It gets a thread of its own, because a window needs a message loop to stay alive and the
 /// thread running the grab is busy watching the pointer.
 ///
-/// The class carries the magnifier. With no cursor of its own a window keeps whatever the last
-/// one left there, and Windows reads a class with none as the app-start cursor — which is the
-/// hourglass the grab used to show. `DefWindowProc` is what puts a class cursor up on WM_SETCURSOR.
+/// The class carries the plain arrow. It cannot carry no cursor at all: with no cursor of its own
+/// a window keeps whatever the last one left there, and Windows reads a class with none as the
+/// app-start cursor, which is the hourglass the grab used to show. The loupe itself is drawn in
+/// the panel's window beside the pointer, and the arrow only covers its own hot spot — the cell
+/// being read is the middle of the loupe, which is never under it.
 fn block_mouse() {
     thread::spawn(|| unsafe {
         let class: Vec<u16> = "RightPanelShield\0".encode_utf16().collect();
         let inst = GetModuleHandleW(std::ptr::null());
-        let made = magnifier_cursor();
-        let cursor = if made.is_null() { LoadCursorW(std::ptr::null_mut(), IDC_CROSS) } else { made };
         let wc = WndClass {
             size: std::mem::size_of::<WndClass>() as u32,
             style: 0,
@@ -682,7 +586,7 @@ fn block_mouse() {
             win_extra: 0,
             instance: inst,
             icon: std::ptr::null_mut(),
-            cursor,
+            cursor: LoadCursorW(std::ptr::null_mut(), IDC_ARROW),
             background: std::ptr::null_mut(),
             menu_name: std::ptr::null(),
             class_name: class.as_ptr(),
@@ -741,51 +645,92 @@ fn release_mouse() {
     }
 }
 
-/// The pixel under the pointer as `#rrggbb`.
+/// A `w`×`h` block of the screen from (`x`, `y`), with each source pixel written `zoom` times,
+/// as RGBA rows. Off the edge of the desktop it is black: the DC leaves what it could not copy,
+/// and a block that ran off the screen would otherwise be uninitialised.
 ///
 /// GetPixel hands back a COLORREF, and the color did not always arrive in the order COLORREF is
 /// documented to be — from the desktop DC it came back as if red were in the low byte, which
-/// swapped every sample. So the pixel is copied into a 32bpp DIB of our own and read out of that:
-/// 32bpp BI_RGB is blue, green, red, alpha, and that does not vary by anything.
-fn pixel_at(x: i32, y: i32) -> Option<String> {
+/// swapped every sample. So the pixels are copied into a 32bpp DIB of our own and read out of
+/// that: 32bpp BI_RGB is blue, green, red, alpha, and that does not vary by anything.
+///
+/// The color sample and the magnified picture are copied the same way, so the pixel under the
+/// pointer and the pixel in the middle of the loupe cannot disagree.
+fn screen_region(x: i32, y: i32, w: i32, h: i32, zoom: i32, buffers: &mut (Vec<u8>, *mut core::ffi::c_void, *mut core::ffi::c_void)) -> Option<Vec<u8>> {
     unsafe {
-        let screen = GetDC(std::ptr::null_mut());
-        if screen.is_null() { return None; }
-        let mem = CreateCompatibleDC(screen);
-        if mem.is_null() { ReleaseDC(std::ptr::null_mut(), screen); return None; }
+        let (src, mem, screen) = buffers;
+        let (nw, nh) = (w * zoom, h * zoom);
         let mut bi: BITMAPINFO = std::mem::zeroed();
         bi.bmiHeader = BITMAPINFOHEADER {
             biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
-            biWidth: 1,
-            biHeight: -1,     // negative height: the row asked for is row zero
+            biWidth: w,
+            biHeight: -h,     // negative height: the row asked for is the top row
             biPlanes: 1,
             biBitCount: 32,
             biCompression: BI_RGB,
             ..std::mem::zeroed()
         };
+        src.clear();
+        src.resize((w * h * 4) as usize, 0);
         let mut bits: *mut core::ffi::c_void = std::ptr::null_mut();
-        let bmp = CreateDIBSection(mem, &mut bi, DIB_RGB_COLORS, &mut bits, std::ptr::null_mut(), 0);
-        if bmp.is_null() || bits.is_null() {
-            DeleteDC(mem);
-            ReleaseDC(std::ptr::null_mut(), screen);
-            return None;
-        }
-        let old = SelectObject(mem, bmp);
-        let copied = BitBlt(mem, 0, 0, 1, 1, screen, x, y, SRCCOPY) != 0;
+        let bmp = CreateDIBSection(*mem, &mut bi, DIB_RGB_COLORS, &mut bits, std::ptr::null_mut(), 0);
+        if bmp.is_null() || bits.is_null() { return None; }
+        let old = SelectObject(*mem, bmp);
+        let copied = BitBlt(*mem, 0, 0, w, h, *screen, x, y, SRCCOPY) != 0;
         GdiFlush();
-        let px: [u8; 4] = if copied { *(bits as *const [u8; 4]) } else { [0; 4] };
-        SelectObject(mem, old);
+        if copied { std::ptr::copy_nonoverlapping(bits as *const u8, src.as_mut_ptr(), src.len()); }
+        SelectObject(*mem, old);
         DeleteObject(bmp);
+        if !copied { return None; }
+        let mut out = Vec::with_capacity((nw * nh * 4) as usize);
+        for row in 0..h {
+            for out_row in 0..zoom {
+                if row * zoom + out_row >= nh { break; }
+                for col in 0..w {
+                    let i = ((row * w + col) * 4) as usize;
+                    let (b, g, r) = (src[i], src[i + 1], src[i + 2]);
+                    for _ in 0..zoom { out.extend_from_slice(&[r, g, b, 255]); }
+                }
+            }
+        }
+        Some(out)
+    }
+}
+
+/// The color of the pixel under the pointer, read out of the same block the magnifier shows.
+fn pixel_at(screen: *mut core::ffi::c_void, mem: *mut core::ffi::c_void, x: i32, y: i32) -> Option<String> {
+    let mut buffers = (Vec::new(), mem, screen);
+    let px = screen_region(x, y, 1, 1, 1, &mut buffers)?;
+    Some(format!("#{:02x}{:02x}{:02x}", px[0], px[1], px[2]))
+}
+
+/// The magnified picture around (`x`, `y`) as a PNG data URI: `cells` source pixels each way,
+/// drawn `zoom` times, so `cells * zoom` pixels across. Small on purpose — it travels to the
+/// page as a string while the pointer moves.
+fn pick_magnifier(x: i32, y: i32, zoom: i32, cells: i32) -> String {
+    let n = cells.max(1);
+    let z = zoom.max(1);
+    unsafe {
+        let screen = GetDC(std::ptr::null_mut());
+        if screen.is_null() { return String::new(); }
+        let mem = CreateCompatibleDC(screen);
+        if mem.is_null() { ReleaseDC(std::ptr::null_mut(), screen); return String::new(); }
+        let mut png = String::new();
+        // the pointer sits at the middle of the block
+        let mut buffers = (Vec::new(), mem, screen);
+        if let Some(px) = screen_region(x - n / 2, y - n / 2, n, n, z, &mut buffers) {
+            png = format!("data:image/png;base64,{}", util::base64(&util::png((n * z) as u32, (n * z) as u32, &px)));
+        }
         DeleteDC(mem);
         ReleaseDC(std::ptr::null_mut(), screen);
-        if !copied { return None; }
-        Some(format!("#{:02x}{:02x}{:02x}", px[2], px[1], px[0]))   // BGRA
+        png
     }
 }
 
 /// Screen eyedropper: waits for the next click, returns the pixel color.
-/// `look` is called with the color under the pointer, and where the pointer is, while it moves;
-/// `done` gets the chosen color, or None if the grab was called off.
+/// `look` is called with the color under the pointer, where the pointer is, and the magnified
+/// picture around it, while it moves; `done` gets the chosen color, or None if the grab was
+/// called off.
 ///
 /// While the grab is up a full-screen transparent window sits over the desktop and takes the
 /// clicks, so sampling a button does not also press it. It draws nothing — a layered window at
@@ -793,7 +738,7 @@ fn pixel_at(x: i32, y: i32) -> Option<String> {
 /// a low-level mouse hook: a hook runs on every mouse event in the system and changed how the
 /// pointer felt, whereas this is just a window in front.
 pub fn pick_color(
-    look: impl Fn(String, i32, i32) + Send + 'static,
+    look: impl Fn(super::Look) + Send + 'static,
     done: impl FnOnce(Option<String>) + Send + 'static,
 ) {
     thread::spawn(move || unsafe {
@@ -802,34 +747,65 @@ pub fn pick_color(
             thread::sleep(Duration::from_millis(10));
         }
         block_mouse();
-        let mut last = String::new();
-        let mut last_y = i32::MIN;
+        /* One screen and one memory DC for the whole grab, opened once: the picture around the
+           pointer is re-read every tick, and opening them per sample churned GDI handles. */
+        let screen = GetDC(std::ptr::null_mut());
+        let mem = if screen.is_null() { std::ptr::null_mut() } else { CreateCompatibleDC(screen) };
+        let usable = !screen.is_null() && !mem.is_null();
+        let mut last: Option<POINT> = None;
+        let mut png = String::new();
+        /* The picture is only re-read when the cell changed: the pointer moving one pixel inside
+           a zoomed cell does not change a single output pixel, and copying it anyway was work
+           the page had already drawn. */
+        let mut last_cell = (i32::MIN, i32::MIN);
         loop {
             thread::sleep(Duration::from_millis(16));
             if GetAsyncKeyState(VK_ESCAPE as i32) < 0 {
                 release_mouse();
+                if usable { DeleteDC(mem); ReleaseDC(std::ptr::null_mut(), screen); }
                 return done(None);
             }
             let mut p = POINT { x: 0, y: 0 };
             GetCursorPos(&mut p);
-            let Some(hex) = pixel_at(p.x, p.y) else { continue };
-            if hex != last || p.y != last_y {
-                last = hex.clone();
-                last_y = p.y;
-                look(hex.clone(), p.x, p.y);
+            if !usable { continue; }
+            let Some(hex) = pixel_at(screen, mem, p.x, p.y) else { continue };
+            let cell = (p.x.div_euclid(ZOOM), p.y.div_euclid(ZOOM));
+            /* The page places the loupe by where the pointer is inside the panel's window, so the
+               screen point is pulled back to the panel's own corner. */
+            let (nx, ny) = (p.x - crate::PANEL_X.load(Ordering::Relaxed), p.y - crate::PANEL_Y.load(Ordering::Relaxed));
+            let moved = last.map_or(true, |l: POINT| l.x != p.x || l.y != p.y);
+            if moved || cell != last_cell {
+                if cell != last_cell {
+                    let made = magnified(p.x, p.y);
+                    if !made.is_empty() { png = made; }
+                    last_cell = cell;
+                }
+                last = Some(p);
+                look(super::Look { hex: hex.clone(), x: nx, y: ny, png: png.clone() });
             }
             if GetAsyncKeyState(VK_LBUTTON as i32) < 0 {
                 release_mouse();
+                if usable { DeleteDC(mem); ReleaseDC(std::ptr::null_mut(), screen); }
                 return done(Some(hex));
             }
         }
     });
 }
 
+/// How many screen pixels one magnified pixel stands for, and how many pixels across the
+/// magnified square is. 15 × 15 screen pixels each drawn 10 times is a 150px loupe: wide enough
+/// to see the edge the pointer is near, small enough to read off in one go.
+const ZOOM: i32 = 10;
+const CELLS: i32 = 15;
+
+/// The loupe around (`x`, `y`) as a data URI, or empty if the screen would not give it up.
+fn magnified(x: i32, y: i32) -> String {
+    pick_magnifier(x, y, ZOOM, CELLS)
+}
 
 
 use windows_sys::Win32::{
-    Graphics::Gdi::{CreateCompatibleDC, CreateBitmap, DeleteDC, DeleteObject, GetDIBits, GetObjectW, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS},
+    Graphics::Gdi::{CreateCompatibleDC, DeleteDC, DeleteObject, GetDIBits, GetObjectW, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS},
     Storage::FileSystem::FILE_ATTRIBUTE_NORMAL,
     UI::{
         Controls::Dialogs::{GetOpenFileNameW, OFN_FILEMUSTEXIST, OFN_NODEREFERENCELINKS, OFN_PATHMUSTEXIST, OPENFILENAMEW},

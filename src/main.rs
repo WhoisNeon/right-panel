@@ -17,6 +17,7 @@ mod sys;
 mod util;
 
 use serde_json::{json, Value};
+use sys::Look;
 use tao::{
     dpi::{PhysicalPosition, PhysicalSize},
     event::{Event, StartCause, WindowEvent},
@@ -36,6 +37,7 @@ static PICKING: AtomicBool = AtomicBool::new(false);
 /// The last QR the panel asked for, held here so it can be handed over a piece at a time.
 static QR: Mutex<Option<(usize, String)>> = Mutex::new(None);
 /// Where the panel currently lives, so the hover watcher follows moves between edges / monitors.
+/// The eyedropper reads it through `sys` as well, to place its loupe inside the panel's window.
 static PANEL_X: AtomicI32 = AtomicI32::new(0);
 static PANEL_Y: AtomicI32 = AtomicI32::new(0);
 static PANEL_H: AtomicI32 = AtomicI32::new(0);
@@ -952,10 +954,9 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                             // at the panel edge, level with the pointer, and takes screen point
                             let look = proxy.clone();
                             sys::pick_color(
-                                move |hex, sx, sy| {
-                                    let x = sx - PANEL_X.load(Ordering::Relaxed);
-                                    let y = sy - PANEL_Y.load(Ordering::Relaxed);
-                                    let _ = look.send_event(Ev::Script(format!("app.picking('{hex}',{x},{y})")));
+                                move |Look { hex, x, y, png }| {
+                                    let js = serde_json::json!([hex, x, y, png]);
+                                    let _ = look.send_event(Ev::Script(format!("app.picking(...{js})")));
                                 },
                                 move |hex| {
                                     if let Some(hex) = hex {
@@ -963,6 +964,8 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                                         OPEN.store(true, Ordering::Relaxed);
                                         let _ = p.send_event(Ev::Open);
                                         let _ = p.send_event(Ev::Script(format!("app.picked('{hex}')")));
+                                    } else {
+                                        let _ = p.send_event(Ev::Script("app.pickCancel()".into()));
                                     }
                                     PICKING.store(false, Ordering::Relaxed);
                                 },

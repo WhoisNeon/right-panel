@@ -249,7 +249,7 @@ pub fn system_info() -> serde_json::Value {
 }
 
 pub fn pick_color(
-    _look: impl Fn(String, i32, i32) + Send + 'static,
+    _look: impl Fn(super::Look) + Send + 'static,
     done: impl FnOnce(Option<String>) + Send + 'static,
 ) {
     done(None);
