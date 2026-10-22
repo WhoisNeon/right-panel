@@ -581,7 +581,8 @@ unsafe fn magnifier_cursor() -> *mut core::ffi::c_void {
         let center = 16.0f32;
         for y in 0..N {
             for x in 0..N {
-                let dx = x as f32 - center, dy = y as f32 - center;
+                let dx = x as f32 - center;
+                let dy = y as f32 - center;
                 let d = (dx * dx + dy * dy).sqrt();
                 // a band is opaque in its middle and fades over half a pixel at each edge, which
                 // is enough to keep a 32px circle from looking like a staircase
