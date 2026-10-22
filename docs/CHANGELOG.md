@@ -6,6 +6,14 @@ Every release, newest first. Each entry is what changed in that version.
 
 ---
 
+## v1.4.33
+
+- **The eyedropper magnifies what is under the pointer** — the panel sends back the 15 × 15 screen pixels around the pointer, each drawn ten times, as a 150px loupe beside the arrow: the square in the middle is exactly the pixel that will be picked, and the color and its hex sit along the bottom. Escape gives the screen back and the loupe goes with it
+- **One combination, one owner** — the same key on two rows used to open two tools in whatever order the map happened to be walked, and a tool sharing the hold key never opened at all. Binding a key that is already taken now hands it over: the previous row lets go and the panel says so
+- **The Keybinds tab is the height of the Widgets tab** — it measured its own content, so it came up shorter than the tab beside it. The Widgets page is measured once and Keybinds is held to that same box
+
+---
+
 ## v1.4.32
 
 - **The Settings panel follows the tab you are on** — the frame loop measured the flyout while the previous frame's `max-height` cap was still attached, so the panel could only ever get shorter. Reopening on Keybinds and switching to General left the taller page in the Keybinds box. The cap is cleared for the measurement and written back right after, so the panel takes the height of the active tab

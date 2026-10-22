@@ -37,7 +37,7 @@ static PICKING: AtomicBool = AtomicBool::new(false);
 /// The last QR the panel asked for, held here so it can be handed over a piece at a time.
 static QR: Mutex<Option<(usize, String)>> = Mutex::new(None);
 /// Where the panel currently lives, so the hover watcher follows moves between edges / monitors.
-/// The eyedropper reads it through `sys` as well, to place its loupe inside the panel's window.
+/// The eyedropper reads it through `sys` as well, to place its swatch inside the panel's window.
 static PANEL_X: AtomicI32 = AtomicI32::new(0);
 static PANEL_Y: AtomicI32 = AtomicI32::new(0);
 static PANEL_H: AtomicI32 = AtomicI32::new(0);
@@ -954,8 +954,8 @@ const TWEMOJI_RANGE: &str = "U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF,U+203C,U+2049
                             // at the panel edge, level with the pointer, and takes screen point
                             let look = proxy.clone();
                             sys::pick_color(
-                                move |Look { hex, x, y, png }| {
-                                    let js = serde_json::json!([hex, x, y, png]);
+                                move |Look { hex, x, y }| {
+                                    let js = serde_json::json!([hex, x, y]);
                                     let _ = look.send_event(Ev::Script(format!("app.picking(...{js})")));
                                 },
                                 move |hex| {

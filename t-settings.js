@@ -172,7 +172,7 @@ ok('a page is still capped to the room the panel has', /maxHeight = room/.test(e
 ok('only Keybinds gets a floor', /keyPageFloor\(\)/.test(equalise));
 ok('the Keybinds page takes the Widgets page height', /widgets\.offsetHeight/.test(floor) && /keys\.style\.minHeight = h/.test(floor));
 ok('the Widgets page is measured on its own', /widgets\.classList\.add\('on'\)/.test(floor) && /keys\.classList\.remove\('on'\)/.test(floor));
-ok('the keybinds list still scrolls at six rows', /#bindTools \{ max-height: 224px; \}/.test(html));
+ok('the keybinds list fills the page and scrolls inside it', /#bindTools \{ flex: 1 1 auto; max-height: none; min-height: 0; \}/.test(html));
 ok('the keybinds list is filled before the page is measured', /addEventListener\('load', \(\) => \{ renderBinds\(\); equaliseSettings\(\); \}/.test(html));
 ok('the keybinds page offers Reset all', /id="resetBinds"/.test(html) && /#resetBinds'\)\.onclick/.test(html));
 ok('Reset all clears the hold key and the tool binds', /S\.binds = \{\}; S\.openKeys = \[\];/.test(html));
@@ -196,23 +196,30 @@ ok('the panel exposes armReset', /app\.armReset\s*=/.test(html));
 ok('the network tool has no open-domain button', !/netOpen|NET_OPEN_ROW|rowopen/.test(html));
 ok('the Domain row is still read out', /connection\?\.domain/.test(html));
 
-/* ---- the eyedropper magnifies what is under the pointer ---- */
-ok('the native side copies a magnified screen block', /fn screen_region/.test(win) && /fn pick_magnifier/.test(win));
-ok('the loupe travels to the page as a picture', /app\.picking\(\.\.\./.test(main));
+/* ---- the eyedropper is a crosshair and nothing else ---- */
+ok('the capture window shows the stock crosshair',
+  /cursor: LoadCursorW\(std::ptr::null_mut\(\), IDC_CROSS\)/.test(win) && !/IDC_ARROW/.test(win));
+ok('nothing magnifies the screen any more', !/pick_magnifier|magnified|#pickMag|showLoupe/.test(win + html));
+ok('the page is told where the pointer is, not sent a picture', /serde_json::json!\(\[hex, x, y\]\)/.test(main));
+ok('the panel still places its swatch by the pointer', /app\.picking = \(hex, px, py\)/.test(html));
 ok('the panel corner is read from the crate root', /crate::PANEL_X/.test(win) && !/PANEL_AT/.test(win));
-ok('the loupe is a fixed 150px box, not the whole window', /#pickMag \{ position: fixed; width: 150px; height: 150px;/.test(html));
-ok('the loupe is placed inside the window', /innerWidth - LOUPE/.test(html) && /innerHeight - LOUPE/.test(html));
-ok('the corner chip steps aside once the loupe is up', /pickHint\.hidden = true;/.test(html));
-ok('Escape gives the overlay back', /app\.pickCancel/.test(main) && /app\.pickCancel = /.test(html));
-ok('the capture window shows the plain arrow, not the pixel-covering crosshair',
-  /cursor: LoadCursorW\(std::ptr::null_mut\(\), IDC_ARROW\)/.test(win) && !/IDC_CROSS/.test(win));
+ok('Escape gives the screen back', /app\.pickCancel/.test(main) && /app\.pickCancel = /.test(html));
+
+/* ---- the world clock's flags ---- */
+ok('the clock has a zone-to-country table', /const ZONE_CC = Object\.fromEntries\(/.test(html) && /Asia\/Tehran=ir/.test(html));
+ok('a clock row leads with its flag', /\$\{zoneFlag\(z\)\}<span class="zn">\$\{esc\(city\(z\)\)\}/.test(html));
+ok('the picker rows carry the flag too', /class="item plain zitem" data-z="\$\{z\}">\$\{zoneFlag\(z\)\}/.test(html));
+ok("the flag is round, like the Network tool's", /\.zflag \{ width: 17px; height: 17px; border-radius: 50%/.test(html));
+ok('a broken flag leaves the circle, not a torn icon', /onerror="this\.remove\(\)"/.test(html));
+ok('the picker stops re-rendering once a second', /if \(panel === 'clock'\) tickZones\(\)/.test(html));
+ok('a tick rewrites the times, not the flags', /function tickZones\(\)/.test(html) && /row\.querySelector\('\.zt'\)\.textContent = p\.t/.test(html));
 
 /* ---- the release being cut ---- */
 ok('Cargo.toml and Cargo.lock agree on the version',
   new RegExp(`name = "right-panel"\\r?\\nversion = "${version.replace(/\./g, '\\.')}"`).test(lock));
 ok('the README badges say the version being cut', new RegExp(`v${version.replace(/\./g, '\\.')}`).test(readme));
 ok('the notes link this tag, never /latest/', notes.includes(`releases/download/v${version}/`) && !notes.includes('/releases/latest/download/'));
-ok('the previous release is what the changelog still leads with', changelog.includes('## v1.4.32') && !changelog.includes(`## v${version}`));
+ok('the previous release is what the changelog still leads with', changelog.includes('## v1.4.33') && !changelog.includes(`## v${version}`));
 ok('the changelog is UTF-8 text with no NULs', !changelog.includes('\u0000'));
 
 /* ---- British spelling is gone from the shipped text ---- */

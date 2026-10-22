@@ -279,6 +279,14 @@
   .zone .zt { font-size: 18px; font-weight: 300; font-variant-numeric: tabular-nums; text-align: end; flex: none; }
   .zone .zn { flex: 1; min-width: 0; font-size: 13px; line-height: 1.2; }
   .zone .zn small { display: block; color: var(--muted); font-size: 10px; }
+  /* the clock's country flags, round like the Network tool's; the circle is the fallback, so a
+     zone with no single country (UTC, or one the tables leave out) still gets a mark */
+  .zflag { width: 17px; height: 17px; border-radius: 50%; background: var(--soft2); overflow: hidden; flex: none; display: block; }
+  .zflag img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .zone.slim .zflag { width: 14px; height: 14px; }
+  /* a picker row is a button, so its flag, city and zone id need a flex line of their own */
+  .zitem { display: flex; align-items: center; gap: 9px; }
+  .zitem .zn { min-width: 0; }
   /* the added zones sit at the top of the picker as a short list: name and cross, nothing else.
      Two to a row, so ten of them do not push the suggestions off the page. */
   .zadded { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
@@ -395,7 +403,9 @@
   #bindTools .wrow { min-height: 34px; }
   /* six rows, then the list scrolls: every tool has a row on this tab, and a page as long as
      the list would push Add App's own page aside */
-  #bindTools { max-height: 224px; }
+  /* the list takes the room the page has rather than a fixed six rows: the page is held to the
+     Widgets tab's height, and a list that stopped halfway left the bottom of the tab empty */
+  #bindTools { flex: 1 1 auto; max-height: none; min-height: 0; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--inv-ink); transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .toggle.on { background: var(--inv); }
@@ -484,23 +494,6 @@
   /* on a left-edge panel the label would run off the right of the window, so it turns around */
   body.left #pickHint i { left: auto; right: 54px; }
 
-  /* The loupe, while the eyedropper is up: the screen around the pointer, magnified, with the
-     pixel that will be picked marked at its centre and the hex and an outline of the color along
-     the bottom. Its position is set by app.picking, which knows where the pointer is in the panel
-     window. */
-  #pickMag { position: fixed; width: 150px; height: 150px; z-index: 99; pointer-events: none; display: block;
-    background: #000; border-radius: 10px; overflow: hidden;
-    box-shadow: 0 0 0 2px #fffd, 0 0 0 4px #0009, 0 16px 34px -12px rgba(0,0,0,.75); }
-  #pickMag[hidden] { display: none; }
-  #pickMag img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
-  /* the centre cell: a dark corner inside a light one, so it reads on any color */
-  #pickMag::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px;
-    border-radius: 2px; box-shadow: 0 0 0 1px #fff, inset 0 0 0 1px #000; z-index: 2; }
-  /* the color being picked, named, along the bottom edge of the loupe */
-  #pickMag .inchip { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
-    margin: 0 8px 8px; padding: 5px 9px; border-radius: 9px; background: #000c; color: #fff;
-    font-family: Consolas, monospace; font-size: 12px; font-weight: 600; letter-spacing: .02em; z-index: 3; }
-  #pickMag .inchip i { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 0 0 1px #fff8; }
 
   /* custom color picker — the panel draws its own, so no native color dialog leaks in */
   .cpick { position: fixed; z-index: 90; width: 200px; background: var(--liquid); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
@@ -813,8 +806,6 @@
 <div class="toast" id="toast"></div>
 <!-- the eyedropper's sample: it stays in a fixed spot by the panel edge while the grab is up -->
 <div id="pickHint" hidden><i id="pickHex">#000000</i></div>
-<!-- the eyedropper's loupe: a window-sized overlay placed around the pointer, filled by Rust -->
-<div id="pickMag" hidden><img id="pickMagImg" alt=""><div class="inchip"><i id="pickMagSw"></i><span id="pickMagHex">#000000</span></div></div>
 <div class="cpick" id="cpick" hidden>
   <div class="sv" id="cpSv" aria-label="Saturation and brightness"><i></i></div>
   <div class="hue" id="cpHue" aria-label="Hue"><i></i></div>
@@ -2500,25 +2491,24 @@ function renderRecent() {
 [$('#palette'), $('#recentColors')].forEach(el => el.addEventListener('click', e => { const c = e.target.dataset.c; if (c) { setColor(c); copy(color.toUpperCase()); } }));
 $$('.fmt').forEach(b => b.onclick = () => { copy(fmts()[b.dataset.f]); pushRecentColor(color); });
 $('#bigSwatch').onclick = () => openPicker($('#bigSwatch'), color, setColor, () => pushRecentColor(color));
-const startPick = () => { app.close(); pickHint.hidden = false; pickMag.hidden = true; send('pickColor'); };
+const startPick = () => { app.close(); pickHint.hidden = false; send('pickColor'); };
 $('#eyedrop').onclick = startPick;
 /* the eye dropper is a native grab, so the panel is out of the way while it runs: it shows a
    swatch of whatever is under the pointer, which is the only way to aim at a shade you cannot
    name yet */
 const pickHint = $('#pickHint');
-const pickMag = $('#pickMag'), pickMagImg = $('#pickMagImg'), pickMagSw = $('#pickMagSw'), pickMagHex = $('#pickMagHex');
 /* Two fixed spots against the panel edge, and the swatch moves between them rather than
    following the pointer. Chasing the pointer put it under the pointer, which is the one place
    the color being sampled cannot be. */
 /* the swatch is 46px; the gap it keeps from the edge and from its own label */
-const PICK_SIZE = 46, PICK_GAP = 14, PICK_NEAR = 120, LOUPE = 150;
+const PICK_SIZE = 46, PICK_GAP = 14, PICK_NEAR = 120;
 const pickSpot = n => {
   const x = DIR < 0 ? PICK_GAP : innerWidth - PICK_SIZE - PICK_GAP;
   const y = Math.round(Math.max(PICK_GAP, Math.min(innerHeight - PICK_SIZE - PICK_GAP,
     (innerHeight - PICK_SIZE) * (n === 0 ? 0.34 : 0.62))));
   return { x, y };
 };
-app.picking = (hex, px, py, img) => {
+app.picking = (hex, px, py) => {
   pickHint.hidden = false;
   pickHint.style.background = hex;
   const lab = $('#pickHex');
@@ -2536,35 +2526,13 @@ app.picking = (hex, px, py, img) => {
   } else {
     pickHint.style.transform = `translate(${Math.max(4, Math.min(s.x, innerWidth - labW - PICK_GAP - 58))}px, ${s.y}px)`;
   }
-  showLoupe(hex, px, py, img);
 };
-/* The loupe. Rust copies the 15 × 15 screen pixels around the pointer, each drawn 10 times, and
-   sends that as a 150px picture. The square in the middle of it is the pixel that will be picked:
-   that is what the dot of the ordinary cursor would cover. The pointer keeps its arrow; the loupe
-   sits beside it, on the side of the panel. */
-function showLoupe(hex, px, py, img) {
-  if (img) pickMagImg.src = img;
-  pickMagSw.style.background = hex;
-  pickMagHex.textContent = hex.toUpperCase();
-  if (!img && !pickMagImg.src) return;        // no grab on this platform: nothing to magnify
-  pickHint.hidden = true;                     // the loupe carries the color now, so drop the corner chip
-  pickMag.hidden = false;
-  /* An arrow cursor's hot spot is its top-left corner, and the loupe is placed to stand in for
-     it: beside the pointer horizontally, clear of it vertically, so the pointer's own arrow (at
-     the screen's edge, over the panel) never covers the cell being read. The window is the only
-     thing that knows how much room there is: the loupe is 150px and the window is 480 × 680. */
-  const x = DIR > 0 ? px - LOUPE - 12 : px + 12;
-  const y = py - LOUPE / 2;
-  pickMag.style.left = Math.round(clamp(x, 4, Math.max(4, innerWidth - LOUPE - 4))) + 'px';
-  pickMag.style.top = Math.round(clamp(y, 4, Math.max(4, innerHeight - LOUPE - 4))) + 'px';
-}
 app.picked = hex => {
   pickHint.hidden = true;
-  pickMag.hidden = true;
   setColor(hex); pushRecentColor(color); copy(color.toUpperCase());
 };
 /* Escape gives the screen back without a color; the overlay goes with it. */
-app.pickCancel = () => { pickHint.hidden = true; pickMag.hidden = true; };
+app.pickCancel = () => { pickHint.hidden = true; };
 setColor(color); renderRecent();
 
 /* ---- custom color picker: the panel draws its own, so no native dialog leaks in ---- */
@@ -3545,6 +3513,146 @@ calShow(jalaliToday());
 const ALL_ZONES = (typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [])
   .concat(['UTC']).filter((z, i, a) => a.indexOf(z) === i).sort();
 const city = z => z.split('/').pop().replace(/_/g, ' ');
+/* Zone to country, for the flag beside a city: the IANA tables' zone.tab plus the backward
+   links that give the old names (Asia/Calcutta, Europe/Kiev) their country too. Kept here rather
+   than fetched, so a clock works offline; a zone that is not in it just gets the empty circle. */
+const ZONE_CC = Object.fromEntries(`
+Africa/Abidjan=ci;Africa/Accra=gh;Africa/Addis_Ababa=et;Africa/Algiers=dz
+Africa/Asmara=er;Africa/Asmera=er;Africa/Bamako=ml;Africa/Bangui=cf
+Africa/Banjul=gm;Africa/Bissau=gw;Africa/Blantyre=mw;Africa/Brazzaville=cg
+Africa/Bujumbura=bi;Africa/Cairo=eg;Africa/Casablanca=ma;Africa/Ceuta=es
+Africa/Conakry=gn;Africa/Dakar=sn;Africa/Dar_es_Salaam=tz;Africa/Djibouti=dj
+Africa/Douala=cm;Africa/El_Aaiun=eh;Africa/Freetown=sl;Africa/Gaborone=bw
+Africa/Harare=zw;Africa/Johannesburg=za;Africa/Juba=ss;Africa/Kampala=ug
+Africa/Khartoum=sd;Africa/Kigali=rw;Africa/Kinshasa=cd;Africa/Lagos=ng
+Africa/Libreville=ga;Africa/Lome=tg;Africa/Luanda=ao;Africa/Lubumbashi=cd
+Africa/Lusaka=zm;Africa/Malabo=gq;Africa/Maputo=mz;Africa/Maseru=ls
+Africa/Mbabane=sz;Africa/Mogadishu=so;Africa/Monrovia=lr;Africa/Nairobi=ke
+Africa/Ndjamena=td;Africa/Niamey=ne;Africa/Nouakchott=mr;Africa/Ouagadougou=bf
+Africa/Porto-Novo=bj;Africa/Sao_Tome=st;Africa/Timbuktu=ci;Africa/Tripoli=ly
+Africa/Tunis=tn;Africa/Windhoek=na;America/Adak=us;America/Anchorage=us
+America/Anguilla=ai;America/Antigua=ag;America/Araguaina=br;America/Argentina/Buenos_Aires=ar
+America/Argentina/Catamarca=ar;America/Argentina/ComodRivadavia=ar;America/Argentina/Cordoba=ar;America/Argentina/Jujuy=ar
+America/Argentina/La_Rioja=ar;America/Argentina/Mendoza=ar;America/Argentina/Rio_Gallegos=ar;America/Argentina/Salta=ar
+America/Argentina/San_Juan=ar;America/Argentina/San_Luis=ar;America/Argentina/Tucuman=ar;America/Argentina/Ushuaia=ar
+America/Aruba=aw;America/Asuncion=py;America/Atikokan=ca;America/Atka=us
+America/Bahia=br;America/Bahia_Banderas=mx;America/Barbados=bb;America/Belem=br
+America/Belize=bz;America/Blanc-Sablon=ca;America/Boa_Vista=br;America/Bogota=co
+America/Boise=us;America/Buenos_Aires=ar;America/Cambridge_Bay=ca;America/Campo_Grande=br
+America/Cancun=mx;America/Caracas=ve;America/Catamarca=ar;America/Cayenne=gf
+America/Cayman=ky;America/Chicago=us;America/Chihuahua=mx;America/Ciudad_Juarez=mx
+America/Coral_Harbour=pa;America/Cordoba=ar;America/Costa_Rica=cr;America/Coyhaique=cl
+America/Creston=ca;America/Cuiaba=br;America/Curacao=cw;America/Danmarkshavn=gl
+America/Dawson=ca;America/Dawson_Creek=ca;America/Denver=us;America/Detroit=us
+America/Dominica=dm;America/Edmonton=ca;America/Eirunepe=br;America/El_Salvador=sv
+America/Ensenada=mx;America/Fort_Nelson=ca;America/Fort_Wayne=us;America/Fortaleza=br
+America/Glace_Bay=ca;America/Godthab=gl;America/Goose_Bay=ca;America/Grand_Turk=tc
+America/Grenada=gd;America/Guadeloupe=gp;America/Guatemala=gt;America/Guayaquil=ec
+America/Guyana=gy;America/Halifax=ca;America/Havana=cu;America/Hermosillo=mx
+America/Indiana/Indianapolis=us;America/Indiana/Knox=us;America/Indiana/Marengo=us;America/Indiana/Petersburg=us
+America/Indiana/Tell_City=us;America/Indiana/Vevay=us;America/Indiana/Vincennes=us;America/Indiana/Winamac=us
+America/Indianapolis=us;America/Inuvik=ca;America/Iqaluit=ca;America/Jamaica=jm
+America/Jujuy=ar;America/Juneau=us;America/Kentucky/Louisville=us;America/Kentucky/Monticello=us
+America/Knox_IN=us;America/Kralendijk=bq;America/La_Paz=bo;America/Lima=pe
+America/Los_Angeles=us;America/Louisville=us;America/Lower_Princes=sx;America/Maceio=br
+America/Managua=ni;America/Manaus=br;America/Marigot=mf;America/Martinique=mq
+America/Matamoros=mx;America/Mazatlan=mx;America/Mendoza=ar;America/Menominee=us
+America/Merida=mx;America/Metlakatla=us;America/Mexico_City=mx;America/Miquelon=pm
+America/Moncton=ca;America/Monterrey=mx;America/Montevideo=uy;America/Montreal=ca
+America/Montserrat=ms;America/Nassau=bs;America/New_York=us;America/Nipigon=ca
+America/Nome=us;America/Noronha=br;America/North_Dakota/Beulah=us;America/North_Dakota/Center=us
+America/North_Dakota/New_Salem=us;America/Nuuk=gl;America/Ojinaga=mx;America/Panama=pa
+America/Pangnirtung=ca;America/Paramaribo=sr;America/Phoenix=us;America/Port-au-Prince=ht
+America/Port_of_Spain=tt;America/Porto_Acre=br;America/Porto_Velho=br;America/Puerto_Rico=pr
+America/Punta_Arenas=cl;America/Rainy_River=ca;America/Rankin_Inlet=ca;America/Recife=br
+America/Regina=ca;America/Resolute=ca;America/Rio_Branco=br;America/Rosario=ar
+America/Santa_Isabel=mx;America/Santarem=br;America/Santiago=cl;America/Santo_Domingo=do
+America/Sao_Paulo=br;America/Scoresbysund=gl;America/Shiprock=us;America/Sitka=us
+America/St_Barthelemy=bl;America/St_Johns=ca;America/St_Kitts=kn;America/St_Lucia=lc
+America/St_Thomas=vi;America/St_Vincent=vc;America/Swift_Current=ca;America/Tegucigalpa=hn
+America/Thule=gl;America/Thunder_Bay=ca;America/Tijuana=mx;America/Toronto=ca
+America/Tortola=vg;America/Vancouver=ca;America/Virgin=vi;America/Whitehorse=ca
+America/Winnipeg=ca;America/Yakutat=us;America/Yellowknife=ca;Antarctica/Casey=aq
+Antarctica/Davis=aq;Antarctica/DumontDUrville=aq;Antarctica/Macquarie=au;Antarctica/Mawson=aq
+Antarctica/McMurdo=aq;Antarctica/Palmer=aq;Antarctica/Rothera=aq;Antarctica/South_Pole=nz
+Antarctica/Syowa=aq;Antarctica/Troll=aq;Antarctica/Vostok=aq;Arctic/Longyearbyen=sj
+Asia/Aden=ye;Asia/Almaty=kz;Asia/Amman=jo;Asia/Anadyr=ru
+Asia/Aqtau=kz;Asia/Aqtobe=kz;Asia/Ashgabat=tm;Asia/Ashkhabad=tm
+Asia/Atyrau=kz;Asia/Baghdad=iq;Asia/Bahrain=bh;Asia/Baku=az
+Asia/Bangkok=th;Asia/Barnaul=ru;Asia/Beirut=lb;Asia/Bishkek=kg
+Asia/Brunei=bn;Asia/Calcutta=in;Asia/Chita=ru;Asia/Choibalsan=mn
+Asia/Chongqing=cn;Asia/Chungking=cn;Asia/Colombo=lk;Asia/Dacca=bd
+Asia/Damascus=sy;Asia/Dhaka=bd;Asia/Dili=tl;Asia/Dubai=ae
+Asia/Dushanbe=tj;Asia/Famagusta=cy;Asia/Gaza=ps;Asia/Harbin=cn
+Asia/Hebron=ps;Asia/Ho_Chi_Minh=vn;Asia/Hong_Kong=hk;Asia/Hovd=mn
+Asia/Irkutsk=ru;Asia/Istanbul=tr;Asia/Jakarta=id;Asia/Jayapura=id
+Asia/Jerusalem=il;Asia/Kabul=af;Asia/Kamchatka=ru;Asia/Karachi=pk
+Asia/Kashgar=cn;Asia/Kathmandu=np;Asia/Katmandu=np;Asia/Khandyga=ru
+Asia/Kolkata=in;Asia/Krasnoyarsk=ru;Asia/Kuala_Lumpur=my;Asia/Kuching=my
+Asia/Kuwait=kw;Asia/Macao=mo;Asia/Macau=mo;Asia/Magadan=ru
+Asia/Makassar=id;Asia/Manila=ph;Asia/Muscat=om;Asia/Nicosia=cy
+Asia/Novokuznetsk=ru;Asia/Novosibirsk=ru;Asia/Omsk=ru;Asia/Oral=kz
+Asia/Phnom_Penh=kh;Asia/Pontianak=id;Asia/Pyongyang=kp;Asia/Qatar=qa
+Asia/Qostanay=kz;Asia/Qyzylorda=kz;Asia/Rangoon=mm;Asia/Riyadh=sa
+Asia/Saigon=vn;Asia/Sakhalin=ru;Asia/Samarkand=uz;Asia/Seoul=kr
+Asia/Shanghai=cn;Asia/Singapore=sg;Asia/Srednekolymsk=ru;Asia/Taipei=tw
+Asia/Tashkent=uz;Asia/Tbilisi=ge;Asia/Tehran=ir;Asia/Tel_Aviv=il
+Asia/Thimbu=bt;Asia/Thimphu=bt;Asia/Tokyo=jp;Asia/Tomsk=ru
+Asia/Ujung_Pandang=id;Asia/Ulaanbaatar=mn;Asia/Ulan_Bator=mn;Asia/Urumqi=cn
+Asia/Ust-Nera=ru;Asia/Vientiane=la;Asia/Vladivostok=ru;Asia/Yakutsk=ru
+Asia/Yangon=mm;Asia/Yekaterinburg=ru;Asia/Yerevan=am;Atlantic/Azores=pt
+Atlantic/Bermuda=bm;Atlantic/Canary=es;Atlantic/Cape_Verde=cv;Atlantic/Faeroe=fo
+Atlantic/Faroe=fo;Atlantic/Jan_Mayen=de;Atlantic/Madeira=pt;Atlantic/Reykjavik=is
+Atlantic/South_Georgia=gs;Atlantic/St_Helena=sh;Atlantic/Stanley=fk;Australia/ACT=au
+Australia/Adelaide=au;Australia/Brisbane=au;Australia/Broken_Hill=au;Australia/Canberra=au
+Australia/Currie=au;Australia/Darwin=au;Australia/Eucla=au;Australia/Hobart=au
+Australia/LHI=au;Australia/Lindeman=au;Australia/Lord_Howe=au;Australia/Melbourne=au
+Australia/NSW=au;Australia/North=au;Australia/Perth=au;Australia/Queensland=au
+Australia/South=au;Australia/Sydney=au;Australia/Tasmania=au;Australia/Victoria=au
+Australia/West=au;Australia/Yancowinna=au;Brazil/Acre=br;Brazil/DeNoronha=br
+Brazil/East=br;Brazil/West=br;Canada/Atlantic=ca;Canada/Central=ca
+Canada/Eastern=ca;Canada/Mountain=ca;Canada/Newfoundland=ca;Canada/Pacific=ca
+Canada/Saskatchewan=ca;Canada/Yukon=ca;Chile/Continental=cl;Chile/EasterIsland=cl
+Europe/Amsterdam=nl;Europe/Andorra=ad;Europe/Astrakhan=ru;Europe/Athens=gr
+Europe/Belfast=gb;Europe/Belgrade=rs;Europe/Berlin=de;Europe/Bratislava=sk
+Europe/Brussels=be;Europe/Bucharest=ro;Europe/Budapest=hu;Europe/Busingen=de
+Europe/Chisinau=md;Europe/Copenhagen=dk;Europe/Dublin=ie;Europe/Gibraltar=gi
+Europe/Guernsey=gg;Europe/Helsinki=fi;Europe/Isle_of_Man=im;Europe/Istanbul=tr
+Europe/Jersey=je;Europe/Kaliningrad=ru;Europe/Kiev=ua;Europe/Kirov=ru
+Europe/Kyiv=ua;Europe/Lisbon=pt;Europe/Ljubljana=si;Europe/London=gb
+Europe/Luxembourg=lu;Europe/Madrid=es;Europe/Malta=mt;Europe/Mariehamn=ax
+Europe/Minsk=by;Europe/Monaco=mc;Europe/Moscow=ru;Europe/Nicosia=cy
+Europe/Oslo=no;Europe/Paris=fr;Europe/Podgorica=me;Europe/Prague=cz
+Europe/Riga=lv;Europe/Rome=it;Europe/Samara=ru;Europe/San_Marino=sm
+Europe/Sarajevo=ba;Europe/Saratov=ru;Europe/Simferopol=ua;Europe/Skopje=mk
+Europe/Sofia=bg;Europe/Stockholm=se;Europe/Tallinn=ee;Europe/Tirane=al
+Europe/Tiraspol=md;Europe/Ulyanovsk=ru;Europe/Uzhgorod=ua;Europe/Vaduz=li
+Europe/Vatican=va;Europe/Vienna=at;Europe/Vilnius=lt;Europe/Volgograd=ru
+Europe/Warsaw=pl;Europe/Zagreb=hr;Europe/Zaporozhye=ua;Europe/Zurich=ch
+Indian/Antananarivo=mg;Indian/Chagos=io;Indian/Christmas=cx;Indian/Cocos=cc
+Indian/Comoro=km;Indian/Kerguelen=tf;Indian/Mahe=sc;Indian/Maldives=mv
+Indian/Mauritius=mu;Indian/Mayotte=yt;Indian/Reunion=re;Mexico/BajaNorte=mx
+Mexico/BajaSur=mx;Mexico/General=mx;Pacific/Apia=ws;Pacific/Auckland=nz
+Pacific/Bougainville=pg;Pacific/Chatham=nz;Pacific/Chuuk=fm;Pacific/Easter=cl
+Pacific/Efate=vu;Pacific/Enderbury=ki;Pacific/Fakaofo=tk;Pacific/Fiji=fj
+Pacific/Funafuti=tv;Pacific/Galapagos=ec;Pacific/Gambier=pf;Pacific/Guadalcanal=sb
+Pacific/Guam=gu;Pacific/Honolulu=us;Pacific/Johnston=us;Pacific/Kanton=ki
+Pacific/Kiritimati=ki;Pacific/Kosrae=fm;Pacific/Kwajalein=mh;Pacific/Majuro=mh
+Pacific/Marquesas=pf;Pacific/Midway=um;Pacific/Nauru=nr;Pacific/Niue=nu
+Pacific/Norfolk=nf;Pacific/Noumea=nc;Pacific/Pago_Pago=as;Pacific/Palau=pw
+Pacific/Pitcairn=pn;Pacific/Pohnpei=fm;Pacific/Ponape=fm;Pacific/Port_Moresby=pg
+Pacific/Rarotonga=ck;Pacific/Saipan=mp;Pacific/Samoa=as;Pacific/Tahiti=pf
+Pacific/Tarawa=ki;Pacific/Tongatapu=to;Pacific/Truk=fm;Pacific/Wake=um
+Pacific/Wallis=wf;Pacific/Yap=pg;US/Alaska=us;US/Aleutian=us
+US/Arizona=us;US/Central=us;US/East-Indiana=us;US/Eastern=us
+US/Hawaii=us;US/Indiana-Starke=us;US/Michigan=us;US/Mountain=us
+US/Pacific=us;US/Samoa=as
+`.replace(/\r/g, '').trim().split(/[;\n]/).map(l => l.split('=')));
+/* the flag itself is the same circle-flags set the Network tool draws its country from */
+const zoneFlag = z => {
+  const cc = ZONE_CC[z];
+  return `<span class="zflag">${cc ? `<img src="${NET_FLAG(cc)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>`;
+};
 /* 24h uses h23 so midnight is 00:00 and not 24:00; 12h needs a locale that writes AM/PM in caps */
 const zoneClock = z => S.hour24
   ? new Intl.DateTimeFormat('en-GB', { timeZone: z, hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())
@@ -3567,8 +3675,18 @@ function zoneParts(z) {
 }
 function renderZones() {
   $('#zones').innerHTML = S.zones.map(z => { const p = zoneParts(z);
-    return `<div class="zone"><span class="zn">${esc(city(z))}<small>${p.sub}</small></span><span class="zt">${p.t}</span></div>`; }).join('')
+    return `<div class="zone">${zoneFlag(z)}<span class="zn">${esc(city(z))}<small>${p.sub}</small></span><span class="zt">${p.t}</span></div>`; }).join('')
     || '<div class="empty">Press Add to pick a time zone</div>';
+}
+/* A tick rewrites the two time fields only: rebuilding the rows once a second would put every
+   flag through the image loader again for a clock that has not changed. Adding or removing a zone
+   changes the row count and falls back to a full render. */
+function tickZones() {
+  const rows = $$('#zones .zone');
+  if (rows.length !== S.zones.length) { renderZones(); return; }
+  rows.forEach((row, i) => { const p = zoneParts(S.zones[i]);
+    row.querySelector('.zt').textContent = p.t;
+    row.querySelector('.zn small').textContent = p.sub; });
 }
 /* the picker matches on the whole id, so "asia/teh", "tehran" and "teh" all find Asia/Tehran.
    Zones already on the clock sit at the top with their clock and a remove button, since that is
@@ -3578,12 +3696,12 @@ function renderZoneList() {
   /* the zones already on the clock are only here to be taken off, so they stay a name and a
      cross — the clock itself is on the other page, one click back */
   const have = S.zones.map(z =>
-    `<div class="zone slim"><span class="zn">${esc(city(z))}</span><button class="x" data-z="${esc(z)}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`).join('');
+    `<div class="zone slim">${zoneFlag(z)}<span class="zn">${esc(city(z))}</span><button class="x" data-z="${esc(z)}" aria-label="Remove ${esc(city(z))}"><svg viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg></button></div>`).join('');
   const hits = (q ? ALL_ZONES.filter(z => fold(z).replace(/[\s_]+/g, '').includes(q)) : ALL_ZONES)
     .filter(z => !S.zones.includes(z)).slice(0, q ? 200 : 400);
   $('#zoneList').innerHTML = (have ? `<div class="zadded">${have}</div>` : '')
     + (hits.length
-      ? hits.map(z => `<button class="item plain" data-z="${z}">${esc(city(z))}<small>${esc(z)}</small></button>`).join('')
+      ? hits.map(z => `<button class="item plain zitem" data-z="${z}">${zoneFlag(z)}<span class="zn">${esc(city(z))}<small>${esc(z)}</small></span></button>`).join('')
       : `<div class="empty">${q ? 'No matching time zone' : 'Every zone is already shown'}</div>`);
 }
 $('#zoneList').onclick = e => {
@@ -3597,7 +3715,9 @@ $('#zoneQ').addEventListener('input', renderZoneList);
 $('#zoneAdd').onclick = () => { anchorY = fy.v; setPanel('zoneadd', true); $('#zoneQ').value = ''; renderZoneList(); setTimeout(() => $('#zoneQ').focus({ preventScroll: true }), 60); };
 $('#zoneFmt').onclick = () => { S.hour24 = !S.hour24; save(); $('#zoneFmt').textContent = S.hour24 ? '24h' : '12h'; renderZones(); };
 $('#zoneFmt').textContent = S.hour24 ? '24h' : '12h';
-setInterval(() => { if (panel === 'clock' || panel === 'zoneadd') { renderZones(); if (panel === 'zoneadd') renderZoneList(); } }, 1000);
+/* only the clocks tick; the picker has no times in it, and re-rendering 400 flag rows once a
+   second would keep the image loader busy for nothing */
+setInterval(() => { if (panel === 'clock') tickZones(); }, 1000);
 
 /* ---- calculator ---- */
 /* Windows Calculator (Standard) is a state machine, not an expression: the display holds one number and
