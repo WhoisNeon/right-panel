@@ -95,10 +95,16 @@ const equalise = slice('function equaliseSettings', 'function moveTpill');
 ok('the pages are not pinned to a shared floor', !/minHeight\s*=\s*floor/.test(equalise));
 ok('a page carries no min-height of its own', /\.style\.minHeight = ''/.test(equalise));
 ok('a page is still capped to the room the panel has', /maxHeight = room/.test(equalise));
+ok('the keybinds page has room for another row', /#bindTools \{ max-height: 224px; \}/.test(html));
+ok('the keybinds page offers Reset all', /id="resetBinds"/.test(html) && /#resetBinds'\)\.onclick/.test(html));
+ok('Reset all clears the hold key and the tool binds', /S\.binds = \{\}; S\.openKeys = \[\];/.test(html));
+ok('the danger state uses the circle alert icon', /LUC\[armed \? 'circle-alert' : 'rotate-ccw'\]/.test(html));
 
 /* ---- the frame loop keeps a stable top ---- */
-const frame = slice('const flyH = flyUi.offsetHeight', 'const Y = fy.step(dt)');
+const frame = slice("if (panel) flyUi.style.maxHeight = 'none';", 'const Y = fy.step(dt)');
+ok('the panel is measured without last frame’s cap', /if \(panel\) flyUi\.style\.maxHeight = 'none';/.test(frame));
 ok('a wanted top is not ratcheted by a tall page', !/flyTop = Math\.min\(/.test(frame));
+ok('an overflowing page is pulled up by its full overflow', /flyTop \+ flyH \+ 10 - innerHeight/.test(frame) && !/over\) \/ 2/.test(frame));
 
 /* ---- the tray no longer mirrors the hold key ---- */
 for (const gone of ['Hold key to open', 'set_open_mod', 'OPEN_MOD', 'openmod-']) {
@@ -112,8 +118,9 @@ ok('the panel exposes armReset', /app\.armReset\s*=/.test(html));
 ok('the network tool has no open-domain button', !/netOpen|NET_OPEN_ROW|rowopen/.test(html));
 ok('the Domain row is still read out', /connection\?\.domain/.test(html));
 
-/* ---- the shield owns a crosshair, not the app-start hourglass ---- */
-ok('the eyedropper shield owns a crosshair', /IDC_CROSS/.test(win) && /cursor: LoadCursorW\(/.test(win));
+/* ---- the shield owns a magnifier, not the app-start hourglass ---- */
+ok('the eyedropper draws its own magnifier cursor', /fn magnifier_cursor/.test(win) && /CreateIconIndirect/.test(win));
+ok('the crosshair is only the fallback', /made\.is_null\(\) \{ LoadCursorW\(std::ptr::null_mut\(\), IDC_CROSS\)/.test(win));
 
 /* ---- British spelling is gone from the shipped text ---- */
 for (const f of ['README.md', '.github/RELEASE_NOTES.md', 'docs/CHANGELOG.md', 'src/ui.html', 'src/sys/windows.rs']) {

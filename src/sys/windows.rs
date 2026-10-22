@@ -519,6 +519,7 @@ unsafe extern "system" {
     fn DispatchMessageW(msg: *const Msg) -> isize;
     fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
     fn LoadCursorW(inst: *mut core::ffi::c_void, name: *const u16) -> *mut core::ffi::c_void;
+    fn CreateIconIndirect(info: *const IconInfo) -> *mut core::ffi::c_void;
     fn CreateDIBSection(dc: *mut core::ffi::c_void, info: *mut BITMAPINFO, usage: u32,
                         bits: *mut *mut core::ffi::c_void, section: *mut core::ffi::c_void, offset: u32) -> *mut core::ffi::c_void;
     fn SelectObject(dc: *mut core::ffi::c_void, obj: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
@@ -529,8 +530,105 @@ unsafe extern "system" {
 
 const WM_CLOSE: u32 = 0x0010;
 const WM_DESTROY: u32 = 0x0002;
-/// MAKEINTRESOURCE(32515): the stock crosshair, which is not a LoadImage id but an atom.
+/// MAKEINTRESOURCE(32515): the stock crosshair, which is not a LoadImage id but an atom. It is
+/// only the fallback now: the grab normally shows the magnifier below.
 const IDC_CROSS: *const u16 = 32515 as *const u16;
+
+/// ICONINFO: `fIcon` is FALSE for a cursor. The hotspot is what makes the center of the ring the
+/// pixel that gets sampled.
+#[repr(C)]
+struct IconInfo {
+    icon: i32,
+    hotspot_x: u32,
+    hotspot_y: u32,
+    mask: *mut core::ffi::c_void,
+    color: *mut core::ffi::c_void,
+}
+
+/// Built once and kept for the life of the process: a cursor is a GDI object, and the class is
+/// registered again for every grab.
+static MAGNIFIER: AtomicIsize = AtomicIsize::new(0);
+
+/// A small ring with a dot in the middle, hotspot at the dot. The crosshair covered the pixel
+/// underneath it; a hollow ring leaves the sample visible while still saying exactly where the
+/// click will read. Black and white rings are drawn together so it reads on either background.
+unsafe fn magnifier_cursor() -> *mut core::ffi::c_void {
+    let made = MAGNIFIER.load(Ordering::Relaxed);
+    if made != 0 { return made as *mut core::ffi::c_void; }
+    unsafe {
+        const N: i32 = 32;
+        let screen = GetDC(std::ptr::null_mut());
+        if screen.is_null() { return std::ptr::null_mut(); }
+        let mem = CreateCompatibleDC(screen);
+        ReleaseDC(std::ptr::null_mut(), screen);
+        if mem.is_null() { return std::ptr::null_mut(); }
+        let mut bi: BITMAPINFO = std::mem::zeroed();
+        bi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
+        bi.bmiHeader.biWidth = N;
+        bi.bmiHeader.biHeight = -N;          // top-down, so y runs the way the loop does
+        bi.bmiHeader.biPlanes = 1;
+        bi.bmiHeader.biBitCount = 32;
+        bi.bmiHeader.biCompression = BI_RGB;
+        let mut bits: *mut core::ffi::c_void = std::ptr::null_mut();
+        let color = CreateDIBSection(mem, &mut bi, DIB_RGB_COLORS, &mut bits, std::ptr::null_mut(), 0);
+        if color.is_null() || bits.is_null() {
+            if !color.is_null() { DeleteObject(color); }
+            DeleteDC(mem);
+            return std::ptr::null_mut();
+        }
+        let px = bits as *mut u8;
+        let mut alphas = vec![0u8; (N * N) as usize];
+        let center = 16.0f32;
+        for y in 0..N {
+            for x in 0..N {
+                let dx = x as f32 - center, dy = y as f32 - center;
+                let d = (dx * dx + dy * dy).sqrt();
+                // a band is opaque in its middle and fades over half a pixel at each edge, which
+                // is enough to keep a 32px circle from looking like a staircase
+                let band = |inner: f32, outer: f32| {
+                    ((d - inner) / 0.8 + 0.5).clamp(0.0, 1.0).min(((outer - d) / 0.8 + 0.5).clamp(0.0, 1.0))
+                };
+                let black = band(8.8, 11.2);      // the rim
+                let white = band(9.7, 10.3);      // the light line through it
+                let dot = ((1.6 - d) / 0.8).clamp(0.0, 1.0);
+                let a = (black.max(white).max(dot) * 255.0) as u8;
+                let v = if white > 0.0 { 255u8 } else { 0u8 };
+                let i = ((y * N + x) * 4) as usize;
+                *px.add(i) = v;                   // blue
+                *px.add(i + 1) = v;               // green
+                *px.add(i + 2) = v;               // red
+                *px.add(i + 3) = a;
+                alphas[(y * N + x) as usize] = a;
+            }
+        }
+        GdiFlush();
+        /* The monochrome mask is the shape a cursor falls back to when alpha is not honoured:
+           a 1 means "leave the screen alone" (transparent), zero means draw the color. */
+        let mut mask_bits = vec![0u8; (N * 4) as usize];
+        for y in 0..N {
+            for x in 0..N {
+                if alphas[(y * N + x) as usize] < 128 {
+                    mask_bits[(y * 4 + x / 8) as usize] |= 0x80u8 >> (x % 8);
+                }
+            }
+        }
+        let mask = CreateBitmap(N, N, 1, 1, mask_bits.as_ptr() as *const core::ffi::c_void);
+        if mask.is_null() {
+            DeleteObject(color);
+            DeleteDC(mem);
+            return std::ptr::null_mut();
+        }
+        let info = IconInfo { icon: 0, hotspot_x: center as u32, hotspot_y: center as u32, mask, color };
+        let cursor = CreateIconIndirect(&info);
+        DeleteObject(mask);
+        DeleteObject(color);
+        DeleteDC(mem);
+        if cursor.is_null() { std::ptr::null_mut() } else {
+            MAGNIFIER.store(cursor as isize, Ordering::Relaxed);
+            cursor
+        }
+    }
+}
 const WS_POPUP: u32 = 0x8000_0000;
 const WS_EX_LAYERED: u32 = 0x0008_0000;
 const WS_EX_TOOLWINDOW: u32 = 0x0000_0080;
@@ -566,13 +664,15 @@ unsafe extern "system" fn shield_wndproc(hwnd: isize, msg: u32, w: isize, l: isi
 /// It gets a thread of its own, because a window needs a message loop to stay alive and the
 /// thread running the grab is busy watching the pointer.
 ///
-/// The class carries the crosshair. With no cursor of its own a window keeps whatever the last
+/// The class carries the magnifier. With no cursor of its own a window keeps whatever the last
 /// one left there, and Windows reads a class with none as the app-start cursor — which is the
 /// hourglass the grab used to show. `DefWindowProc` is what puts a class cursor up on WM_SETCURSOR.
 fn block_mouse() {
     thread::spawn(|| unsafe {
         let class: Vec<u16> = "RightPanelShield\0".encode_utf16().collect();
         let inst = GetModuleHandleW(std::ptr::null());
+        let made = magnifier_cursor();
+        let cursor = if made.is_null() { LoadCursorW(std::ptr::null_mut(), IDC_CROSS) } else { made };
         let wc = WndClass {
             size: std::mem::size_of::<WndClass>() as u32,
             style: 0,
@@ -581,7 +681,7 @@ fn block_mouse() {
             win_extra: 0,
             instance: inst,
             icon: std::ptr::null_mut(),
-            cursor: LoadCursorW(std::ptr::null_mut(), IDC_CROSS),
+            cursor,
             background: std::ptr::null_mut(),
             menu_name: std::ptr::null(),
             class_name: class.as_ptr(),
@@ -728,7 +828,7 @@ pub fn pick_color(
 
 
 use windows_sys::Win32::{
-    Graphics::Gdi::{CreateCompatibleDC, DeleteDC, DeleteObject, GetDIBits, GetObjectW, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS},
+    Graphics::Gdi::{CreateCompatibleDC, CreateBitmap, DeleteDC, DeleteObject, GetDIBits, GetObjectW, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS},
     Storage::FileSystem::FILE_ATTRIBUTE_NORMAL,
     UI::{
         Controls::Dialogs::{GetOpenFileNameW, OFN_FILEMUSTEXIST, OFN_NODEREFERENCELINKS, OFN_PATHMUSTEXIST, OPENFILENAMEW},

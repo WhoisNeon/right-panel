@@ -15,14 +15,14 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 
 <br>
 
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.31-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.31-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.31-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-Setup.exe"><img src="https://img.shields.io/badge/Windows-Installer%20v1.4.32-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows installer"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-portable.exe"><img src="https://img.shields.io/badge/Windows-Portable%20.exe%20v1.4.32-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download portable exe"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-windows-x64.zip"><img src="https://img.shields.io/badge/Windows-.zip%20v1.4.32-1f1f1f?style=for-the-badge&logo=windows&logoColor=white" alt="Download zip"></a>
 <br>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.31-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.31-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.31-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
-<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.31-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-arm64.dmg"><img src="https://img.shields.io/badge/macOS-Apple%20Silicon%20v1.4.32-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Apple Silicon"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-macos-x64.dmg"><img src="https://img.shields.io/badge/macOS-Intel%20v1.4.32-333333?style=for-the-badge&logo=apple&logoColor=white" alt="Download for Intel Mac"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-amd64.deb"><img src="https://img.shields.io/badge/Linux-.deb%20v1.4.32-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Download .deb"></a>
+<a href="https://github.com/WhoisNeon/right-panel/releases/latest/download/RightPanel-linux-x64.tar.gz"><img src="https://img.shields.io/badge/Linux-.tar.gz%20v1.4.32-333333?style=for-the-badge&logo=linux&logoColor=white" alt="Download tar.gz"></a>
 
 <br><br>
 
@@ -40,7 +40,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 |---|---|
 | 😊 **Emoji picker** | Search in English or Persian, categories, recents, and **259 country flags**. Click to type it straight into the app you were using |
 | 📋 **Clipboard history** | Text *and images*, search, ☆ pin favourites that survive restarts |
-| 🎨 **Color** | Eyedropper (pick any pixel on screen), HEX / RGB / HSL, palette, recent colors |
+| 🎨 **Color** | Eyedropper with a ring-and-dot magnifier cursor (pick any pixel on screen), HEX / RGB / HSL, palette, recent colors |
 | 📸 **Screenshot** | Opens the system snipping tool |
 | 📝 **Notes** | As many notes as you like, in tabs, saved as you type — double-click a tab to name it |
 | 🧩 **Your apps** | Pin apps or shortcuts — add them in Settings or just **drag them onto the panel** |
@@ -68,7 +68,7 @@ Move your mouse to the right edge and it pours out: emoji, clipboard history, co
 - **Drag a file onto the panel** to pin it, or right-click it → *Add to Right Panel* (Windows; on Windows 11 under *Show more options*). Folders go to the **Folders** tool instead
 - **Left or right edge**, and pick which monitor it lives on (*Settings → General*)
 - **Open on a key of your choosing** — the panel appears when you reach the screen edge, or only while you hold a key or combination you set, such as `Ctrl`, `Shift` or `Ctrl + Shift + Space` (*Settings → Keybinds*)
-- **Bind a key to any tool** — including the eyedropper (*Settings → Keybinds*)
+- **Bind a key to any tool** — including the eyedropper, and *Reset all* in the Keybinds header clears every binding at once (*Settings → Keybinds*)
 - **Built-in updater**: Right Panel checks GitHub once a day and can download and run the new installer for you (*Settings → General*)
 - Only one copy runs at a time
 

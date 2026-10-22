@@ -6,6 +6,18 @@ Every release, newest first. Each entry is what changed in that version.
 
 ---
 
+## v1.4.32
+
+- **The Settings panel follows the tab you are on** — the frame loop measured the flyout while the previous frame's `max-height` cap was still attached, so the panel could only ever get shorter. Reopening on Keybinds and switching to General left the taller page in the Keybinds box. The cap is cleared for the measurement and written back right after, so the panel takes the height of the active tab
+- **A page that does not fit is pulled up by all of its overflow** — half of it was pulled up before, which on a small screen or at high scaling left the content area scrolled down to nothing. It is pulled up by exactly what overflows, never past the top margin, and a shorter page comes back down to where it was anchored
+- **The Keybinds list shows six tools before it scrolls** — five was a little too few to read a binding and the row above it at once
+- **Reset all on the Keybinds tab** — a small button in the tab header (the counterclockwise rotate icon, like *Add App* on Widgets) clears the hold key and every tool binding, and cancels a capture that was still waiting for a key
+- **The eyedropper cursor is a magnifier** — a hollow black-and-white ring with a dot in the middle, with the hotspot on the dot, drawn as a real Win32 cursor for the picking window. The crosshair is kept only as the fallback if the cursor cannot be built
+- **Circle alert for the danger state** — *Tap again to erase everything* uses Lucide's `circle-alert` instead of `octagon-alert`
+- **Cargo.lock no longer says 1.4.18** — the package entry had not been bumped since then
+
+---
+
 ## v1.4.31
 
 - **A key on its own can open the panel** — the Keybinds capture treated Ctrl, Shift, Alt and Win as "still choosing" and threw them away, so only a combination could be bound and the tray's *Hold key to open* was the only way to get Ctrl on its own. A lone modifier now binds when it is released, and Ctrl + Q still binds as a pair

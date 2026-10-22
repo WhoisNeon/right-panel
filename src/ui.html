@@ -390,6 +390,9 @@
   /* the rows here are read, not dragged, so they say nothing about grabbing */
   #bindTools .wrow { cursor: default; }
   #bindTools .wn { flex: 1; min-width: 0; }
+  /* six rows rather than five: the page was a little too short to read a bind and the header
+     above it without scrolling, and every tool has a row here */
+  #bindTools { max-height: 224px; }
   .toggle { width: 40px; height: 24px; border-radius: 99px; background: var(--soft2); border: 0; position: relative; cursor: pointer; transition: background .25s; flex: none; }
   .toggle::after { content: ""; position: absolute; left: 3px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--inv-ink); transition: transform .4s var(--pop); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .toggle.on { background: var(--inv); }
@@ -417,8 +420,8 @@
   .opts.open { opacity: 1; visibility: visible; pointer-events: auto; transform: none; transition: opacity .16s, transform .2s var(--pop), visibility 0s; }
   .opts button { display: block; width: 100%; border: 0; background: none; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .opts button:hover, .opts button.on { background: var(--inv-ink); color: var(--inv); }
-  /* Every settings tab is given the height of the tallest one, so moving between them does not
-     resize the panel under the pointer — a fixed guess went stale the moment a row was added. */
+  /* Each settings tab is left to its own content; the frame loop caps the panel to the room the
+     screen has, so a tall page scrolls inside instead of running off the edge. */
   .spage { display: none; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .spage.on { display: flex; animation: rise .4s cubic-bezier(.2,.8,.2,1) both; }
   /* switching tabs slides the new page in from the side you moved toward */
@@ -740,10 +743,10 @@
       </div>
     </div>
     <div class="spage" data-p="keys">
-      <div class="wsec"><span>The panel</span></div>
+      <div class="wsec"><span>The panel</span><span class="addpair"><button class="link" id="resetBinds"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>Reset all</button></span></div>
       <div class="set"><span>Hold to open</span><button class="bind" id="bindOpen">None</button></div>
       <div class="wsec"><span>Open a tool</span></div>
-      <div class="wlist" id="bindTools"></div>
+      <div class="wlist scroll" id="bindTools"></div>
     </div>
     <div class="spage" data-p="general">
       <div class="engsec" data-g="genPanel">
@@ -838,6 +841,7 @@ const LUC = {
   monitor: "<rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\" /> <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\" />",
   'monitor-cog': "<path d=\"M12.5 6H13a2 2 0 0 1 2 2v.5\"/> <path d=\"M15 9h1a2 2 0 0 1 2 2v1\"/> <path d=\"M12 16.5v-1a2 2 0 0 1 2-2h1\"/> <path d=\"M9 16h1a2 2 0 0 1 2-2v-1\"/> <path d=\"M10 8.5V8a2 2 0 0 1 2-2h1\"/> <path d=\"M14 6.5h.01\"/> <rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\"/> <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\"/>",
   'rotate-ccw': "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /><path d=\"M3 3v5h5\" />",
+  'circle-alert': "<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"M12 8v4\" /><path d=\"M12 16h.01\" />",
   'octagon-alert': "<path d=\"M21.801 10A10 10 0 0 0 17 3.335\"/><path d=\"m11 2-1.6 1.6a2 2 0 0 1-1.4.6H4a2 2 0 0 0-2 2V8c0 .5.2 1 .6 1.4l1.6 1.6a2 2 0 0 1 .6 1.4V16a2 2 0 0 0 2 2h4a2 2 0 0 1 1.4-.6l1.6-1.6a2 2 0 0 1 1.4-.6H20a2 2 0 0 0 2-2v-4a2 2 0 0 0-.6-1.4z\"/><path d=\"M12 8v4\"/><path d=\"M12 16h.01\"/>",
   'external-link': "<path d=\"M15 3h6v6\"/><path d=\"M10 14 21 3\"/><path d=\"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6\"/>",
   'monitor-off': "<path d=\"M12 17v4\" /> <path d=\"M17 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 1.184-1.826\" /> <path d=\"m2 2 20 20\" /> <path d=\"M8 21h8\" /> <path d=\"M8.656 3H20a2 2 0 0 1 2 2v10a2 2 0 0 1-.293 1.042\" />",
@@ -1135,6 +1139,11 @@ function frame(now) {
   /* ----- flyout: pours out next to the clicked button ----- */
   grow.t = panel ? 1 : 0;
   const g = grow.step(dt), gv = grow.vel, gs = Math.max(0, g);
+  /* Measuring while last frame's cap is still attached to the flyout meant a page could only
+     ever get shorter: Keybinds set a cap of its own height, and the taller General page then
+     measured that same capped height, so the cap could never grow back. Clear it for the
+     measurement and write the new one below; nothing is painted between the two. */
+  if (panel) flyUi.style.maxHeight = 'none';
   const flyH = flyUi.offsetHeight;
   if (panel) {
     /* The top is what the eye tracks: a new panel is anchored where it was asked for, and a tab
@@ -1143,11 +1152,12 @@ function frame(now) {
        a little more on every switch, and it never came back down. Only the frame's own top is
        clamped, and only when the page really does not fit above the bottom of the screen. */
     if (flyTop === null) flyTop = clamp(fy.v - flyH / 2, 10, Math.max(10, innerHeight - flyH - 10));
-    /* A page that does not fit is pulled up by half of what overflows, not pushed down to the
-       very edge: it keeps the top and the bottom equally reachable, and a page that fits later
-       goes back to where it was. */
-    const over = flyTop + flyH + 10 - innerHeight;
-    const top = Math.max(10, flyTop - Math.max(0, over) / 2);
+    /* A page that does not fit is pulled up by exactly what overflows, never past the top
+       margin: that is the most room the screen can give it, so the next tab gets its full
+       content height instead of a box cut down to half the overflow. flyTop is left alone, so
+       a shorter page comes back down to where it was anchored. */
+    const over = Math.max(0, flyTop + flyH + 10 - innerHeight);
+    const top = Math.max(10, flyTop - over);
     flyUi.style.maxHeight = Math.max(80, innerHeight - top - 10) + 'px';
     fy.t = top + flyH / 2;
   }
@@ -3133,6 +3143,15 @@ $('#bindTools').onclick = e => {
   const k = e.target.closest('[data-k]');
   if (k) { listening = k.dataset.k; heldMod = null; renderBinds(); }
 };
+/* Reset all clears both halves of the tab: the hold key and every tool binding. A capture that
+   was waiting for a key is dropped too, or the next keystroke would write a binding back into
+   the map that was just emptied. */
+$('#resetBinds').onclick = () => {
+  S.binds = {}; S.openKeys = [];
+  listening = null; heldMod = null;
+  save(); renderBinds(); pushBinds();
+  toast('All keybinds reset');
+};
 renderBinds();
 pushBinds();   // the saved bindings go to the native side at start-up, not only when one changes
 /* the native side saw one of the bound combinations: it has already brought the panel up, so all
@@ -3881,7 +3900,7 @@ const RESET_LABEL = 'Reset to default', RESET_ARMED = 'Tap again to erase everyt
 function resetLabel(armed) {
   const b = $('#resetBtn');
   b.querySelector('span').textContent = armed ? RESET_ARMED : RESET_LABEL;
-  $('#resetIco').innerHTML = I(LUC[armed ? 'octagon-alert' : 'rotate-ccw']);
+  $('#resetIco').innerHTML = I(LUC[armed ? 'circle-alert' : 'rotate-ccw']);
   b.classList.toggle('armed', !!armed);
 }
 function reset() {
